@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import.meta.env.VITE_API_URL;
 
 import participantRoutes from "./routes/participants.js";
 import conferenceRoutes from "./routes/conferenceRoutes.js";
@@ -13,11 +14,12 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: "*",
+  origin: "https://regiverse-hnrapgori-sagar-425s-projects.vercel.app",
   credentials: true,
 }));
 
 app.use(express.json({ limit: "50mb" }));
+app.use("/conferences", conferenceRoutes);
 
 /* ROUTES */
 app.use("/api/participants", participantRoutes);
