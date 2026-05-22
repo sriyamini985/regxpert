@@ -24,7 +24,7 @@ const Conferences = () => {
     try {
 
       const res = await fetch(
-        "http://localhost:5000/api/conferences"
+        `${import.meta.env.VITE_API_URL}/api/conferences`
       );
 
       const data = await res.json();
@@ -64,7 +64,7 @@ const Conferences = () => {
           year;
 
         const res = await fetch(
-          "http://localhost:5000/api/conferences",
+          `${import.meta.env.VITE_API_URL}/api/conferences`,
           {
             method: "POST",
 

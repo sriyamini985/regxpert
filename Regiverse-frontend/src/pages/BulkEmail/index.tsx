@@ -24,7 +24,7 @@ const BulkEmail = () => {
         setFetching(true);
 
         const response = await fetch(
-          `http://localhost:5000/api/participants/conference/${conferenceId}`
+          `${import.meta.env.VITE_API_URL}/api/participants/conference/${conferenceId}`
         );
 
         if (!response.ok) {
@@ -69,7 +69,7 @@ const BulkEmail = () => {
       setLoading(true);
 
       const response = await fetch(
-        `http://localhost:5000/api/bulk-email/${conferenceId}/send-emails`,
+        `${import.meta.env.VITE_API_URL}/api/bulk-email/${conferenceId}/send-emails`,
         {
           method: "POST",
           headers: {

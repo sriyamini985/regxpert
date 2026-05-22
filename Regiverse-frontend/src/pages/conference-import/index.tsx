@@ -53,7 +53,7 @@ const ConferenceImport = () => {
       );
 
       const res = await fetch(
-        "http://localhost:5000/api/conferences/import",
+        `${import.meta.env.VITE_API_URL}/api/conferences/import`,
         {
           method: "POST",
           body: formData,

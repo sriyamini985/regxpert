@@ -36,7 +36,7 @@ const UploadPage = () => {
       );
 
       const res = await fetch(
-        "http://localhost:5000/api/conferences/import-excel",
+        `${import.meta.env.VITE_API_URL}/api/conferences/import-excel`,
         {
           method: "POST",
           body: formData,

@@ -166,8 +166,8 @@ const ParticipantPage = () => {
     };
 
     const url = editingPerson
-      ? `http://localhost:5000/api/participants/${form._id || form.id}`
-      : "http://localhost:5000/api/participants";
+      ?  `${import.meta.env.VITE_API_URL}/api/participants/${form._id || form.id}`
+      : `${import.meta.env.VITE_API_URL}/api/participants`;
 
     const res = await fetch(url, {
       method: editingPerson ? "PUT" : "POST",

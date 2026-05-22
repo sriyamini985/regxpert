@@ -87,7 +87,7 @@ const ConferenceDashboard = () => {
     if (!conferenceId) return;
 
     fetch(
-      `http://localhost:5000/api/participants/conference/${conferenceId}`
+      `${import.meta.env.VITE_API_URL}/api/participants/conference/${conferenceId}`
     )
       .then((res) => res.json())
       .then((data) => {

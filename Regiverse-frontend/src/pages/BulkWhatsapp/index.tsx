@@ -6,7 +6,7 @@ const BulkWhatsapp = () => {
   const sendWhatsapp = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/bulk-whatsapp/${conferenceId}/send`,
+        `${import.meta.env.VITE_API_URL}/api/bulk-whatsapp/${conferenceId}/send`,
         {
           method: "POST",
           headers: {
