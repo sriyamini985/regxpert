@@ -241,5 +241,5 @@ const Participant =
     "Participant",
     participantSchema
   );
-export default mongoose.model("Participant", participantSchema);
+
 export default Participant;
