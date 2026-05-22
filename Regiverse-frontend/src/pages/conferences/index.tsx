@@ -19,90 +19,63 @@ const Conferences = () => {
     useState<any[]>([]);
 
   /* LOAD */
-  const loadConferences = async () => {
+ const loadConferences = async () => {
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/conferences`
+    );
 
-    try {
+    const data = await res.json();
 
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/conferences`
-      );
-
-      const data = await res.json();
-
-      setConferences(data);
-
-    } catch (err) {
-
-      console.log(err);
-    }
-  };
+    setConferences(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.log(err);
+    setConferences([]);
+  }
+};
 
   useEffect(() => {
     loadConferences();
   }, []);
 
   /* CREATE */
-  const createConference =
-    async () => {
+  const createConference = async () => {
+  if (!title.trim()) return alert("Enter conference name");
 
-      if (!title.trim()) {
-        alert("Enter conference name");
-        return;
+  try {
+    setLoading(true);
+
+    const year = new Date().getFullYear();
+
+    const slug = title.toLowerCase().replace(/\s+/g, "") + year;
+
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/conferences`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title, slug }),
       }
+    );
 
-      try {
+    const data = await res.json();
 
-        setLoading(true);
+    if (data.success) {
+      setTitle("");
+      loadConferences();
+      navigate(`/conference/${slug}`);
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.log(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
-        const year =
-          new Date().getFullYear();
-
-        const slug =
-          title
-            .toLowerCase()
-            .replace(/\s+/g, "") +
-          year;
-
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/conferences`,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify({
-              title,
-              slug,
-            }),
-          }
-        );
-
-        const data =
-          await res.json();
-
-        if (data.success) {
-
-          setTitle("");
-
-          loadConferences();
-
-          navigate(
-            `/conference/${slug}`
-          );
-        }
-
-      } catch (err) {
-
-        console.log(err);
-
-      } finally {
-
-        setLoading(false);
-      }
-    };
 
   return (
     <div className="min-h-screen bg-[#f4f7fb]">
