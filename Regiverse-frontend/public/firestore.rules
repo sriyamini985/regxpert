@@ -1,0 +1,104 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================================
+    // HELPER FUNCTIONS
+    // ============================================================
+    
+    // Check if user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Check if user matches the requested document ID
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Validate string field: exists, is a string, within length bounds
+    function isValidString(field, minLen, maxLen) {
+      return field is string && field.size() >= minLen && field.size() <= maxLen;
+    }
+
+    // Validate email format (basic check)
+    function isValidEmail(email) {
+      return email is string 
+        && email.size() >= 5 
+        && email.size() <= 254
+        && email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+    }
+
+    // ============================================================
+    // 1. USERS COLLECTION
+    // Users can only read/write their own profile
+    // ============================================================
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && isOwner(userId);
+    }
+
+    // ============================================================
+    // 2. EVENTS COLLECTION
+    // Public can view events (for registration pages)
+    // Only authenticated users (admins) can create/update/delete
+    // ============================================================
+    match /events/{eventId} {
+      allow read: if true;
+      
+      allow create: if isSignedIn()
+        && isValidString(request.resource.data.name, 1, 200)
+        && request.resource.data.capacity is int
+        && request.resource.data.capacity > 0
+        && request.resource.data.date is timestamp
+        && isValidString(request.resource.data.location, 1, 500);
+
+      allow update: if isSignedIn()
+        && isValidString(request.resource.data.name, 1, 200)
+        && request.resource.data.capacity is int
+        && request.resource.data.capacity > 0;
+
+      allow delete: if isSignedIn();
+    }
+
+    // ============================================================
+    // 3. PARTICIPANTS COLLECTION
+    // Public can register (create) with field validation
+    // Only authenticated users can read/update/delete
+    // ============================================================
+    match /participants/{participantId} {
+      allow create: if true
+        // Required fields validation
+        && isValidString(request.resource.data.name, 1, 100)
+        && isValidEmail(request.resource.data.email)
+        && isValidString(request.resource.data.company, 1, 200)
+        && isValidString(request.resource.data.eventId, 1, 100)
+        // Status must be 'pending' on creation
+        && request.resource.data.status == 'pending'
+        // Prevent field injection — only allow known fields
+        && request.resource.data.keys().hasAll(['name', 'email', 'company', 'eventId', 'status'])
+        && request.resource.data.keys().hasOnly([
+          'name', 'email', 'company', 'eventId', 'status',
+          'phone', 'notes', 'qrCode', 'registrationDate',
+          'avatarUrl', 'foodAccessStatus', 'checkInTime'
+        ]);
+
+      allow read, update, delete: if isSignedIn();
+    }
+
+    // ============================================================
+    // 4. CHECK-INS COLLECTION
+    // Only authenticated users can view or log check-ins
+    // ============================================================
+    match /checkIns/{checkInId} {
+      allow read: if isSignedIn();
+      
+      allow create: if isSignedIn()
+        && isValidString(request.resource.data.participantId, 1, 100)
+        && isValidString(request.resource.data.participantName, 1, 100)
+        && request.resource.data.timestamp is timestamp
+        && request.resource.data.method in ['qr', 'manual'];
+      
+      allow update, delete: if isSignedIn();
+    }
+  }
+}

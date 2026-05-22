@@ -1,0 +1,4 @@
+﻿src/components/Navbar.tsx(70,22): error TS2322: Type '({ isActive }: { isActive: any; }) => Element' is not assignable to type 'ReactNode'.
+src/components/Navbar.tsx(70,25): error TS7031: Binding element 'isActive' implicitly has an 'any' type.
+src/pages/check-in-station/index.tsx(199,15): error TS2322: Type '{ auth: AuthContextType; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'auth' does not exist on type 'IntrinsicAttributes'.
