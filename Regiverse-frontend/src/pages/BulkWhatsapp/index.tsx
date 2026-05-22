@@ -5,8 +5,13 @@ const BulkWhatsapp = () => {
 
   const sendWhatsapp = async () => {
     try {
+      const API_URL = import.meta.env.VITE_API_URL;
+
+      console.log("API URL:", API_URL);
+      console.log("Conference ID:", conferenceId);
+
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/bulk-whatsapp/${conferenceId}/send`,
+        `${API_URL}/api/bulk-whatsapp/${conferenceId}/send`,
         {
           method: "POST",
           headers: {
@@ -17,22 +22,22 @@ const BulkWhatsapp = () => {
 
       const data = await res.json();
 
+      console.log("Response:", data);
+
       if (!res.ok) {
         throw new Error(data.message || "Failed to send WhatsApp");
       }
 
-      alert(`Successfully sent to ${data.sent} users`);
-    } catch (error: any) {
-      console.error(error);
+      alert(`Successfully sent to ${data.sent || 0} users`);
+    } catch (error) {
+      console.error("WhatsApp Error:", error);
       alert(error.message);
     }
   };
 
   return (
     <div className="p-20 flex flex-col gap-6">
-      <h1 className="text-4xl font-bold">
-        Bulk WhatsApp QR Sender
-      </h1>
+      <h1 className="text-4xl font-bold">Bulk WhatsApp QR Sender</h1>
 
       <p className="text-gray-600">
         Send QR codes to all participants via WhatsApp
