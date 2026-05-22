@@ -1,0 +1,21 @@
+{
+  "name": "regiverse",
+  "private": true,
+  "scripts": {
+    "frontend": "npm start --prefix regiverse-frontend",
+    "backend": "npm run dev --prefix regiverse-backend",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+
+    "build": "npm install --prefix regiverse-frontend && npm run build --prefix regiverse-frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "axios": "^1.16.1",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.7",
+    "qrcode": "^1.5.4",
+    "xlsx": "^0.18.5"
+  }
+}
