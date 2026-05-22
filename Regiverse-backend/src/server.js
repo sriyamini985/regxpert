@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
+import connectDB from "./config/db.js";
 
 import participantRoutes from "./routes/participants.js";
 import conferenceRoutes from "./routes/conferenceRoutes.js";
@@ -13,7 +13,10 @@ dotenv.config();
 
 const app = express();
 
-/* ✅ CORS FIX (DEV + PROD) */
+/* DB CONNECTION */
+connectDB();
+
+/* CORS */
 app.use(
   cors({
     origin: [
@@ -24,7 +27,6 @@ app.use(
   })
 );
 
-/* JSON PARSER */
 app.use(express.json({ limit: "50mb" }));
 
 /* ROUTES */
@@ -34,16 +36,9 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/bulk-email", bulkEmailRoutes);
 app.use("/api/bulk-whatsapp", bulkWhatsappRoutes);
 
-/* DB */
-mongoose
-  .connect(process.env.MONGO_URI, {
-    serverSelectionTimeoutMS: 30000,
-  })
-  .then(() => {
-    console.log("✅ MongoDB Connected");
-    console.log("URI OK");
-  })
-  .catch((err) => {
-    console.log("❌ MongoDB FAILED:");
-    console.log(err);
-  });
+/* START SERVER 👇 THIS WAS MISSING */
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
