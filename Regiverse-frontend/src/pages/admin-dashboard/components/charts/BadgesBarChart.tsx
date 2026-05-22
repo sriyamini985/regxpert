@@ -17,8 +17,8 @@ interface BadgesBarChartProps {
 
 const BadgesBarChart = ({ data }: BadgesBarChartProps) => {
   const chartData = [
-    { name: "Printed", value: data.printed },
-    { name: "Issued", value: data.issued }
+    { name: "Not-Printed", value: data.printed },
+    { name: "Printed", value: data.issued }
   ];
   
 
