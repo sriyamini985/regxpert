@@ -7,7 +7,7 @@ import dns from "dns";
 
 import participantRoutes from "./routes/participants.js";
 import conferenceRoutes from "./routes/conferenceRoutes.js";
-import messageRoutes from "./routes/messageRoutes.js";
+/*import messageRoutes from "./routes/messageRoutes.js";*/
 import bulkEmailRoutes from "./routes/bulkEmailRoutes.js";
 import bulkWhatsappRoutes from "./routes/bulkWhatsappRoutes.js";
 
@@ -44,7 +44,7 @@ console.log("RESEND KEY:", process.env.RESEND_API_KEY ? "Loaded Successfully" : 
 /* ROUTES */
 app.use("/api/conferences", conferenceRoutes);
 app.use("/api/participants", participantRoutes);
-app.use("/api/messages", messageRoutes);
+/*app.use("/api/messages", messageRoutes);*/
 app.use("/api/bulk-email", bulkEmailRoutes);
 app.use("/api/bulk-whatsapp", bulkWhatsappRoutes);
 

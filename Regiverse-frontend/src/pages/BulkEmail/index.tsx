@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-
 import { useParams } from "react-router-dom";
 
 interface Participant {
@@ -11,7 +10,6 @@ interface Participant {
 
 const BulkEmail = () => {
   const { conferenceId } = useParams();
-
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -22,25 +20,15 @@ const BulkEmail = () => {
     const fetchParticipants = async () => {
       try {
         setFetching(true);
-
         const response = await fetch(
           `${import.meta.env.VITE_API_URL}/api/participants/conference/${conferenceId}`
         );
 
         if (!response.ok) {
-          const text = await response.text();
-
-          console.error("API Error:", text);
-
-          throw new Error(
-            `Failed to load participants (${response.status})`
-          );
+          throw new Error(`Failed to load participants (${response.status})`);
         }
 
         const data = await response.json();
-
-        console.log("Participants loaded:", data);
-
         setParticipants(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Fetch Participants Error:", error);
@@ -72,33 +60,22 @@ const BulkEmail = () => {
         `${import.meta.env.VITE_API_URL}/api/bulk-email/${conferenceId}/send-emails`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            subject,
-            message,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subject, message }),
         }
       );
 
-      if (!response.ok) {
-        const text = await response.text();
-
-        console.error("Send Email Error:", text);
-
-        throw new Error(
-          `Failed to send emails (${response.status})`
-        );
-      }
-
       const data = await response.json();
 
-      alert(`Emails sent successfully to ${data.sent || 0} delegates`);
-    } catch (error: any) {
-      console.error(error);
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send emails");
+      }
 
-      alert(error.message || "Something went wrong");
+      alert(`Emails Sent: ${data.sent || 0} \nFailed: ${data.failed || 0}`);
+    } catch (error: unknown) {
+      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -107,23 +84,13 @@ const BulkEmail = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-lg p-8">
-
-        <h1 className="text-4xl font-bold mb-4">
-          Bulk Email Sender
-        </h1>
-
+        <h1 className="text-4xl font-bold mb-4">Bulk Email Sender</h1>
         <p className="mb-6 text-gray-600">
           Total Delegates:
-          <span className="font-bold ml-2 text-blue-600">
-            {participants.length}
-          </span>
+          <span className="font-bold ml-2 text-blue-600">{participants.length}</span>
         </p>
 
-        {fetching && (
-          <div className="mb-5 text-blue-600">
-            Loading participants...
-          </div>
-        )}
+        {fetching && <div className="mb-5 text-blue-600">Loading participants...</div>}
 
         <input
           type="text"
@@ -154,30 +121,18 @@ const BulkEmail = () => {
         </button>
 
         <div className="mt-10">
-          <h2 className="text-2xl font-semibold mb-4">
-            Participants
-          </h2>
-
+          <h2 className="text-2xl font-semibold mb-4">Participants</h2>
           <div className="space-y-3 max-h-[500px] overflow-y-auto">
             {participants.map((participant) => (
-              <div
-                key={participant._id}
-                className="border rounded-xl p-4 flex justify-between items-center"
-              >
+              <div key={participant._id} className="border rounded-xl p-4 flex justify-between items-center">
                 <div>
-                  <p className="font-semibold">
-                    {participant.name}
-                  </p>
-
-                  <p className="text-sm text-gray-500">
-                    {participant.email || "No email"}
-                  </p>
+                  <p className="font-semibold">{participant.name}</p>
+                  <p className="text-sm text-gray-500">{participant.email || "No email"}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );
