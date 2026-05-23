@@ -5,10 +5,17 @@ import { Resend } from "resend";
 
 const router = express.Router();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 router.post("/:conferenceId/send-emails", async (req, res) => {
   try {
+    // 1. Check for the key and initialize Resend INSIDE the route
+    if (!process.env.RESEND_API_KEY) {
+      return res.status(500).json({ 
+        success: false, 
+        message: "Server configuration error: Missing Resend API Key" 
+      });
+    }
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
     const { subject, message } = req.body;
 
     const participants = await Participant.find({
