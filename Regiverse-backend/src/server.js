@@ -19,9 +19,16 @@ const app = express();
 /* DB */
 connectDB();
 
-/* CORS */
+/* CORS CONFIGURATION - UPDATED */
+// This allows any Vercel domain, localhost, or requests without an origin (like Postman)
 app.use(cors({
-  origin: "https://regiverse-ni89f1849-sagar-425s-projects.vercel.app",
+  origin: function (origin, callback) {
+    if (!origin || origin.includes("localhost") || origin.includes("vercel.app")) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
@@ -30,7 +37,8 @@ app.options("*", cors());
 
 app.use(express.json({ limit: "50mb" }));
 
-console.log("RESEND KEY:", process.env.RESEND_API_KEY);
+// Security best practice: Don't print the actual key to the console logs
+console.log("RESEND KEY:", process.env.RESEND_API_KEY ? "Loaded Successfully" : "Missing");
 
 /* ROUTES */
 app.use("/api/conferences", conferenceRoutes);
