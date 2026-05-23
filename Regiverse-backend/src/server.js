@@ -20,7 +20,7 @@ const app = express();
 connectDB();
 
 /* CORS CONFIGURATION - UPDATED */
-// This allows any Vercel domain, localhost, or requests without an origin (like Postman)
+/* CORS CONFIGURATION - UPDATED */
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || origin.includes("localhost") || origin.includes("vercel.app")) {
@@ -33,7 +33,8 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
 
-app.options("*", cors());
+// CHANGE IS HERE: Replace "*" with /(.*)/
+app.options(/(.*)/, cors());
 
 app.use(express.json({ limit: "50mb" }));
 
