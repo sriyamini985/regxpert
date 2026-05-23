@@ -1,9 +1,11 @@
 import express from "express";
-import nodemailer from "nodemailer";
 import QRCode from "qrcode";
 import Participant from "../models/Participant.js";
+import { Resend } from "resend";
 
 const router = express.Router();
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 router.post("/:conferenceId/send-emails", async (req, res) => {
   try {
@@ -20,61 +22,49 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
       });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
     let sent = 0;
+    let failed = 0;
 
-    await Promise.all(
-      participants.map(async (p) => {
-        if (!p.email) return;
+    for (const p of participants) {
+      try {
+        if (!p.email) {
+          failed++;
+          continue;
+        }
 
         const qrDataUrl = await QRCode.toDataURL(
           p.regId || p._id.toString()
         );
 
-        const base64Data = qrDataUrl.replace(
-          /^data:image\/png;base64,/,
-          ""
-        );
-
-        const qrBuffer = Buffer.from(base64Data, "base64");
-
-        await transporter.sendMail({
-          from: process.env.EMAIL_USER,
+        await resend.emails.send({
+          from: "Conference <onboarding@resend.dev>",
           to: p.email,
           subject: subject || `QR Code - ${p.conferenceName}`,
           html: `
             <h2>Hello ${p.name}</h2>
             <p>${message || "Please find your QR code attached."}</p>
             <p><b>Conference:</b> ${p.conferenceName}</p>
+            <p><b>Your QR Code:</b></p>
+            <img src="${qrDataUrl}" width="200"/>
           `,
-          attachments: [
-            {
-              filename: `QR-${p.regId || p._id}.png`,
-              content: qrBuffer,
-              encoding: "base64",
-            },
-          ],
         });
 
         sent++;
-      })
-    );
+      } catch (err) {
+        console.log(`Failed for ${p.email}:`, err.message);
+        failed++;
+      }
+    }
 
-    res.json({
+    return res.json({
       success: true,
       sent,
+      failed,
     });
 
   } catch (err) {
     console.log(err);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: err.message,
     });

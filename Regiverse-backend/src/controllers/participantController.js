@@ -16,6 +16,8 @@ export const scanQR = async (req, res) => {
     const { qrCode, type } = req.body;
 
     const user = await Participant.findOne({ qrCode });
+    console.log("QR scan request:", req.body);
+    console.log("User found:", user);
 
     if (!user) return res.status(404).json({ msg: "User not found" });
 
