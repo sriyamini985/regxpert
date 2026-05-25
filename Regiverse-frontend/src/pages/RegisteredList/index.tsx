@@ -1,67 +1,98 @@
 import { useEffect, useMemo, useState } from "react";
-
 import { useParams } from "react-router-dom";
 
 import SearchBar from "./components/SearchBar";
-
 import DelegateTable from "./components/DelegateTable";
 
 const RegisteredList = () => {
+  const { conferenceId } = useParams();
 
-  const { conferenceId } =
-    useParams();
+  const [participants, setParticipants] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [participants, setParticipants] =
-    useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const [searchQuery, setSearchQuery] =
-    useState("");
-
-  /* LOAD CONFERENCE PARTICIPANTS */
+  /* =========================
+     LOAD CONFERENCE PARTICIPANTS
+  ========================= */
 
   useEffect(() => {
-    
+    const fetchParticipants = async () => {
+      try {
+        setLoading(true);
 
-fetch(
-  `${import.meta.env.VITE_API_URL}/api/participants/conference/${conferenceId}`
-)
-      .then((res) => res.json())
-      .then((data) => {
+        console.log(
+          "FETCHING CONFERENCE:",
+          conferenceId
+        );
 
-        console.log(data);
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/participants/conference/${conferenceId}`
+        );
 
-        setParticipants(data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+        if (!response.ok) {
+          throw new Error(
+            `Failed with status ${response.status}`
+          );
+        }
 
+        const data = await response.json();
+
+        console.log(
+          "PARTICIPANTS:",
+          data
+        );
+
+        if (Array.isArray(data)) {
+          setParticipants(data);
+        } else {
+          setParticipants([]);
+        }
+      } catch (err) {
+        console.log(
+          "FETCH ERROR:",
+          err
+        );
+
+        setParticipants([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (conferenceId) {
+      fetchParticipants();
+    }
   }, [conferenceId]);
 
-  /* PRINT */
+  /* =========================
+     PRINT
+  ========================= */
 
   const handlePrint = (
     participant: any
   ) => {
-
     console.log(
       "Print:",
       participant
     );
   };
 
-  /* LIVE SEARCH */
+  /* =========================
+     LIVE SEARCH
+  ========================= */
 
   const filtered = useMemo(() => {
+    /* SHOW ALL IF SEARCH EMPTY */
 
-    if (!searchQuery.trim())
-      return [];
+    if (!searchQuery.trim()) {
+      return participants;
+    }
 
     const q =
       searchQuery.toLowerCase();
 
     return participants.filter((p) =>
-
       [
         p.name,
         p.email,
@@ -75,7 +106,6 @@ fetch(
             .includes(q)
         )
     );
-
   }, [
     participants,
     searchQuery,
@@ -97,30 +127,29 @@ fetch(
         }
       />
 
+      {/* LOADING */}
+
+      {loading && (
+        <div className="bg-white rounded-xl shadow p-6 text-blue-600">
+          Loading participants...
+        </div>
+      )}
+
       {/* RESULTS */}
 
-      {searchQuery.trim() !==
-        "" && (
+      {!loading && (
         <>
-
           {filtered.length > 0 ? (
-
             <DelegateTable
               data={filtered}
             />
-
           ) : (
-
             <div className="bg-white rounded-xl shadow p-6 text-gray-500">
-
               No participants found
-
             </div>
           )}
-
         </>
       )}
-
     </div>
   );
 };
