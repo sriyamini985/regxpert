@@ -1,6 +1,5 @@
 import express from "express";
 import Participant from "../models/Participant.js";
-import twilio from "twilio";
 
 const router = express.Router();
 
@@ -10,10 +9,14 @@ router.post("/:conferenceId/send", async (req, res) => {
 
     const { message } = req.body;
 
+    console.log(
+      "CONFERENCE:",
+      req.params.conferenceId
+    );
+
     const participants =
       await Participant.find({
-        conferenceId:
-          req.params.conferenceId,
+        conferenceId: req.params.conferenceId,
       });
 
     console.log(
@@ -21,107 +24,59 @@ router.post("/:conferenceId/send", async (req, res) => {
       participants.length
     );
 
+    if (!participants.length) {
+
+      return res.status(404).json({
+        success: false,
+        message: "No participants found",
+      });
+    }
+
     let sent = 0;
     let failed = 0;
-
-    const hasTwilio =
-      process.env.TWILIO_ACCOUNT_SID &&
-      process.env.TWILIO_AUTH_TOKEN &&
-      process.env.TWILIO_WHATSAPP_NUMBER;
-
-    let client = null;
-
-    if (hasTwilio) {
-
-      client = twilio(
-        process.env.TWILIO_ACCOUNT_SID,
-        process.env.TWILIO_AUTH_TOKEN
-      );
-
-      console.log(
-        "TWILIO MODE ENABLED"
-      );
-
-    } else {
-
-      console.log(
-        "SIMULATION MODE"
-      );
-    }
 
     for (const p of participants) {
 
       try {
 
         console.log(
-          "PHONE CHECK:",
+          "CHECKING:",
           p.name,
           p.phone
         );
 
         if (!p.phone) {
 
-          console.log(
-            "NO PHONE FOUND"
-          );
+          console.log("NO PHONE");
 
           failed++;
           continue;
         }
 
-        const formattedPhone =
-          p.phone.startsWith("+")
-            ? p.phone
-            : `+91${p.phone}`;
-
-        const finalMessage =
-          message ||
-          `Hello ${p.name},
-Your registration for ${p.conferenceName} is confirmed.`;
-
-        if (client) {
-
-          await client.messages.create({
-
-            body: finalMessage,
-
-            from:
-              `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
-
-            to:
-              `whatsapp:${formattedPhone}`,
-          });
-
-          console.log(
-            "WHATSAPP SENT:",
-            formattedPhone
-          );
-
-        } else {
-
-          console.log(`
+        console.log(`
+==================================
 SIMULATED WHATSAPP
-TO: ${formattedPhone}
+TO: ${p.phone}
 
 MESSAGE:
-${finalMessage}
-          `);
-        }
+${message}
+
+USER:
+${p.name}
+==================================
+`);
 
         sent++;
 
       } catch (err) {
 
-        console.log(
-          "WHATSAPP FAILED:",
-          err.message
-        );
+        console.log(err);
 
         failed++;
       }
     }
 
-    res.json({
+    return res.json({
       success: true,
       sent,
       failed,
@@ -131,7 +86,7 @@ ${finalMessage}
 
     console.log(err);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: err.message,
     });
