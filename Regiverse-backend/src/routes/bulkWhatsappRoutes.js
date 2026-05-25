@@ -5,64 +5,136 @@ import twilio from "twilio";
 const router = express.Router();
 
 router.post("/:conferenceId/send", async (req, res) => {
+
   try {
+
     const { message } = req.body;
 
-    const participants = await Participant.find({
-      conferenceId: req.params.conferenceId,
-    });
+    const participants =
+      await Participant.find({
+        conferenceId:
+          req.params.conferenceId,
+      });
 
-    if (!participants.length) {
-      return res.status(404).json({ success: false, message: "No participants found" });
-    }
+    console.log(
+      "TOTAL PARTICIPANTS:",
+      participants.length
+    );
 
     let sent = 0;
     let failed = 0;
 
-    // Initialize Twilio ONLY if credentials exist in .env
-    const hasTwilio = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN;
-    const client = hasTwilio ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN) : null;
+    const hasTwilio =
+      process.env.TWILIO_ACCOUNT_SID &&
+      process.env.TWILIO_AUTH_TOKEN &&
+      process.env.TWILIO_WHATSAPP_NUMBER;
 
-    await Promise.all(
-      participants.map(async (p) => {
-        // Fallbacks in case your DB uses a different field name for the phone number
-        const userPhone = p.phone || p.phoneNumber || p.contactNumber;
+    let client = null;
 
-        if (!userPhone) {
+    if (hasTwilio) {
+
+      client = twilio(
+        process.env.TWILIO_ACCOUNT_SID,
+        process.env.TWILIO_AUTH_TOKEN
+      );
+
+      console.log(
+        "TWILIO MODE ENABLED"
+      );
+
+    } else {
+
+      console.log(
+        "SIMULATION MODE"
+      );
+    }
+
+    for (const p of participants) {
+
+      try {
+
+        console.log(
+          "PHONE CHECK:",
+          p.name,
+          p.phone
+        );
+
+        if (!p.phone) {
+
+          console.log(
+            "NO PHONE FOUND"
+          );
+
           failed++;
-          return;
+          continue;
         }
 
-        // WhatsApp APIs require the country code (e.g., +91 for India, +1 for US)
-        const formattedPhone = userPhone.toString().startsWith("+") ? userPhone : `+91${userPhone}`;
-        
-        // Note: WhatsApp APIs require public URLs for images. We send the ID as text.
-        const customMessage = message || `Hello ${p.name},\nHere is your Registration ID for ${p.conferenceName}: ${p.regId || p._id}\nPlease show this at the entrance.`;
+        const formattedPhone =
+          p.phone.startsWith("+")
+            ? p.phone
+            : `+91${p.phone}`;
 
-        try {
-          if (client && process.env.TWILIO_WHATSAPP_NUMBER) {
-            // Send real WhatsApp message
-            await client.messages.create({
-              body: customMessage,
-              from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
-              to: `whatsapp:${formattedPhone}`,
-            });
-          } else {
-            // Simulation mode if Twilio isn't set up yet
-            console.log(`[SIMULATED WHATSAPP] To: ${formattedPhone} | Message: ${customMessage}`);
-          }
-          sent++;
-        } catch (err) {
-          console.error(`Failed to send WhatsApp to ${formattedPhone}:`, err.message);
-          failed++;
+        const finalMessage =
+          message ||
+          `Hello ${p.name},
+Your registration for ${p.conferenceName} is confirmed.`;
+
+        if (client) {
+
+          await client.messages.create({
+
+            body: finalMessage,
+
+            from:
+              `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
+
+            to:
+              `whatsapp:${formattedPhone}`,
+          });
+
+          console.log(
+            "WHATSAPP SENT:",
+            formattedPhone
+          );
+
+        } else {
+
+          console.log(`
+SIMULATED WHATSAPP
+TO: ${formattedPhone}
+
+MESSAGE:
+${finalMessage}
+          `);
         }
-      })
-    );
 
-    res.json({ success: true, sent, failed });
+        sent++;
+
+      } catch (err) {
+
+        console.log(
+          "WHATSAPP FAILED:",
+          err.message
+        );
+
+        failed++;
+      }
+    }
+
+    res.json({
+      success: true,
+      sent,
+      failed,
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: err.message });
+
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 });
 
