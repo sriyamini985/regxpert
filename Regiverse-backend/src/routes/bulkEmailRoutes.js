@@ -6,15 +6,12 @@ import { Resend } from "resend";
 const router = express.Router();
 
 router.post("/:conferenceId/send-emails", async (req, res) => {
-
   try {
-
     /* =========================
        CHECK RESEND KEY
     ========================= */
 
     if (!process.env.RESEND_API_KEY) {
-
       console.log("❌ RESEND_API_KEY MISSING");
 
       return res.status(500).json({
@@ -23,33 +20,21 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
       });
     }
 
-    const resend =
-      new Resend(
-        process.env.RESEND_API_KEY
-      );
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const {
-      subject,
-      message,
-    } = req.body;
+    const { subject, message } = req.body;
 
     /* =========================
        GET PARTICIPANTS
     ========================= */
 
-    const participants =
-      await Participant.find({
-        conferenceId:
-          req.params.conferenceId,
-      });
+    const participants = await Participant.find({
+      conferenceId: req.params.conferenceId,
+    });
 
-    console.log(
-      "👥 TOTAL PARTICIPANTS:",
-      participants.length
-    );
+    console.log("👥 TOTAL PARTICIPANTS:", participants.length);
 
     if (!participants.length) {
-
       return res.status(404).json({
         success: false,
         message: "No participants found",
@@ -64,26 +49,13 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
     ========================= */
 
     for (const p of participants) {
-
       try {
-
-        console.log(
-          "📧 CHECKING:",
-          p.name,
-          p.email
-        );
+        console.log("📧 CHECKING:", p.name, p.email);
 
         /* VALIDATE EMAIL */
 
-        if (
-          !p.email ||
-          !p.email.includes("@")
-        ) {
-
-          console.log(
-            "❌ INVALID EMAIL:",
-            p.email
-          );
+        if (!p.email || !p.email.includes("@")) {
+          console.log("❌ INVALID EMAIL:", p.email);
 
           failed++;
           continue;
@@ -91,149 +63,124 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
 
         /* GENERATE QR */
 
-        const qrDataUrl =
-          await QRCode.toDataURL(
-            p.regId ||
-            p._id.toString()
-          );
+        const qrBuffer = await QRCode.toBuffer(
+          p.regId || p._id.toString(),
+          {
+            width: 300,
+          }
+        );
 
         /* SEND EMAIL */
 
-        const response =
-          await resend.emails.send({
+        const response = await resend.emails.send({
+          from: "RegiVerse <onboarding@resend.dev>",
 
-            from:
-              "RegiVerse <onboarding@resend.dev>",
+          to: p.email,
 
-            to: p.email,
+          subject:
+            subject || `Conference QR - ${p.conferenceName}`,
 
-            subject:
-              subject ||
-              `Conference QR - ${p.conferenceName}`,
-
-            html: `
+          html: `
+            <div style="font-family:Arial;padding:20px;background:#f4f7fb;">
+              
               <div style="
-                font-family:Arial;
-                padding:20px;
-                background:#f4f7fb;
+                max-width:600px;
+                margin:auto;
+                background:white;
+                padding:30px;
+                border-radius:16px;
               ">
 
+                <h1 style="color:#2563eb;">
+                  RegiVerse
+                </h1>
+
+                <h2>
+                  Hello ${p.name}
+                </h2>
+
+                <p style="
+                  font-size:16px;
+                  line-height:1.7;
+                  color:#444;
+                ">
+                  ${
+                    message ||
+                    "Please find your conference QR code below."
+                  }
+                </p>
+
                 <div style="
-                  max-width:600px;
-                  margin:auto;
-                  background:white;
-                  padding:30px;
-                  border-radius:16px;
-                  box-shadow:0 4px 12px rgba(0,0,0,0.08);
+                  text-align:center;
+                  margin:30px 0;
                 ">
 
-                  <h1 style="
-                    color:#2563eb;
-                    margin-bottom:20px;
-                  ">
-                    RegiVerse
-                  </h1>
+                  <img
+                    src="cid:qrcode"
+                    width="220"
+                    alt="QR Code"
+                  />
 
-                  <h2>
-                    Hello ${p.name}
-                  </h2>
+                </div>
 
-                  <p style="
-                    font-size:16px;
-                    line-height:1.7;
-                    color:#444;
-                  ">
-                    ${
-                      message ||
-                      "Please find your conference QR code below."
-                    }
+                <div style="
+                  background:#eff6ff;
+                  padding:15px;
+                  border-radius:12px;
+                ">
+
+                  <p>
+                    <b>Conference:</b>
+                    ${p.conferenceName}
                   </p>
 
-                  <div style="
-                    text-align:center;
-                    margin:30px 0;
-                  ">
-
-                    <img
-                      src="${qrDataUrl}"
-                      width="220"
-                      alt="QR Code"
-                    />
-
-                  </div>
-
-                  <div style="
-                    background:#eff6ff;
-                    padding:15px;
-                    border-radius:12px;
-                    margin-top:20px;
-                  ">
-
-                    <p>
-                      <b>Conference:</b>
-                      ${p.conferenceName}
-                    </p>
-
-                    <p>
-                      <b>Registration ID:</b>
-                      ${p.regId || p._id}
-                    </p>
-
-                  </div>
-
-                  <p style="
-                    margin-top:25px;
-                    color:#666;
-                    font-size:14px;
-                  ">
-                    Please carry this QR code
-                    during conference entry.
+                  <p>
+                    <b>Registration ID:</b>
+                    ${p.regId || p._id}
                   </p>
 
                 </div>
 
+                <p style="
+                  margin-top:25px;
+                  color:#666;
+                  font-size:14px;
+                ">
+                  Please carry this QR code during conference entry.
+                </p>
+
               </div>
-            `,
-          });
 
-        /* =========================
-           CHECK RESEND RESPONSE
-        ========================= */
+            </div>
+          `,
 
-              console.log(
+          attachments: [
+            {
+              filename: "qrcode.png",
+              content: qrBuffer,
+              cid: "qrcode",
+            },
+          ],
+        });
+
+        console.log(
+          "✅ RESEND RESPONSE:",
           JSON.stringify(response, null, 2)
         );
 
         if (response.error) {
-
-          console.log(
-            "❌ RESEND ERROR:",
-            response.error
-          );
+          console.log("❌ RESEND ERROR:", response.error);
 
           failed++;
-
         } else {
-
-          console.log(
-            "✅ EMAIL SENT:",
-            p.email
-          );
+          console.log("✅ EMAIL SENT:", p.email);
 
           sent++;
         }
-
       } catch (err) {
+        console.log("❌ FAILED FOR:", p.email);
 
-        console.log(
-          "❌ FAILED FOR:",
-          p.email
-        );
-
-        console.log(
-          "ERROR:",
-          err.message
-        );
+        console.log("ERROR:", err.message);
 
         failed++;
       }
@@ -248,12 +195,8 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
       sent,
       failed,
     });
-
   } catch (err) {
-
-    console.log(
-      "❌ ROUTE ERROR:"
-    );
+    console.log("❌ ROUTE ERROR:");
 
     console.log(err);
 
