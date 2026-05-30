@@ -50,7 +50,7 @@ import ConferenceDashboard from "./pages/Conference - dashboard";
 
 import ConferenceImport from "./pages/conference-import";
 
-import UploadPage from "./pages/upload";
+import UploadPage from "./admin/pages/upload";
 
 import BulkEmail from "./pages/BulkEmail";
 import BulkWhatsapp from "./pages/BulkWhatsapp";
