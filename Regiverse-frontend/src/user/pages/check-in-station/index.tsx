@@ -5,7 +5,7 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import LoadingBar from "../../components/ui/LoadingBar";
+import LoadingBar from "../../../components/ui/LoadingBar";
 import AutoScan from "./components/Autoscan";
 import ManualScan from "./components/ManualScan";
 
@@ -14,7 +14,7 @@ import { Participant } from "./types/types";
 import {
   processQRCheckIn,
   processManualCheckIn,
-} from "../../services/checkInService";
+} from "../../../services/checkInService";
 
 const days = [1, 2, 3, 4, 5];
 
@@ -259,5 +259,6 @@ const CheckInStation = () => {
     </div>
   );
 };
+
 
 export default CheckInStation;

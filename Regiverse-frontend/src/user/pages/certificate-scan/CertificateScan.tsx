@@ -11,6 +11,7 @@ import Header from "./components/Header";
 import SearchBox from "./components/SearchBox";
 import ResultTable from "./components/ResultCard";
 
+
 const STORAGE_KEY = "certificate_users";
 
 const certificateTypes = [

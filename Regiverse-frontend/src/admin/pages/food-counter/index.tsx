@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FoodAccessScanner from './components/FoodAccessScanner';
 import FoodAccessLog from './components/FoodAccessLog';
-import Icon from '../../components/AppIcon';
-import Button from '../../components/ui/Button';
+import Icon from '../../../components/AppIcon';
+import Button from '../../../components/ui/Button';
 import {
     subscribeToParticipants,
     recordFoodAccess,
     undoFoodAccess,
     getParticipantByQRCode,
     Participant
-} from '../../services/participantService';
+} from '../../../services/participantService';
 
 const FoodCounter = () => {
     const navigate = useNavigate();

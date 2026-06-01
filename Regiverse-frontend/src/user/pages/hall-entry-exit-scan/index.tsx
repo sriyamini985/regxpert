@@ -53,7 +53,7 @@ const HallScan = () => {
               Mode: <span className="font-semibold">{mode.toUpperCase()}</span>
             </div>
 
-            <AutoScan participants={participants} onScan={handleScan} />
+            <AutoScan participants={participants} onCheckIn={handleScan}/>
             <ManualScan participants={participants} onCheckIn={handleScan} />
           </>
         )}

@@ -11,3 +11,5 @@ root.render(
     <CertificateScan />
   </React.StrictMode>
 );
+
+export { default } from "./CertificateScan";
