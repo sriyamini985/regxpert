@@ -1,4 +1,4 @@
-import Icon from '../../../components/AppIcon';
+import Icon from 'components/AppIcon';
 import { QRCodeTemplate } from '../types';
 
 interface TemplateSelectorProps {

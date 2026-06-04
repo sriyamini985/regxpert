@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   useNavigate,
   useLocation,
+  useParams,
 } from "react-router-dom";
 
 import { Participant } from "./types";
@@ -25,6 +26,7 @@ const CertificateScan: React.FC = () => {
   const navigate = useNavigate();
 
   const location = useLocation();
+  const { conferenceSlug } = useParams();
 
   const params = new URLSearchParams(
     location.search
@@ -185,7 +187,7 @@ const CertificateScan: React.FC = () => {
                   );
 
                   navigate(
-                    `/certificate-scan?type=${encodeURIComponent(
+                    `/u/${conferenceSlug}/certificate-scan?type=${encodeURIComponent(
                       type
                     )}`
                   );
@@ -227,9 +229,9 @@ const CertificateScan: React.FC = () => {
 
                   setSearch("");
 
-                  navigate(
-                    "/certificate-scan"
-                  );
+                     navigate(
+                  `/u/${conferenceSlug}/certificate-scan`
+                );
                 }}
                 className="px-5 py-2 bg-red-500 text-white rounded-xl"
               >

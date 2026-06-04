@@ -13,71 +13,49 @@ const ConferenceImport = () => {
   const [loading, setLoading] =
     useState(false);
 
-  const handleImport = async () => {
-    if (!conferenceName.trim()) {
-      alert("Enter conference name");
-      return;
-    }
+  // Replace the handleImport function in your ConferenceImport.tsx
+const handleImport = async () => {
+  if (!conferenceName.trim()) {
+    alert("Enter conference name");
+    return;
+  }
 
-    if (!excelFile) {
-      alert("Upload excel file");
-      return;
-    }
+  if (!excelFile) {
+    alert("Upload excel file");
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const year =
-        new Date().getFullYear();
+    const formData = new FormData();
+    // Use the name directly
+    formData.append("conferenceId", conferenceName); 
+    formData.append("file", excelFile);
 
-      const slug =
-        conferenceName
-          .toLowerCase()
-          .replace(/\s+/g, "") + year;
-
-      const formData = new FormData();
-
-      formData.append(
-        "title",
-        conferenceName
-      );
-
-      formData.append(
-        "slug",
-        slug
-      );
-
-      formData.append(
-        "file",
-        excelFile
-      );
-
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/conferences/import`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const data = await res.json();
-
-      console.log(data);
-
-      if (data.success) {
-        navigate(`/conference/${slug}`);
-      } else {
-        alert("Import failed");
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/conferences/import-excel`,
+      {
+        method: "POST",
+        body: formData,
       }
+    );
 
-    } catch (err) {
-      console.error(err);
+    const data = await res.json();
 
-      alert("Server error");
-    } finally {
-      setLoading(false);
+    if (data.success) {
+      // Navigate to the list or dashboard
+      navigate(`/admin/registered-list?conferenceId=${conferenceName}`);
+    } else {
+      alert("Import failed: " + data.message);
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Server error");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-100 pt-28 px-4">

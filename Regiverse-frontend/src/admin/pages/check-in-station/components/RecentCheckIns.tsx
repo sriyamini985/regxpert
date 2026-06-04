@@ -1,5 +1,5 @@
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
+import Icon from 'components/AppIcon';
+import Button from '../../../../components/ui/Button';
 import type { RecentCheckIn } from '../types';
 
 interface RecentCheckInsProps {

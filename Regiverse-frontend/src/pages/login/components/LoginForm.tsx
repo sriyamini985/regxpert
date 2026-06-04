@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import Icon from '../../../components/AppIcon';
+import Icon from 'components/AppIcon';
 
 const LoginForm = () => {
   const navigate = useNavigate();

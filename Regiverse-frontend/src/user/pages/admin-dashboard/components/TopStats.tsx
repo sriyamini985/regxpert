@@ -45,6 +45,9 @@ const TopStats = () => {
           >
             <span className={item.iconColor}>{item.icon}</span>
           </div>
+          <div className="bg-red-500 text-white p-4">
+  Tailwind Test
+</div>
 
           {/* TEXT */}
           <div>

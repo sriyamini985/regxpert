@@ -1,5 +1,5 @@
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
+import Icon from 'components/AppIcon';
+import Button from '../../../../components/ui/Button';
 import { BatchOperation } from '../types';
 
 interface BatchHistoryProps {

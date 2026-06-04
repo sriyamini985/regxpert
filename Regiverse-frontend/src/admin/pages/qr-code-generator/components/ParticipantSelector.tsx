@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import Icon from '../../../components/AppIcon';
-import Input from '../../../components/ui/Input';
-import { Checkbox } from '../../../components/ui/Checkbox';
-import Button from '../../../components/ui/Button';
-import Select from '../../../components/ui/Select';
+import Icon from 'components/AppIcon';
+import Input from '../../../../components/ui/Input';
+import { Checkbox } from '../../../../components/ui/Checkbox';
+import Button from '../../../../components/ui/Button';
+import Select from '../../../../components/ui/Select';
 import { Participant } from '../types';
 
 interface ParticipantSelectorProps {

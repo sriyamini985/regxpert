@@ -2,32 +2,10 @@ import mongoose from "mongoose";
 
 const conferenceSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-    },
-
-    slug: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-
-    isActive: {
-      type: Boolean,
-      default: false,
-    },
+    name: { type: String, required: true },
+    slug: { type: String, required: true, unique: true }, // Add this!
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-const Conference =
-  mongoose.models.Conference ||
-  mongoose.model(
-    "Conference",
-    conferenceSchema
-  );
-
-export default Conference;
+export default mongoose.model("Conference", conferenceSchema);

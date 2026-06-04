@@ -1,5 +1,5 @@
-import { Participant } from '../../../services/participantService';
-import Icon from '../../../components/AppIcon';
+import { Participant } from '../../../../services/participantService';
+import Icon from 'components/AppIcon';
 
 interface FoodAccessLogProps {
     logs: Participant[];

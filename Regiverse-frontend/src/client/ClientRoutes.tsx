@@ -1,8 +1,9 @@
-import { Routes, Route } from "react-router-dom";
-
+import { Routes, Route, Navigate } from "react-router-dom";
 import ClientLayout from "./layouts/ClientLayout";
 
 import Dashboard from "./pages/admin-dashboard";
+import Conferences from "../admin/pages/conferences";
+
 import ParticipantManagement from "./pages/participant-management";
 import RegisteredList from "./pages/RegisteredList";
 
@@ -12,8 +13,18 @@ export default function ClientRoutes() {
       <Route element={<ClientLayout />}>
 
         <Route
+          index
+          element={<Navigate to="dashboard" replace />}
+        />
+
+        <Route
           path="dashboard"
           element={<Dashboard />}
+        />
+
+        <Route
+          path="conferences"
+          element={<Conferences />}
         />
 
         <Route
@@ -22,7 +33,7 @@ export default function ClientRoutes() {
         />
 
         <Route
-          path="registered-list/:conferenceId"
+          path="registered-list"
           element={<RegisteredList />}
         />
 

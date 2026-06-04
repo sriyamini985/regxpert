@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
+import Button from '../../../../components/ui/Button';
+import Icon from 'components/AppIcon';
 
 interface ScannerState {
     isScanning: boolean;
@@ -98,6 +98,7 @@ const FoodAccessScanner = ({ onScan, isProcessing, testCodes = [] }: FoodAccessS
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
                         <Icon name="Utensils" size={20} className="text-orange-500" />
+            
                     </div>
                     <div>
                         <h2 className="text-lg font-semibold text-foreground">Food Access Scanner</h2>

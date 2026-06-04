@@ -1,4 +1,6 @@
 import Participant from "../models/Participant.js";
+import { io } from "../server.js";
+import { getIO } from "../socket.js";
 
 // CREATE participant (from Excel later)
 export const createParticipant = async (req, res) => {
@@ -31,7 +33,18 @@ export const scanQR = async (req, res) => {
     if (type === "workshop") user.workshopScans.push(new Date().toISOString());
 
     await user.save();
+    
+  const io = getIO();
 
+io.to(user.conferenceId).emit(
+  "participant-updated",
+  {
+    participantId: user._id,
+    conferenceId: user.conferenceId,
+    scanType: type,
+  }
+);
+    
     res.json({ success: true, user });
 
   } catch (err) {

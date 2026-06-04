@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
+import Icon from 'components/AppIcon';
+import Button from '../../../../components/ui/Button';
 import { QRCodeModalProps } from '../types';
-import { sendQRCodeEmail, isEmailConfigured } from '../../../services/emailService';
+import { sendQRCodeEmail, isEmailConfigured } from '../../../../services/emailService';
 
 const QRCodeModal: React.FC<QRCodeModalProps> = ({ isOpen, onClose, registrationData }) => {
   const qrCodeRef = useRef<HTMLDivElement>(null);

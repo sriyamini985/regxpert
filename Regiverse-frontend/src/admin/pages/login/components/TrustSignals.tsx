@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import Icon from '../../../components/AppIcon';
+import Icon from 'components/AppIcon';
 import type { TrustSignal } from '../types';
 
 interface TrustSignalsProps {

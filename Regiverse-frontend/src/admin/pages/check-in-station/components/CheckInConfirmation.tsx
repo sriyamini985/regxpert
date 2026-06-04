@@ -1,6 +1,6 @@
-import Icon from '../../../components/AppIcon';
-import Image from '../../../components/AppImage';
-import Button from '../../../components/ui/Button';
+import Icon from 'components/AppIcon';
+import Image from '../../../../components/AppImage';
+import Button from '../../../../components/ui/Button';
 import type { CheckInResult } from '../types';
 
 interface CheckInConfirmationProps {
@@ -86,3 +86,4 @@ const CheckInConfirmation = ({ result, onClose }: CheckInConfirmationProps) => {
 };
 
 export default CheckInConfirmation;
+

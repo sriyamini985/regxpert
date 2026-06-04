@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
+import Icon from 'components/AppIcon';
+import Button from '../../../../components/ui/Button';
 
 interface ScannerState {
     isScanning: boolean;

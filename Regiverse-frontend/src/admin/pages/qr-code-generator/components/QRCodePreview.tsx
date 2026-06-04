@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Image from '../../../components/AppImage';
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
+import Image from '../../../../components/AppImage';
+import Icon from 'components/AppIcon';
+import Button from '../../../../components/ui/Button';
 import { GeneratedQRCode } from '../types';
 
 interface QRCodePreviewProps {

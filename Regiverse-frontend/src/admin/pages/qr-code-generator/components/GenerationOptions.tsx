@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import Select from '../../../components/ui/Select';
+import Select from '../../../../components/ui/Select';
 
-import { Checkbox } from '../../../components/ui/Checkbox';
-import Button from '../../../components/ui/Button';
-import Icon from '../../../components/AppIcon';
+import { Checkbox } from '../../../../components/ui/Checkbox';
+import Button from '../../../../components/ui/Button';
+import Icon from 'components/AppIcon';
 import { GenerationOptions as GenerationOptionsType, QRCodeTemplate } from '../types';
 
 interface GenerationOptionsProps {

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { useParams } from "react-router-dom";
+
 import {
   useNavigate,
   useLocation,
@@ -20,8 +22,10 @@ const days = [1, 2, 3, 4, 5];
 
 const CheckInStation = () => {
   const navigate = useNavigate();
-
+  
+  
   const location = useLocation();
+  const { conferenceSlug } = useParams();
 
   const params = new URLSearchParams(
     location.search
@@ -183,9 +187,10 @@ const CheckInStation = () => {
                 onClick={() => {
                   setSelectedDay(day);
 
-                  navigate(
-                    `/kitbag-scan?day=${day}`
-                  );
+                 navigate(
+                  `/u/${conferenceSlug}/checkin?day=${day}`
+                );
+
                 }}
                 className="bg-white shadow-lg rounded-3xl p-10 hover:scale-105 transition-all border"
               >
@@ -225,7 +230,7 @@ const CheckInStation = () => {
                   setSelectedDay(null);
 
                   navigate(
-                    "/kitbag-scan"
+                    `/u/${conferenceSlug}/checkin`
                   );
                 }}
                 className="px-5 py-2 bg-red-500 text-white rounded-xl"

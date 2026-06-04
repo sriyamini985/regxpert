@@ -1,74 +1,55 @@
 import express from "express";
 import Participant from "../models/Participant.js";
 
+import {
+  broadcastParticipantCreated,
+  broadcastParticipantUpdated,
+  broadcastParticipantDeleted,
+} from "../socket.js";
+
 const router = express.Router();
 
-/* =========================
-   CREATE SINGLE PARTICIPANT
-========================= */
-
 router.post("/", async (req, res) => {
-
   try {
-
     const participant =
-      await Participant.create({
+      await Participant.create(
+        req.body
+      );
 
-        ...req.body,
+    broadcastParticipantCreated(
+      participant
+    );
 
-        conferenceId:
-          req.body.conferenceId || "",
-
-        conferenceName:
-          req.body.conferenceName || "",
-      });
-
-    res.json({
+    return res.json({
       success: true,
       data: participant,
     });
-
   } catch (err) {
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: err.message,
     });
   }
 });
 
-/* =========================
-   GET ALL
-========================= */
-
 router.get("/", async (req, res) => {
-
   try {
-
-    const data =
+    const participants =
       await Participant.find().sort({
         createdAt: -1,
       });
 
-    res.json(data);
-
+    return res.json(participants);
   } catch (err) {
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: err.message,
     });
   }
 });
 
-/* =========================
-   UPDATE
-========================= */
-
 router.put("/:id", async (req, res) => {
-
   try {
-
     const updated =
       await Participant.findByIdAndUpdate(
         req.params.id,
@@ -78,50 +59,75 @@ router.put("/:id", async (req, res) => {
         }
       );
 
-    res.json({
+    broadcastParticipantUpdated(
+      updated
+    );
+
+    return res.json({
       success: true,
       data: updated,
     });
-
   } catch (err) {
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: err.message,
     });
   }
 });
 
+router.delete("/:id", async (req, res) => {
+  try {
+    await Participant.findByIdAndDelete(
+      req.params.id
+    );
 
-/* =========================
-   GET BY CONFERENCE
-========================= */
+    broadcastParticipantDeleted(
+      req.params.id
+    );
+
+    return res.json({
+      success: true,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
 
 router.get(
   "/conference/:conferenceId",
   async (req, res) => {
-
     try {
+      const conferenceId =
+        req.params.conferenceId;
 
-      const data =
+      const participants =
         await Participant.find({
-          conferenceId:
-            req.params.conferenceId,
+          $or: [
+            {
+              conferenceId,
+            },
+            {
+              conferenceName:
+                conferenceId,
+            },
+          ],
         }).sort({
           createdAt: -1,
         });
 
-      res.json(data);
-
+      return res.json(
+        participants
+      );
     } catch (err) {
-
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: err.message,
       });
     }
   }
 );
-
 
 export default router;

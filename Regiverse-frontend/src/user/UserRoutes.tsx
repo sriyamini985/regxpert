@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import UserLayout from "./layouts/UserLayout";
 
@@ -13,7 +13,14 @@ import WorkshopScan from "./pages/workshop-scan";
 export default function UserRoutes() {
   return (
     <Routes>
+
+      <Route
+        index
+        element={<Navigate to="checkin" replace />}
+      />
+
       <Route element={<UserLayout />}>
+
         <Route
           path="checkin"
           element={<CheckInStation />}
@@ -48,7 +55,9 @@ export default function UserRoutes() {
           path="workshop-scan"
           element={<WorkshopScan />}
         />
+
       </Route>
+
     </Routes>
   );
 }

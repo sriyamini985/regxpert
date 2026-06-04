@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import Input from '../../../components/ui/Input';
-import Select from '../../../components/ui/Select';
-import Button from '../../../components/ui/Button';
-import Icon from '../../../components/AppIcon';
+import Input from '../../../../components/ui/Input';
+import Select from '../../../../components/ui/Select';
+import Button from '../../../../components/ui/Button';
+import Icon from '../../../../components/AppIcon';
 import { RegistrationFormProps, RegistrationFormData } from '../types';
 
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, isSubmitting, errors }) => {
