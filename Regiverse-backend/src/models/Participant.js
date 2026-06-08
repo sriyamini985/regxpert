@@ -45,15 +45,18 @@ const participantSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    
     conferenceId: {
       type: String,
       default: "",
     },
+    
     conferenceName: {
       type: String,
       default: "",
     },
-        printed: {
+    
+    printed: {
       type: Boolean,
       default: false,
     },
@@ -80,6 +83,13 @@ const participantSchema = new mongoose.Schema(
     isCheckedIn: {
       type: Boolean,
       default: false,
+    },
+
+    // ADDED: Tracks dynamic meal scans (e.g., {"day1-lunch": true, "day2-dinner": true})
+    foodLogs: {
+      type: Map,
+      of: Boolean,
+      default: {},
     },
 
     foodScanned: {
@@ -237,9 +247,6 @@ const participantSchema = new mongoose.Schema(
 
 const Participant =
   mongoose.models.Participant ||
-  mongoose.model(
-    "Participant",
-    participantSchema
-  );
+  mongoose.model("Participant", participantSchema);
 
 export default Participant;

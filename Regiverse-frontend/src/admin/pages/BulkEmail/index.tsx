@@ -1,13 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useConferenceData } from "../../../hooks/useConferenceData";
 
 const BulkEmail = () => {
   const { conferenceId } = useParams();
-  const { participants, loading: fetching } = useConferenceData(conferenceId);
+  const [participants, setParticipants] = useState<any[]>([]);
+  const [fetching, setFetching] = useState(true);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/participants/conference/${conferenceId}`)
+      .then(res => res.json())
+      .then(data => setParticipants(Array.isArray(data) ? data : []))
+      .catch(err => console.error(err))
+      .finally(() => setFetching(false));
+  }, [conferenceId]);
 
   const sendBulkEmail = async () => {
     if (!subject.trim() || !message.trim()) {
@@ -31,49 +39,74 @@ const BulkEmail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-lg p-8">
-        <h1 className="text-4xl font-bold mb-4">Bulk Email Sender</h1>
-        <p className="mb-6 text-gray-600">
-          Total Delegates: <span className="font-bold ml-2 text-blue-600">{participants.length}</span>
-        </p>
-
-        {fetching && <div className="mb-5 text-blue-600">Loading participants...</div>}
-
-        <input
-          type="text"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder="Email Subject"
-          className="w-full border border-gray-300 p-4 rounded-xl mb-5 outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Write your message..."
-          rows={10}
-          className="w-full border border-gray-300 p-4 rounded-xl mb-5 outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
-        <button
-          onClick={sendBulkEmail}
-          disabled={loading || fetching}
-          className={`px-8 py-4 rounded-xl text-white font-semibold ${loading || fetching ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
-        >
-          {loading ? "Sending..." : "Send Email + QR"}
-        </button>
-
-        <div className="mt-10">
-          <h2 className="text-2xl font-semibold mb-4">Participants</h2>
-          <div className="space-y-3 max-h-[500px] overflow-y-auto">
-            {participants.map((p: any) => (
-              <div key={p._id} className="border rounded-xl p-4 flex justify-between items-center">
-                <p className="font-semibold">{p.name}</p>
-                <p className="text-sm text-gray-500">{p.email || "No email"}</p>
-              </div>
-            ))}
+    <div className="min-h-[calc(100vh-5rem)] bg-[#F4F7FB] p-6 md:p-12">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* COMPOSER SECTION */}
+        <div className="lg:col-span-2 bg-white rounded-[2rem] shadow-sm p-8 md:p-10 border border-slate-200 h-fit">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-12 h-12 bg-purple-500 rounded-2xl flex items-center justify-center text-white text-xl shadow-inner">✉️</div>
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Bulk Email Engine</h1>
+              <p className="text-slate-500 font-medium text-sm mt-1">Broadcast messages to all registered delegates.</p>
+            </div>
           </div>
+
+          <input
+            type="text"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="Email Subject Line"
+            className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl mb-5 outline-none focus:ring-2 focus:ring-purple-500 font-medium transition-all text-slate-800"
+          />
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Compose your message body here..."
+            rows={12}
+            className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl mb-8 outline-none focus:ring-2 focus:ring-purple-500 font-medium transition-all resize-none text-slate-800"
+          />
+
+          <button
+            onClick={sendBulkEmail}
+            disabled={loading || fetching || participants.length === 0}
+            className={`w-full py-4 rounded-2xl text-white font-bold text-lg transition-all shadow-lg active:scale-[0.98] ${
+              loading || fetching || participants.length === 0 ? "bg-slate-300 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
+            }`}
+          >
+            {loading ? "Transmitting..." : "Send Mass Email + QR Codes"}
+          </button>
         </div>
+
+        {/* AUDIENCE SIDEBAR */}
+        <div className="bg-white rounded-[2rem] shadow-sm p-8 border border-slate-200 flex flex-col h-[700px]">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-slate-900">Audience Roster</h2>
+            <div className="flex items-center gap-2 mt-2">
+                <span className="text-sm text-slate-500 font-medium">Targeting:</span>
+                <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-lg text-sm font-bold border border-purple-100">
+                {fetching ? "..." : participants.length} Delegates
+                </span>
+            </div>
+          </div>
+
+          {fetching ? (
+            <div className="flex-1 flex items-center justify-center text-purple-500 font-bold text-sm animate-pulse">Loading Database...</div>
+          ) : (
+            <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+              {participants.map((p: any) => (
+                <div key={p._id} className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex flex-col justify-center">
+                  <p className="font-bold text-slate-800 text-sm truncate">{p.name}</p>
+                  <p className="text-xs font-medium text-slate-500 truncate mt-1">{p.email || "No email on file"}</p>
+                </div>
+              ))}
+              {participants.length === 0 && (
+                <div className="text-center text-slate-400 font-medium text-sm mt-10">No participants found.</div>
+              )}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );

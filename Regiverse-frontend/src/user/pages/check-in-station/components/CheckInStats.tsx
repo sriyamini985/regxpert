@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import Icon from '../../../components/AppIcon';
+import Icon from 'components/AppIcon';
 import type { CheckInStats } from '../types';
 
 interface CheckInStatsProps {

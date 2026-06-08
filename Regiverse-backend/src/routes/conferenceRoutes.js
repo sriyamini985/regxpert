@@ -15,9 +15,6 @@ const upload = multer({
 /* =========================================
    CREATE CONFERENCE
 ========================================= */
-/* =========================================
-   CREATE CONFERENCE
-========================================= */
 router.post("/", async (req, res) => {
   try {
     const { title } = req.body;
@@ -57,7 +54,6 @@ router.post("/", async (req, res) => {
 /* =========================================
    GET ALL CONFERENCES
 ========================================= */
-
 router.get("/", async (req, res) => {
   try {
     const conferences = await Conference.find().sort({
@@ -66,75 +62,58 @@ router.get("/", async (req, res) => {
 
     const formatted = await Promise.all(
       conferences.map(async (c) => {
-        const conferenceName =
-          c.name ||
-          c.title ||
-          "";
+        const conferenceName = c.name || c.title || "";
 
-        const delegates =
-          await Participant.countDocuments({
-            $or: [
-              {
-                conferenceId:
-                  c._id.toString(),
-              },
-              {
-                conferenceName:
-                  conferenceName,
-              },
-            ],
-          });
+        const delegates = await Participant.countDocuments({
+          $or: [
+            {
+              conferenceId: c._id.toString(),
+            },
+            {
+              conferenceName: conferenceName,
+            },
+          ],
+        });
 
         return {
           _id: c._id,
           name: conferenceName,
           delegates,
-          createdAt:
-            c.createdAt,
+          createdAt: c.createdAt,
         };
       })
     );
 
-    return res.status(200).json(
-      formatted
-    );
+    return res.status(200).json(formatted);
   } catch (err) {
     console.error(err);
-
     return res.status(500).json({
       success: false,
-      message:
-        err.message,
+      message: err.message,
     });
   }
 });
 
-
 /* =========================================
    GET SINGLE CONFERENCE
 ========================================= */
-
 router.get("/:conferenceId", async (req, res) => {
   try {
-    const conference =
-      await Conference.findOne({
-        $or: [
-          {
-            _id:
-              req.params.conferenceId,
-          },
-          {
-            name:
-              req.params.conferenceId,
-          },
-        ],
-      });
+    const conference = await Conference.findOne({
+      $or: [
+        {
+          _id: req.params.conferenceId,
+        },
+        {
+          name: req.params.conferenceId,
+        },
+      ],
+    });
 
     if (!conference) {
       return res.status(404).json({
         success: false,
-        message:
-          "Conference not found",
+        message: "Conference not found",
       });
     }
 
@@ -144,7 +123,6 @@ router.get("/:conferenceId", async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-
     return res.status(500).json({
       success: false,
       message: err.message,
@@ -153,133 +131,79 @@ router.get("/:conferenceId", async (req, res) => {
 });
 
 /* =========================================
-   IMPORT EXCEL
+   IMPORT EXCEL (FIXED & OPTIMIZED)
 ========================================= */
-
 router.post(
   "/import-excel",
   upload.single("file"),
   async (req, res) => {
     try {
-      const conferenceId =
-        req.body.conferenceId;
+      const { conferenceId } = req.body;
 
-      if (!conferenceId) {
+      // Ensure we don't process empty or stringified 'undefined' fields
+      if (!conferenceId || conferenceId === "undefined" || conferenceId.trim() === "") {
         return res.status(400).json({
           success: false,
-          message:
-            "conferenceId missing",
+          message: "A valid conferenceId is required for importing records.",
         });
       }
 
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          message:
-            "No file uploaded",
+          message: "No file uploaded",
         });
       }
 
-      const workbook =
-        XLSX.read(req.file.buffer, {
-          type: "buffer",
-        });
+      // 1. Fetch target conference info to extract the human-readable name string
+      const targetConference = await Conference.findById(conferenceId);
+      const actualConferenceName = targetConference ? targetConference.name : "Unknown Conference";
 
-      const sheetName =
-        workbook.SheetNames[0];
+      const workbook = XLSX.read(req.file.buffer, {
+        type: "buffer",
+      });
 
-      const worksheet =
-        workbook.Sheets[sheetName];
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const excelData = XLSX.utils.sheet_to_json(worksheet, {
+        defval: "",
+      });
 
-      const excelData =
-        XLSX.utils.sheet_to_json(
-          worksheet,
-          {
-            defval: "",
-          }
-        );
+      const formatted = excelData.map((row, index) => ({
+        regId:
+          row["Registration ID"] ||
+          row["Reg ID"] ||
+          row["Abstract ID"] ||
+          `REG-${index + 1}`,
 
-      const formatted =
-        excelData.map(
-          (row, index) => ({
-            regId:
-              row[
-                "Registration ID"
-              ] ||
-              row["Reg ID"] ||
-              row[
-                "Abstract ID"
-              ] ||
-              `REG-${index + 1}`,
+        name: row["Name"] || row["Full Name"] || "",
+        email: row["Email"] || "",
+        phone: String(row["Phone"] || row["Mobile"] || ""),
+        state: row["State"] || "",
+        category: row["Registration Type"] || row["Category"] || "",
+        reference: row["Reference"] || "",
+        medicalCouncilNumber:
+          row["MCI Number"] ||
+          row["Medical Council Number"] ||
+          "",
 
-            name:
-              row["Name"] ||
-              row["Full Name"] ||
-              "",
+        // 2. Clear, explicit value mappings
+        conferenceId: String(conferenceId).trim(),
+        conferenceName: actualConferenceName, // Resolves to descriptive title string
 
-            email:
-              row["Email"] || "",
+        printed: false,
+        printType: "name",
+        qrCode: `QR-${Date.now()}-${Math.random()}`,
+        dynamicData: row,
+      }));
 
-            phone: String(
-              row["Phone"] ||
-                row["Mobile"] ||
-                ""
-            ),
-
-            state:
-              row["State"] || "",
-
-            category:
-              row[
-                "Registration Type"
-              ] ||
-              row["Category"] ||
-              "",
-
-            reference:
-              row["Reference"] ||
-              "",
-
-            medicalCouncilNumber:
-              row[
-                "MCI Number"
-              ] ||
-              row[
-                "Medical Council Number"
-              ] ||
-              "",
-
-            conferenceId,
-
-            conferenceName:
-              conferenceId,
-
-            printed: false,
-
-            printType: "name",
-
-            qrCode: `QR-${Date.now()}-${Math.random()}`,
-
-            dynamicData: row,
-          })
-        );
-
-      const cleaned =
-        formatted.filter(
-          (p) =>
-            p.name ||
-            p.email ||
-            p.phone
-        );
-
-      const result =
-        await Participant.insertMany(
-          cleaned
-        );
-
-      broadcastBulkImport(
-        conferenceId
+      const cleaned = formatted.filter(
+        (p) => p.name || p.email || p.phone
       );
+
+      const result = await Participant.insertMany(cleaned);
+
+      broadcastBulkImport(conferenceId);
 
       return res.status(200).json({
         success: true,
@@ -288,7 +212,6 @@ router.post(
       });
     } catch (err) {
       console.error(err);
-
       return res.status(500).json({
         success: false,
         message: err.message,
@@ -298,4 +221,3 @@ router.post(
 );
 
 export default router;
-

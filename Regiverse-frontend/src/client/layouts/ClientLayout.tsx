@@ -25,6 +25,9 @@ export default function ClientLayout() {
           <Link to="/client/registered-list">
             Registered List
           </Link>
+          <Link to="/client/upload-page">
+            Upload Page
+          </Link>
         </nav>
       </header>
 
@@ -65,6 +68,13 @@ export default function ClientLayout() {
             className="block py-2"
           >
             Registered List
+          </Link>
+
+          <Link
+            to="/client/upload-page"
+            className="block py-2"
+          >
+            Upload Page
           </Link>
         </div>
       )}

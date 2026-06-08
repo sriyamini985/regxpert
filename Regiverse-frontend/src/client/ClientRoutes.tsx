@@ -6,6 +6,7 @@ import Conferences from "../admin/pages/conferences";
 
 import ParticipantManagement from "./pages/participant-management";
 import RegisteredList from "./pages/RegisteredList";
+import UploadPage from "pages/upload";
 
 export default function ClientRoutes() {
   return (
@@ -33,11 +34,18 @@ export default function ClientRoutes() {
         />
 
         <Route
+          path="upload-page"
+          element={<UploadPage />}
+        />
+
+        <Route
           path="registered-list"
           element={<RegisteredList />}
         />
+        
 
       </Route>
     </Routes>
   );
 }
+

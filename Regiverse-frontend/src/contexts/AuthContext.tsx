@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }: any) => {
   }, []);
 
   const login = async (email: string, password: string, role: string) => {
-    // Replace this with your actual API call to your backend /api/auth/login
+    // 1. Admin Logic
     if (email === "admin@gmail.com" && password === "123456" && role === "admin") {
       const userData = { role: "admin", email };
       localStorage.setItem("user", JSON.stringify(userData));
@@ -19,8 +19,17 @@ export const AuthProvider = ({ children }: any) => {
       return { success: true };
     }
     
+    // 2. Client Logic
     if (email === "client@gmail.com" && password === "123456" && role === "client") {
       const userData = { role: "client", email };
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+      return { success: true };
+    }
+
+    // 3. User (Staff) Logic
+    if (email === "user@gmail.com" && password === "123456" && role === "user") {
+      const userData = { role: "user", email };
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
       return { success: true };
@@ -29,13 +38,22 @@ export const AuthProvider = ({ children }: any) => {
     return { success: false, error: "Invalid Credentials" };
   };
 
+  // ADDED: Direct Bypass Helper Function for Developer/Direct Navigation
+  const quickUserLogin = () => {
+    const userData = { role: "user", email: "user@gmail.com" };
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+    return { success: true };
+  };
+
   const logout = () => {
     localStorage.removeItem("user");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    // FIXED: Added quickUserLogin to the shared context state values
+    <AuthContext.Provider value={{ user, login, logout, quickUserLogin }}>
       {children}
     </AuthContext.Provider>
   );

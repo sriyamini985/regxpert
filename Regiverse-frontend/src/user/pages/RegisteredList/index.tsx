@@ -16,55 +16,42 @@ const RegisteredList = () => {
      LOAD CONFERENCE PARTICIPANTS
   ========================= */
 
-  useEffect(() => {
+useEffect(() => {
     const fetchParticipants = async () => {
+      if (!conferenceId) return;
+
       try {
         setLoading(true);
-
-        console.log(
-          "FETCHING CONFERENCE:",
-          conferenceId
-        );
-
         const response = await fetch(
           `${import.meta.env.VITE_API_URL}/api/participants/conference/${conferenceId}`
         );
 
-        if (!response.ok) {
-          throw new Error(
-            `Failed with status ${response.status}`
-          );
-        }
+        if (!response.ok) throw new Error(`Status ${response.status}`);
 
         const data = await response.json();
+        
+        // DEBUG: See exactly what the API returns in your Browser Console
+        console.log("API RETURNED DATA:", data);
 
-        console.log(
-          "PARTICIPANTS:",
-          data
-        );
-
+        // FIX: Handle both cases (Array vs { data: [] })
         if (Array.isArray(data)) {
           setParticipants(data);
+        } else if (data && Array.isArray(data.data)) {
+          setParticipants(data.data);
         } else {
+          console.warn("Unexpected data format:", data);
           setParticipants([]);
         }
       } catch (err) {
-        console.log(
-          "FETCH ERROR:",
-          err
-        );
-
+        console.error("FETCH ERROR:", err);
         setParticipants([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (conferenceId) {
-      fetchParticipants();
-    }
+    fetchParticipants();
   }, [conferenceId]);
-
   /* =========================
      PRINT
   ========================= */

@@ -1,5 +1,11 @@
 import express from "express";
 import Participant from "../models/Participant.js";
+import { createParticipant, scanQR, verifyAndScan } from "../controllers/participantController.js";
+
+// ... existing router code
+
+// ADD THIS NEW ROUTE
+
 
 import {
   broadcastParticipantCreated,
@@ -8,6 +14,9 @@ import {
 } from "../socket.js";
 
 const router = express.Router();
+
+// Add this to routes/participants.js
+router.post("/verify-and-scan", verifyAndScan);
 
 router.post("/", async (req, res) => {
   try {
@@ -31,21 +40,12 @@ router.post("/", async (req, res) => {
     });
   }
 });
-
 router.get("/", async (req, res) => {
-  try {
-    const participants =
-      await Participant.find().sort({
-        createdAt: -1,
-      });
-
-    return res.json(participants);
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
+  const { identifier } = req.query;
+  const participants = await Participant.find({
+    $or: [{ phone: identifier }, { regId: identifier }, { name: identifier }]
+  });
+  res.json(participants);
 });
 
 router.put("/:id", async (req, res) => {
@@ -129,5 +129,15 @@ router.get(
     }
   }
 );
+
+// Get all participants for a conference to be used by the User Panel
+router.get("/list/:conferenceId", async (req, res) => {
+  try {
+    const participants = await Participant.find({ conferenceId: req.params.conferenceId });
+    res.json(participants);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 export default router;
