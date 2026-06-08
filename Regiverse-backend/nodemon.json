@@ -1,0 +1,8 @@
+{
+  "ignore": [
+    "*.xlsx",
+    "*.xls",
+    "*.csv",
+    "uploads/*"
+  ]
+}
