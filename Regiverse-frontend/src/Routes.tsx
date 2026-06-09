@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import ScrollToTop from "components/ScrollToTop";
 import NotFound from "pages/NotFound";
 import UserRoutes from "./user/UserRoutes";
-
+import ParticipantManagement from "./admin/pages/participant-management";
 
 
 // Auth & Core
@@ -24,6 +24,7 @@ import RegisteredList from "./admin/pages/RegisteredList";
 import BulkEmail from "./admin/pages/BulkEmail";
 import BulkWhatsapp from "./admin/pages/BulkWhatsapp";
 import UserLogin from "auth/pages/userlogin";
+import ParticipantPage from "./admin/pages/participant-management";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -40,6 +41,11 @@ const AppRoutes: React.FC = () => {
         <Route path="/print-qr" element={<QRPrint />} />
         <Route path="/" element={<OperationsDashboard />} />
         <Route path="/user-login" element={<UserLogin />} />
+
+        <Route path="/user/conference/:conferenceId/registered-list" element={<RegisteredList />} />
+        
+        {/* User Terminal Form View (Handles both Add and Edit dynamically via state) */}
+        <Route path="/user/conference/:conferenceId/add-delegate" element={<ParticipantPage />} />
 
         {/* Dynamic Conference Nested Routes */}
         <Route path="/conference/:conferenceId">
