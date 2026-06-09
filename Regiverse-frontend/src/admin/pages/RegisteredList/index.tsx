@@ -9,13 +9,11 @@ const RegisteredList = () => {
 
   const [participants, setParticipants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [searchQuery, setSearchQuery] = useState("");
 
   /* =========================
-     LOAD CONFERENCE PARTICIPANTS
+      LOAD CONFERENCE PARTICIPANTS
   ========================= */
-
   useEffect(() => {
     const fetchParticipants = async () => {
       try {
@@ -53,7 +51,6 @@ const RegisteredList = () => {
           "FETCH ERROR:",
           err
         );
-
         setParticipants([]);
       } finally {
         setLoading(false);
@@ -66,31 +63,25 @@ const RegisteredList = () => {
   }, [conferenceId]);
 
   /* =========================
-     PRINT
+      PRINT HANDLER (Opens clean QRPrint tab)
   ========================= */
-
-  const handlePrint = (
-    participant: any
-  ) => {
-    console.log(
-      "Print:",
-      participant
-    );
+  const handlePrint = (participant: any) => {
+    // Safely package data into a URL string
+    const encodedData = encodeURIComponent(JSON.stringify(participant));
+    
+    // Open the clean print badge page in a brand new window tab
+    window.open(`/print?data=${encodedData}`, "_blank");
   };
 
   /* =========================
-     LIVE SEARCH
+      LIVE SEARCH
   ========================= */
-
   const filtered = useMemo(() => {
-    /* SHOW ALL IF SEARCH EMPTY */
-
     if (!searchQuery.trim()) {
       return participants;
     }
 
-    const q =
-      searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase();
 
     return participants.filter((p) =>
       [
@@ -106,29 +97,20 @@ const RegisteredList = () => {
             .includes(q)
         )
     );
-  }, [
-    participants,
-    searchQuery,
-  ]);
+  }, [participants, searchQuery]);
 
   return (
     <div className="p-24 space-y-6">
 
       {/* SEARCH */}
-
       <SearchBar
         searchQuery={searchQuery}
-        setSearchQuery={
-          setSearchQuery
-        }
+        setSearchQuery={setSearchQuery}
         onSearch={() => {}}
-        onClear={() =>
-          setSearchQuery("")
-        }
+        onClear={() => setSearchQuery("")}
       />
 
       {/* LOADING */}
-
       {loading && (
         <div className="bg-white rounded-xl shadow p-6 text-blue-600">
           Loading participants...
@@ -136,12 +118,12 @@ const RegisteredList = () => {
       )}
 
       {/* RESULTS */}
-
       {!loading && (
         <>
           {filtered.length > 0 ? (
             <DelegateTable
               data={filtered}
+              onPrint={handlePrint}
             />
           ) : (
             <div className="bg-white rounded-xl shadow p-6 text-gray-500">

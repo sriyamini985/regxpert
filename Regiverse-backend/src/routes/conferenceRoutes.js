@@ -104,14 +104,13 @@ router.get("/:conferenceId", async (req, res) => {
 });
 
 /* =========================================================================
-   IMPORT EXCEL (FIXED: CASE-INSENSITIVE MAPPING & FOOLPROOF PARAMETER CHECK)
+   IMPORT EXCEL (WITH SMART AUTOMATIC REGID GENERATION)
 ========================================================================= */
 router.post(
   "/import-excel",
   upload.single("file"),
   async (req, res) => {
     try {
-      // 1. Safe extraction check (handles body fields or fallback query strings safely)
       let conferenceId = req.body.conferenceId || req.query.conferenceId;
 
       if (!conferenceId || conferenceId === "undefined" || conferenceId.trim() === "") {
@@ -124,80 +123,138 @@ router.post(
       conferenceId = String(conferenceId).trim();
 
       if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: "No file uploaded",
-        });
+        return res.status(400).json({ success: false, message: "No file uploaded" });
       }
 
-      // Fetch target conference to find its descriptive name string
       const targetConference = await Conference.findById(conferenceId).catch(() => null);
       const actualConferenceName = targetConference ? targetConference.name : "Unknown Conference";
 
       const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const excelData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-      const formatted = excelData.map((row, index) => {
-        // 2. Map all row object keys to lowercase to stop case-sensitive header mismatches
-        const cleanRow = {};
-        Object.keys(row).forEach((key) => {
-          cleanRow[key.toLowerCase().trim()] = row[key];
-        });
+      const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
 
-        // 3. Fallback checking for headers (Matches NAME, Name, Email, email, Phone, phone, etc.)
-        const nameValue = cleanRow["name"] || cleanRow["full name"] || cleanRow["delegate name"] || cleanRow["participant name"] || "";
-        const emailValue = cleanRow["email"] || cleanRow["e-mail"] || "";
-        const phoneValue = cleanRow["phone"] || cleanRow["mobile"] || cleanRow["phone number"] || "";
-        const regIdValue = cleanRow["registration id"] || cleanRow["reg id"] || cleanRow["abstract id"] || cleanRow["si.no"] || cleanRow["sl.no"] || `REG-${index + 1}`;
-        const catValue = cleanRow["registration type"] || cleanRow["category"] || cleanRow["type"] || "";
-        const stateValue = cleanRow["state"] || cleanRow["city"] || "";
-        const refValue = cleanRow["reference"] || cleanRow["referred by"] || "";
-        const mciValue = cleanRow["mci number"] || cleanRow["medical council number"] || cleanRow["mci no"] || "";
-
-        return {
-          regId: String(regIdValue).trim(),
-          name: String(nameValue).trim(),
-          email: String(emailValue).trim(),
-          phone: String(phoneValue).trim(),
-          state: String(stateValue).trim(),
-          category: String(catValue).trim(),
-          reference: String(refValue).trim(),
-          medicalCouncilNumber: String(mciValue).trim(),
-
-          // Now safely matched and passed to MongoDB strings
-          conferenceId: conferenceId,
-          conferenceName: actualConferenceName,
-
-          printed: false,
-          printType: "name",
-          qrCode: `QR-${Date.now()}-${index}-${Math.floor(Math.random() * 1000)}`,
-          dynamicData: row,
-        };
-      });
-
-      // Filter out any completely empty spacer lines
-      const cleaned = formatted.filter((p) => p.name || p.email || p.phone);
-
-      if (cleaned.length === 0) {
+      if (rawRows.length <= 1) {
         return res.status(400).json({
           success: false,
-          message: "No valid participant rows could be read from your spreadsheet headers.",
+          message: "The uploaded file appears to be empty or contains no readable data rows.",
         });
       }
 
-      const result = await Participant.insertMany(cleaned);
+      // Step 1: Analyze headers
+      const headers = rawRows[0].map(h => String(h).toLowerCase().trim());
+      
+      const nameIdx = headers.findIndex(h => h.includes("name") || h === "name");
+      const emailIdx = headers.findIndex(h => h.includes("email") || h.includes("e-mail") || h === "mail");
+      const phoneIdx = headers.findIndex(h => h.includes("phone") || h.includes("mobile") || h.includes("number") || h === "contact");
+      
+      const regIdIdx = headers.findIndex(h => 
+        h.includes("reg") || 
+        h.includes("id") || 
+        h.includes("sl.no") || 
+        h.includes("sl no") || 
+        h.includes("si.no") || 
+        h.includes("no")
+      );
+      
+      const catIdx = headers.findIndex(h => h.includes("type") || h.includes("category") || h.includes("cat"));
+      const stateIdx = headers.findIndex(h => h.includes("state") || h.includes("city") || h.includes("address"));
+      const refIdx = headers.findIndex(h => h.includes("reference") || h.includes("referred") || h.includes("ref"));
+      const mciIdx = headers.findIndex(h => h.includes("mci") || h.includes("medical") || h.includes("council"));
 
+      const formatted = [];
+
+      // Helper function to generate a random "ABCD123" format sequence
+      const generateCustomRegId = () => {
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const numbers = "0123456789";
+        let alphaPart = "";
+        let numPart = "";
+        
+        // Generate 4 random letters
+        for (let j = 0; j < 4; j++) {
+          alphaPart += letters.charAt(Math.floor(Math.random() * letters.length));
+        }
+        // Generate 3 random numbers
+        for (let k = 0; k < 3; k++) {
+          numPart += numbers.charAt(Math.floor(Math.random() * numbers.length));
+        }
+        
+        return `RegID - ${alphaPart}${numPart}`;
+      };
+
+      // Step 2: Loop through data rows
+      for (let i = 1; i < rawRows.length; i++) {
+        const row = rawRows[i];
+        if (!row || row.length === 0) continue; 
+
+        const rawName = nameIdx !== -1 ? row[nameIdx] : "";
+        const rawEmail = emailIdx !== -1 ? row[emailIdx] : "";
+        const rawPhone = phoneIdx !== -1 ? row[phoneIdx] : "";
+        const rawRegId = regIdIdx !== -1 ? row[regIdIdx] : "";
+        const rawCat = catIdx !== -1 ? row[catIdx] : "";
+        const rawState = stateIdx !== -1 ? row[stateIdx] : "";
+        const rawRef = refIdx !== -1 ? row[refIdx] : "";
+        const rawMci = mciIdx !== -1 ? row[mciIdx] : "";
+
+        const nameValue = String(rawName || "").trim();
+        const emailValue = String(rawEmail || "").trim();
+        const phoneValue = String(rawPhone || "").trim();
+
+        if (!nameValue && !emailValue && !phoneValue) continue;
+
+        // NEW LOGIC: Check if Excel has a valid Reg ID, otherwise generate "RegID - ABCD123"
+        let regIdValue = String(rawRegId || "").trim();
+        if (!regIdValue) {
+          regIdValue = generateCustomRegId();
+        }
+
+        const catValue = String(rawCat || "").trim();
+        const stateValue = String(rawState || "").trim();
+        const refValue = String(rawRef || "").trim();
+        const mciValue = String(rawMci || "").trim();
+
+        const fallbackObj = {};
+        headers.forEach((h, idx) => {
+          if (h) fallbackObj[h] = row[idx] || "";
+        });
+
+        formatted.push({
+          regId: regIdValue,
+          name: nameValue,
+          email: emailValue,
+          phone: phoneValue,
+          state: stateValue,
+          category: catValue,
+          reference: refValue,
+          medicalCouncilNumber: mciValue,
+          conferenceId: conferenceId,
+          conferenceName: actualConferenceName,
+          printed: false,
+          printType: "name",
+          qrCode: `QR-${Date.now()}-${i}-${Math.floor(Math.random() * 1000)}`,
+          dynamicData: fallbackObj
+        });
+      }
+
+      if (formatted.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Failed to map entries. Please verify column headers exist in row 1.",
+        });
+      }
+
+      const result = await Participant.insertMany(formatted);
       broadcastBulkImport(conferenceId);
 
       return res.status(200).json({
         success: true,
         inserted: result.length,
-        message: `${result.length} delegates imported successfully`,
+        message: `${result.length} delegates imported successfully.`,
       });
     } catch (err) {
-      console.error(err);
+      console.error("Critical Import Exception:", err);
       return res.status(500).json({
         success: false,
         message: err.message,
