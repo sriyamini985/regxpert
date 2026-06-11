@@ -1,14 +1,9 @@
 import express from "express";
-
-import {
-  getDashboardStats,
-} from "../controllers/dashboardController.js";
+import { getDashboardStats } from "../controllers/dashboardController.js";
 
 const router = express.Router();
 
-router.get(
-  "/:conferenceId",
-  getDashboardStats
-);
+// GET /api/dashboard/stats
+router.get("/stats", getDashboardStats);
 
 export default router;

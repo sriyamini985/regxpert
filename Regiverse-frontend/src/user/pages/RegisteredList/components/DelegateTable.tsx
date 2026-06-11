@@ -20,33 +20,33 @@ type UserTableProps = {
 
 const UserDelegateTable = ({ data }: UserTableProps) => {
   const navigate = useNavigate();
-  const { conferenceId, conferenceSlug } = useParams();
-  const currentConferenceId = conferenceId || conferenceSlug;
+  const { conferenceId, conferenceSlug, id, slug } = useParams();
+  const currentConferenceId = conferenceId || conferenceSlug || id || slug;
 
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [showQR, setShowQR] = useState(true);
 
-  // 1. ROUTE USER TO PUBLIC PARTICIPANT EDITOR MODULE (With state payload)
   const handleUserEdit = (participant: Participant) => {
+    if (!currentConferenceId) {
+      alert("Error: Routing frame cannot identify the active workspace profile target.");
+      return;
+    }
     navigate(`/user/conference/${currentConferenceId}/add-delegate`, {
       state: { person: participant },
     });
   };
 
-  // 2. TRIGGER FULLSCREEN OVERLAY MODAL CANVAS
   const handlePrintPreview = (participant: Participant) => {
     setSelectedParticipant(participant);
     setShowQR(true); 
   };
 
-  // 3. LAUNCH OS PRINT HARDWARE INTERFACES
   const executeHardwarePrint = () => {
     window.print();
   };
 
   return (
     <>
-      {/* STYLE OVERRIDES SHIELDING HARDWARE THERMAL PRINTER RENDER TARGETS */}
       <style>
         {`
           @media print {
@@ -74,17 +74,10 @@ const UserDelegateTable = ({ data }: UserTableProps) => {
         `}
       </style>
 
-      {/* =========================================================================
-          PRINT PREVIEW INTERFACE OVERLAY
-         ========================================================================= */}
       {selectedParticipant && (
         <div className="fixed inset-0 z-[99999] bg-slate-50 flex flex-col">
-          
-          {/* CONTROL OVERLAY MENU BAR */}
           <div className="no-print bg-white border-b shadow-sm p-4 flex flex-wrap gap-6 items-center justify-between select-none">
             <div className="flex items-center gap-6">
-              
-              {/* Checkbox Input Alignment Logic */}
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input 
                   type="checkbox" 
@@ -96,7 +89,6 @@ const UserDelegateTable = ({ data }: UserTableProps) => {
               </label>
             </div>
 
-            {/* View Control Buttons */}
             <div className="flex gap-4">
               <button 
                 onClick={() => setSelectedParticipant(null)} 
@@ -113,9 +105,7 @@ const UserDelegateTable = ({ data }: UserTableProps) => {
             </div>
           </div>
 
-          {/* DYNAMIC DESIGN PREVIEW CANVAS BOX */}
           <div className="print-section flex-1 w-full bg-white flex flex-col items-center justify-center text-center px-4">
-            
             {showQR && (
               <div className="mb-8 p-2 bg-white border border-gray-100 rounded-xl shadow-sm">
                 <QRCode 
@@ -124,7 +114,6 @@ const UserDelegateTable = ({ data }: UserTableProps) => {
                 />
               </div>
             )}
-            
             <h1 className="text-5xl font-black text-black tracking-tight max-w-2xl uppercase leading-none">
               {selectedParticipant.name}
             </h1>
@@ -132,9 +121,6 @@ const UserDelegateTable = ({ data }: UserTableProps) => {
         </div>
       )}
 
-      {/* =========================================================================
-          STANDARD INTERACTIVE GRID TABLE DATA PRESENTATION LAYOUT
-         ========================================================================= */}
       <div className={`bg-white rounded-xl shadow overflow-x-auto hide-print ${selectedParticipant ? 'hidden' : ''}`}>
         <table className="w-full text-sm min-w-[1200px] border-collapse">
           <thead className="bg-gray-100 text-slate-700 text-left font-semibold">

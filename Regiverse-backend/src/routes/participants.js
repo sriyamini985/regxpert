@@ -1,5 +1,7 @@
 import express from "express";
+import mongoose from "mongoose"; // 1. Added to validate MongoDB hex strings
 import Participant from "../models/Participant.js";
+import Conference from "../models/Conference.js"; // 2. Added to inspect active status properties
 import { createParticipant, scanQR, verifyAndScan } from "../controllers/participantController.js";
 import {
   broadcastParticipantCreated,
@@ -30,20 +32,47 @@ router.post("/", async (req, res) => {
   }
 });
 
-// 3. OPTIMIZED SEARCH ROUTE: Returns nothing by default, searches instantly via Regex when query exists
+// 3. OPTIMIZED SEARCH ROUTE: Scopes searches purely to the ACTIVATED conference
 router.get("/", async (req, res) => {
   try {
-    const { identifier } = req.query;
+    const { identifier, conferenceId } = req.query;
     
-    // REQUIREMENT: Do not load anything if the search query is empty
+    // REQUIREMENT 1: Do not load anything if search string is empty
     if (!identifier || identifier.trim() === "") {
       return res.json([]);
     }
 
-    const safeSearch = identifier.trim();
+    // REQUIREMENT 2: Enforce conference context activation safety rules
+    if (!conferenceId || conferenceId.trim() === "") {
+      return res.status(400).json({ error: "Missing active conference context parameter." });
+    }
 
-    // Use Mongo $regex for partial instant matching ('i' makes it case-insensitive)
+    const safeSearch = identifier.trim();
+    const incomingId = conferenceId.trim();
+
+    // Look up the conference profile row to translate slug to ID and check status
+    const targetConference = await Conference.findOne({
+      $or: [
+        { _id: mongoose.Types.ObjectId.isValid(incomingId) ? incomingId : undefined },
+        { slug: incomingId }
+      ].filter(Boolean)
+    });
+
+    if (!targetConference) {
+      return res.json([]); // Return empty array if conference doesn't exist
+    }
+
+    // USER PANEL ACTIVATION GUARD: If the conference isn't active, return nothing
+    const isLive = targetConference.isActive === true || targetConference.status === "active";
+    if (!isLive) {
+      return res.json([]); 
+    }
+
+    const finalConferenceId = String(targetConference._id);
+
+    // Query filters check fields nested inside the true hex database identifier container
     const filteredParticipants = await Participant.find({
+      conferenceId: finalConferenceId,
       $or: [
         { name: { $regex: safeSearch, $options: "i" } }, 
         { phone: { $regex: safeSearch, $options: "i" } }, 
@@ -51,7 +80,7 @@ router.get("/", async (req, res) => {
       ]
     })
     .sort({ createdAt: -1 })
-    .limit(30); // Performance cap for instant dropdown responses
+    .limit(30);
     
     return res.json(filteredParticipants);
   } catch (err) {
@@ -59,7 +88,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 4. Update Route (Fixed variable references and Mongoose warning)
+// 4. Update Route 
 router.put("/:id", async (req, res) => {
   try {
     const updatedParticipant = await Participant.findOneAndUpdate(
@@ -106,14 +135,39 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// 6. GET participants by specific Conference
+// 6. GET participants by specific Conference (With Admin Overrides)
 router.get("/conference/:conferenceId", async (req, res) => {
   try {
-    const conferenceId = req.params.conferenceId?.trim();
+    const incomingId = req.params.conferenceId?.trim();
+    const { admin } = req.query; // Capture permission override parameter
+
+    // Resolve workspace details dynamically from database
+    const targetConference = await Conference.findOne({
+      $or: [
+        { _id: mongoose.Types.ObjectId.isValid(incomingId) ? incomingId : undefined },
+        { slug: incomingId },
+        { name: incomingId }
+      ].filter(Boolean)
+    });
+
+    if (!targetConference) {
+      return res.status(404).json({ error: "Conference workspace profile not found." });
+    }
+
+    // MANDATORY SPLIT: If it is NOT an admin request, verify activation status
+    if (admin !== "true") {
+      const isLive = targetConference.isActive === true || targetConference.status === "active";
+      if (!isLive) {
+        return res.json([]); // Return blank dataset if an external user targets this directly
+      }
+    }
+
+    // Admin passes bypass verification -> load dataset seamlessly all the time
+    const finalConferenceId = String(targetConference._id);
     const participants = await Participant.find({
       $or: [
-        { conferenceId: conferenceId },
-        { conferenceName: conferenceId },
+        { conferenceId: finalConferenceId },
+        { conferenceName: incomingId },
       ],
     }).sort({ createdAt: -1 });
 

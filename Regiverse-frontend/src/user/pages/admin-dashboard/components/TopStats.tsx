@@ -1,31 +1,42 @@
 import { Users, BadgeCheck, Award, Package } from "lucide-react";
 
-const TopStats = () => {
+// 1. Define the interface so TypeScript knows exactly what parameters to expect
+interface TopStatsProps {
+  statsData: {
+    totalDelegates: number;
+    badgesPrinted: number;
+    certificatesIssued: number;
+    kitBagsDelivered: number;
+  };
+}
+
+// 2. Pass the dynamic statsData object into the component
+const TopStats: React.FC<TopStatsProps> = ({ statsData }) => {
   const stats = [
     {
       title: "Total Delegates",
-      value: 118,
+      value: statsData.totalDelegates,
       icon: <Users size={20} />,
       bg: "bg-blue-100",
       iconColor: "text-blue-600"
     },
     {
       title: "Badges Printed",
-      value: 1,
+      value: statsData.badgesPrinted,
       icon: <BadgeCheck size={20} />,
       bg: "bg-green-100",
       iconColor: "text-green-600"
     },
     {
       title: "Certificates Issued",
-      value: 0,
+      value: statsData.certificatesIssued,
       icon: <Award size={20} />,
       bg: "bg-yellow-100",
       iconColor: "text-yellow-600"
     },
     {
       title: "Kit Bags Delivered",
-      value: 0,
+      value: statsData.kitBagsDelivered,
       icon: <Package size={20} />,
       bg: "bg-red-100",
       iconColor: "text-red-600"

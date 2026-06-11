@@ -1,37 +1,33 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  Tooltip,
-  ResponsiveContainer
-} from "recharts";
-
-const COLORS = ["#f59e0b", "#3b82f6"];
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface BadgesBarChartProps {
   data: {
     printed: number;
-    issued: number;
+    notPrinted: number; // Changed from issued to notPrinted
   };
 }
 
 const BadgesBarChart = ({ data }: BadgesBarChartProps) => {
+  // Map the items to Printed and Not Printed with custom colors
   const chartData = [
-    { name: "Not-Printed", value: data.printed },
-    { name: "Printed", value: data.issued }
+    { name: "Printed", value: data?.printed || 0, color: "#3b82f6" },     // Blue
+    { name: "Not Printed", value: data?.notPrinted || 0, color: "#94a3b8" } // Slate Gray
   ];
-  
 
   return (
-    <div className="bg-white p-4 rounded-2xl shadow-sm h-[260px] flex flex-col">
-      <h3 className="text-sm font-semibold mb-2 text-center">Badges</h3>
-
-      <div className="flex-1">
+    <div className="bg-white p-4 rounded-2xl shadow-sm h-[260px] flex flex-col justify-between">
+      <h3 className="text-sm font-semibold text-gray-700 text-center">Badges</h3>
+      <div className="flex-1 min-h-[160px] mt-2">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData}>
-            <XAxis dataKey="name" />
+          <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
             <Tooltip />
-            <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={50}>
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>

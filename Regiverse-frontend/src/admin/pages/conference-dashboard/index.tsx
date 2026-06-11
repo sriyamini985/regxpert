@@ -1,44 +1,100 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { io } from "socket.io-client"; // 1. Import socket client
 
-// We have mapped EVERY route from your AdminRoutes.tsx here
 const modules = [
-   { title: "Event-Dashboard", route: "/admin/dashboard", desc: "High-level global event analytics.", icon: "📊", color: "bg-slate-900" },
+  { title: "Event-Dashboard", route: "/admin/dashboard", desc: "High-level global event analytics.", icon: "📊", color: "bg-slate-900" },
   { title: "Upload Database", route: "upload", desc: "Batch import attendee data via secure XLSX upload.", icon: "📁", color: "bg-amber-500" },
   { title: "Add Delegate", route: "add-delegate", desc: "Manual registration terminal for walk-in attendees.", icon: "👤", color: "bg-rose-500" },
   { title: "Registered List", route: "registered-list", desc: "Full database access with editing and search.", icon: "📋", color: "bg-emerald-500" },
   { title: "Bulk Email", route: "bulk-email", desc: "SMTP-powered mass communication engine.", icon: "✉️", color: "bg-purple-500" },
   { title: "Bulk WhatsApp", route: "bulk-whatsapp", desc: "Direct API integration for mobile notifications.", icon: "💬", color: "bg-green-500" },
- 
 ];
 
 const ConferenceDashboard = () => {
   const navigate = useNavigate();
   const { conferenceId } = useParams();
   const [confName, setConfName] = useState("Loading...");
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState<number | string>("...");
 
-  useEffect(() => {
+  // 2. Wrap the fetch routine into a reusable function so we can invoke it on demand
+  const fetchCount = () => {
+    if (!conferenceId) return;
+
     fetch(`${import.meta.env.VITE_API_URL}/api/conferences`)
-      .then(res => res.json())
-      .then(data => {
-        const match = data.find((c: any) => c._id === conferenceId || c.slug === conferenceId);
-        if (match) setConfName(match.title || match.name);
+      .then((res) => res.json())
+      .then((data) => {
+        const match = data.find(
+          (c: any) => c._id === conferenceId || c.slug === conferenceId
+        );
+
+        if (match) {
+          setConfName(match.title || match.name);
+          return fetch(`${import.meta.env.VITE_API_URL}/api/participants/conference/${match._id}?admin=true`);
+        } else {
+          throw new Error("No matching workspace found.");
+        }
+      })
+      .then((res) => {
+        if (!res) return;
+        return res.json();
+      })
+      .then((data) => {
+        if (data) {
+          if (Array.isArray(data)) {
+            setCount(data.length);
+          } else if (data.data && Array.isArray(data.data)) {
+            setCount(data.data.length);
+          } else if (typeof data.count === 'number') {
+            setCount(data.count);
+          } else {
+            setCount(0);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Workspace synchronization error:", err);
+        setCount(0);
+        setConfName("Unknown Workspace");
       });
-      
-    fetch(`${import.meta.env.VITE_API_URL}/api/participants/conference/${conferenceId}`)
-      .then(res => res.json())
-      .then(data => setCount(Array.isArray(data) ? data.length : 0))
-      .catch(() => setCount(0));
+  };
+
+  // 3. Setup core data fetch tracking + WebSocket listeners
+  useEffect(() => {
+    if (!conferenceId) return;
+
+    // Run the initial data fetch
+    fetchCount();
+
+    // Establish WebSocket pipe connection directly to backend server
+    const socket = io(`${import.meta.env.VITE_API_URL}`);
+
+    // Join the room dedicated to this conference identifier block
+    socket.emit("join", conferenceId);
+
+    // Listen for live update events fired by your excel batch controller
+    socket.on("conferenceDataUpdated", (data: any) => {
+      if (data?.conferenceId === conferenceId || !data?.conferenceId) {
+        fetchCount(); // Re-trigger counts instantly!
+      }
+    });
+
+    socket.on("statsUpdated", () => {
+      fetchCount();
+    });
+
+    // Cleanup listeners when navigating away from this component page
+    return () => {
+      socket.off("conferenceDataUpdated");
+      socket.off("statsUpdated");
+      socket.disconnect();
+    };
   }, [conferenceId]);
 
-  // BULLETPROOF ROUTING FIX
   const handleNavigation = (route: string) => {
     if (route.startsWith("/")) {
-      // If it's a global route (like /admin/dashboard)
       navigate(route);
     } else {
-      // If it's a conference-specific route, forcefully construct the absolute path
       navigate(`/admin/conference/${conferenceId}/${route}`);
     }
   };
@@ -62,7 +118,11 @@ const ConferenceDashboard = () => {
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               System Online
             </div>
-            <p className="text-[11px] text-slate-400 font-bold mt-2 md:mr-2 uppercase tracking-wider">Live Database Size: {count}</p>
+            
+            {/* DISPLAY METRIC */}
+            <div className="mt-3 text-left md:text-right bg-slate-50 px-4 py-2 rounded-xl border border-slate-200/60 shadow-inner">
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider"> Live Database Size:{count} <span className="ml-1 text-sm font-bold text-slate-800">{count}</span></p>
+            </div>
           </div>
         </div>
 

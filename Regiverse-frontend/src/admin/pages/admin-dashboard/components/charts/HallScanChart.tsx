@@ -1,17 +1,16 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
-const COLORS = ["#4F46E5", "#E5E7EB"];
+const COLORS = ["#06B6D4", "#F59E0B"];
 
-const KitBagChart = ({ data }: any) => {
-  // FIXED: Removed hardcoded test fallbacks (80/40) to show absolute database truths
+const HallScanChart = ({ data }: any) => {
   const chartData = [
-    { name: "Given", value: data?.given || 0 },
-    { name: "Pending", value: data?.pending || 0 }
+    { name: "Entries", value: data?.entry || data?.entries || 0 },
+    { name: "Exits", value: data?.exit || data?.exits || 0 }
   ];
 
   return (
     <div className="bg-white p-4 rounded-2xl shadow-sm h-[260px] flex flex-col items-center justify-between">
-      <h3 className="font-semibold text-sm text-gray-700">Kit Bags</h3>
+      <h3 className="font-semibold text-sm text-gray-700">Hall Flow (Entry vs Exit)</h3>
       <div className="w-full flex-1 min-h-[160px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -29,4 +28,4 @@ const KitBagChart = ({ data }: any) => {
   );
 };
 
-export default KitBagChart;
+export default HallScanChart;

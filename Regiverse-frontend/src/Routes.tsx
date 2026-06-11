@@ -1,10 +1,8 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route, useParams, Outlet } from "react-router-dom";
 import ScrollToTop from "components/ScrollToTop";
 import NotFound from "pages/NotFound";
 import UserRoutes from "./user/UserRoutes";
-import ParticipantManagement from "./admin/pages/participant-management";
-
 
 // Auth & Core
 import AdminRoutes from "./admin/AdminRoutes";
@@ -26,9 +24,31 @@ import BulkWhatsapp from "./admin/pages/BulkWhatsapp";
 import UserLogin from "auth/pages/userlogin";
 import ParticipantPage from "./admin/pages/participant-management";
 
+// Context Injection
+import { ConferenceProvider, useConference } from "./contexts/ConferenceContext";
+
+// ADDED: Route interceptor that auto-syncs URL state variables directly to socket channels
+// FIXED: Removed object parameter constraint to clear TS2339 & TS2344 compile blocks
+const ConferenceRoomTracker: React.FC = () => {
+  const { conferenceId } = useParams(); // React Router automatically infers parameters as strings
+
+  const { setCurrentConferenceId } = useConference();
+
+  useEffect(() => {
+    if (conferenceId) {
+      setCurrentConferenceId(conferenceId);
+    }
+    return () => {
+      setCurrentConferenceId(null); // Clean up on exit
+    };
+  }, [conferenceId, setCurrentConferenceId]);
+
+  return <Outlet />;
+};
+
 const AppRoutes: React.FC = () => {
   return (
-    <>
+    <ConferenceProvider>
       <ScrollToTop />
       <Routes>
         <Route path="/admin-login" element={<PublicRoute><AdminLogin /></PublicRoute>} />
@@ -42,13 +62,14 @@ const AppRoutes: React.FC = () => {
         <Route path="/" element={<OperationsDashboard />} />
         <Route path="/user-login" element={<UserLogin />} />
 
-        <Route path="/user/conference/:conferenceId/registered-list" element={<RegisteredList />} />
-        
-        {/* User Terminal Form View (Handles both Add and Edit dynamically via state) */}
-        <Route path="/user/conference/:conferenceId/add-delegate" element={<ParticipantPage />} />
+        {/* Dynamic Context Interceptors for User Execution Nodes */}
+        <Route path="/user/conference/:conferenceId" element={<ConferenceRoomTracker />}>
+          <Route path="registered-list" element={<RegisteredList />} />
+          <Route path="add-delegate" element={<ParticipantPage />} />
+        </Route>
 
-        {/* Dynamic Conference Nested Routes */}
-        <Route path="/conference/:conferenceId">
+        {/* Dynamic Context Interceptors for Admin Operations Suites */}
+        <Route path="/conference/:conferenceId" element={<ConferenceRoomTracker />}>
           <Route index element={<ConferenceDashboard />} />
           <Route path="upload" element={<UploadPage />} />
           <Route path="add-delegate" element={<AddDelegatePage />} />
@@ -56,12 +77,10 @@ const AppRoutes: React.FC = () => {
           <Route path="bulk-email" element={<BulkEmail />} />
           <Route path="bulk-whatsapp" element={<BulkWhatsapp />} />
         </Route>
-
-
         
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </>
+    </ConferenceProvider>
   );
 };
 

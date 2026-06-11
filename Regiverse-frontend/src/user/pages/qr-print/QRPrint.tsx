@@ -1,19 +1,36 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import QRCode from "react-qr-code";
 
 const QRPrint = () => {
   const [searchParams] = useSearchParams();
   const raw = searchParams.get("data");
-
   const participant = raw ? JSON.parse(decodeURIComponent(raw)) : null;
+  const hasPrinted = useRef(false);
 
   useEffect(() => {
-    if (!participant) return;
-    const timer = setTimeout(() => {
-      window.print();
-    }, 500);
-    return () => clearTimeout(timer);
+    if (!participant || hasPrinted.current) return;
+    hasPrinted.current = true;
+
+    const firePrintPipeline = async () => {
+      try {
+        // Flag backend that badge printing occurred
+        await fetch(`${import.meta.env.VITE_API_URL}/api/participants/${participant._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isBadgePrinted: true, badgePrintedAt: new Date() })
+        });
+      } catch (err) {
+        console.error("Failed to notify backend tracking engine of print event:", err);
+      } finally {
+        // Trigger print window presentation
+        setTimeout(() => {
+          window.print();
+        }, 500);
+      }
+    };
+
+    firePrintPipeline();
   }, [participant]);
 
   if (!participant) {

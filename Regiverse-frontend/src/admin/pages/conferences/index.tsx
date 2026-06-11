@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useConference } from "../../../contexts/ConferenceContext";
 
 const Conferences = () => {
   const navigate = useNavigate();
+  const { setCurrentConferenceId } = useConference();
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const [conferences, setConferences] = useState<any[]>([]);
@@ -36,6 +38,26 @@ const Conferences = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ADDED: Handles Environment Activation States Across Databases
+  const handleToggleActivate = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Stops navigation behavior loop triggers
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/conferences/${id}/activate`, {
+        method: "PATCH",
+      });
+      if (res.ok) {
+        loadConferences();
+      }
+    } catch (err) {
+      console.error("Error toggling workspace state", err);
+    }
+  };
+
+  const handleEnterWorkspace = (conf: any) => {
+    setCurrentConferenceId(conf._id); // Locks global socket connection parameters 
+    navigate(`/conference/${conf.slug || conf._id}`);
   };
 
   return (
@@ -77,17 +99,37 @@ const Conferences = () => {
         {/* GRID LISTING */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {conferences.map((conf) => (
-            <div key={conf._id} className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-blue-50 transition-colors">🌐</div>
-                <div>
-                  <h3 className="text-2xl font-bold text-slate-900 leading-tight">{conf.title || conf.name}</h3>
-                  <p className="text-xs font-mono text-blue-500 font-bold uppercase mt-1 tracking-tighter">{conf.slug}</p>
+            <div key={conf._id} className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between">
+              <div>
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-blue-50 transition-colors">🌐</div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-900 leading-tight">{conf.title || conf.name}</h3>
+                      <p className="text-xs font-mono text-blue-500 font-bold uppercase mt-1 tracking-tighter">{conf.slug}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* STATUS BADGE INDICATOR BLOCK */}
+                <div className="mb-6 flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <span className="text-sm font-semibold text-slate-600">Terminal Status:</span>
+                  <button
+                    onClick={(e) => handleToggleActivate(conf._id, e)}
+                    className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider ${
+                      conf.isActive 
+                        ? "bg-emerald-500 text-white shadow-md shadow-emerald-200" 
+                        : "bg-slate-200 text-slate-600 hover:bg-slate-300"
+                    }`}
+                  >
+                    {conf.isActive ? "● Active Production" : "○ Deploy Workspace"}
+                  </button>
                 </div>
               </div>
+
               <button 
-                onClick={() => navigate(`/conference/${conf.slug || conf._id}`)}
-                className="w-full py-4 bg-slate-50 group-hover:bg-slate-900 group-hover:text-white text-slate-700 rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
+                onClick={() => handleEnterWorkspace(conf)}
+                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
               >
                 Enter Workspace <span>→</span>
               </button>
