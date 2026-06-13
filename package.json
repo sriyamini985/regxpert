@@ -2,10 +2,10 @@
   "name": "regxpert",
   "private": true,
   "scripts": {
-    "frontend": "npm start --prefix regiverse-frontend",
-    "backend": "npm run dev --prefix regiverse-backend",
+    "frontend": "npm start --prefix Regiverse-frontend",
+    "backend": "npm run dev --prefix Regiverse-backend",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
-    "build": "npm install --prefix regiverse-frontend && npm run build --prefix regiverse-frontend"
+    "build": "npm install --prefix Regiverse-frontend && npm run build --prefix Regiverse-frontend"
   },
   "devDependencies": {
     "@types/react": "^19.2.16",
