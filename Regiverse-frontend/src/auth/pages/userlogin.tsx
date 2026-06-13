@@ -21,7 +21,6 @@ export default function UserLogin() {
   const [conferenceError, setConferenceError] = useState<string | null>(null);
 
   // Flow State
-  const [step, setStep] = useState(1); // 1 = Email + Event, 2 = Password
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -70,21 +69,33 @@ export default function UserLogin() {
       .finally(() => setLoadingConferences(false));
   }, []);
 
-  // Autofocus logic based on step transitions
+  // Autofocus on load
   useEffect(() => {
-    if (step === 1 && emailInputRef.current) {
+    if (emailInputRef.current) {
       emailInputRef.current.focus();
-    } else if (step === 2 && passwordInputRef.current) {
-      passwordInputRef.current.focus();
     }
-  }, [step]);
+  }, []);
 
   // Client Side validation of email format
   const validateEmail = (emailStr: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
   };
 
-  const handleNextStep = () => {
+  const handleEmailKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      passwordInputRef.current?.focus();
+    }
+  };
+
+  const handlePasswordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      submit();
+    }
+  };
+
+  const submit = async () => {
     setLoginError(null);
     if (!email) {
       setLoginError("Please enter your email address.");
@@ -98,26 +109,6 @@ export default function UserLogin() {
       setLoginError("Please select an active event workspace.");
       return;
     }
-    // Proceed to password step
-    setStep(2);
-  };
-
-  const handleEmailKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleNextStep();
-    }
-  };
-
-  const handlePasswordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      submit();
-    }
-  };
-
-  const submit = async () => {
-    setLoginError(null);
     if (!password) {
       setLoginError("Please enter your password.");
       return;
@@ -185,7 +176,7 @@ export default function UserLogin() {
             <span className="text-white font-extrabold text-3xl">X</span>
           </div>
           <h2 className="text-3xl font-black bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent tracking-tight">
-            RegXpert
+            RegXperts
           </h2>
           <p className="text-slate-400 text-sm mt-1">Staff Terminal Authentication</p>
         </div>
@@ -198,181 +189,136 @@ export default function UserLogin() {
           </div>
         )}
 
-        {/* Interactive Step Container */}
-        <div className="relative overflow-hidden min-h-[280px]">
-          <AnimatePresence initial={false} mode="wait">
-            {step === 1 ? (
-              <motion.div
-                key="step1"
-                initial={{ x: -100, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: 100, opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="space-y-5"
-              >
-                {/* Event Dropdown */}
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Active Event Workspace
-                  </label>
-                  {loadingConferences ? (
-                    <div className="flex items-center gap-2 text-xs text-blue-400 py-3 bg-slate-800/40 border border-slate-800 rounded-xl px-4 animate-pulse">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Loading active conferences...</span>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <select
-                        value={selectedSlug}
-                        onChange={(e) => setSelectedSlug(e.target.value)}
-                        className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium appearance-none cursor-pointer transition-all duration-150"
-                      >
-                        {conferences.map((c) => (
-                          <option key={c._id} value={c.slug} className="bg-slate-900 text-slate-100">
-                            {c.name} ({c.slug})
-                          </option>
-                        ))}
-                        {conferences.length === 0 && (
-                          <option value="" className="bg-slate-900 text-slate-100">
-                            No active events
-                          </option>
-                        )}
-                      </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                        <Building2 className="w-4 h-4" />
-                      </div>
-                    </div>
-                  )}
-                  {conferenceError && (
-                    <p className="text-xs text-rose-400 font-semibold mt-1">⚠️ {conferenceError}</p>
-                  )}
-                </div>
-
-                {/* Email Input */}
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <input
-                      ref={emailInputRef}
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      onKeyDown={handleEmailKeyDown}
-                      placeholder="user@gmail.com"
-                      className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150"
-                    />
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                      <Mail className="w-4 h-4" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Continue button */}
-                <button
-                  type="button"
-                  onClick={handleNextStep}
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/15 hover:shadow-blue-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 group"
-                >
-                  <span>Continue</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </motion.div>
+        {/* Unified Login Form Container */}
+        <div className="space-y-5">
+          {/* Event Dropdown */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              Active Event Workspace
+            </label>
+            {loadingConferences ? (
+              <div className="flex items-center gap-2 text-xs text-blue-400 py-3 bg-slate-800/40 border border-slate-800 rounded-xl px-4 animate-pulse">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Loading active conferences...</span>
+              </div>
             ) : (
-              <motion.div
-                key="step2"
-                initial={{ x: 100, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -100, opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="space-y-5"
-              >
-                {/* Back button & email summary */}
-                <div className="flex items-center justify-between bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-xs">
-                  <span className="text-slate-400 truncate max-w-[200px]">{email}</span>
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1 transition-colors"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Change</span>
-                  </button>
-                </div>
-
-                {/* Password Input */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
-                      Password
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowForgotModal(true)}
-                      className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <input
-                      ref={passwordInputRef}
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      onKeyDown={handlePasswordKeyDown}
-                      placeholder="••••••••"
-                      className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150"
-                    />
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                      <Lock className="w-4 h-4" />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Remember Me */}
-                <div className="flex items-center">
-                  <label className="relative flex items-center cursor-pointer select-none text-slate-300 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-5 h-5 bg-slate-950 border border-slate-800 rounded-md mr-2.5 peer-checked:bg-blue-600 peer-checked:border-transparent flex items-center justify-center transition-all duration-150">
-                      <Check className="w-3.5 h-3.5 text-white scale-0 peer-checked:scale-100 transition-transform duration-150" />
-                    </div>
-                    <span>Remember me on this terminal</span>
-                  </label>
-                </div>
-
-                {/* Submit button */}
-                <button
-                  type="button"
-                  onClick={submit}
-                  disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/15 hover:shadow-blue-500/20 disabled:bg-blue-800 disabled:shadow-none hover:-translate-y-0.5 disabled:translate-y-0 active:translate-y-0 transition-all duration-150"
+              <div className="relative">
+                <select
+                  value={selectedSlug}
+                  onChange={(e) => setSelectedSlug(e.target.value)}
+                  className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium appearance-none cursor-pointer transition-all duration-150"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Signing In...</span>
-                    </>
-                  ) : (
-                    <span>Sign In</span>
+                  {conferences.map((c) => (
+                    <option key={c._id} value={c.slug} className="bg-slate-900 text-slate-100 font-sans">
+                      {c.name} ({c.slug})
+                    </option>
+                  ))}
+                  {conferences.length === 0 && (
+                    <option value="" className="bg-slate-900 text-slate-100 font-sans">
+                      No active events
+                    </option>
                   )}
-                </button>
-              </motion.div>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <Building2 className="w-4 h-4" />
+                </div>
+              </div>
             )}
-          </AnimatePresence>
+            {conferenceError && (
+              <p className="text-xs text-rose-400 font-semibold mt-1">⚠️ {conferenceError}</p>
+            )}
+          </div>
+
+          {/* Email Input */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <input
+                ref={emailInputRef}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={handleEmailKeyDown}
+                placeholder="user@gmail.com"
+                className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150"
+              />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                <Mail className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+
+          {/* Password Input */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                Forgot password?
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                ref={passwordInputRef}
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handlePasswordKeyDown}
+                placeholder="••••••••"
+                className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150"
+              />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                <Lock className="w-4 h-4" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Remember Me */}
+          <div className="flex items-center">
+            <label className="relative flex items-center cursor-pointer select-none text-slate-300 text-sm">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-5 h-5 bg-slate-950 border border-slate-800 rounded-md mr-2.5 peer-checked:bg-blue-600 peer-checked:border-transparent flex items-center justify-center transition-all duration-150">
+                <Check className="w-3.5 h-3.5 text-white scale-0 peer-checked:scale-100 transition-transform duration-150" />
+              </div>
+              <span>Remember me on this terminal</span>
+            </label>
+          </div>
+
+          {/* Submit button */}
+          <button
+            type="button"
+            onClick={submit}
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/15 hover:shadow-blue-500/20 disabled:bg-blue-800 disabled:shadow-none hover:-translate-y-0.5 disabled:translate-y-0 active:translate-y-0 transition-all duration-150"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Signing In...</span>
+              </>
+            ) : (
+              <span>Sign In</span>
+            )}
+          </button>
         </div>
 
         {/* Developer Bypass Button */}

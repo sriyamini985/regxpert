@@ -14,7 +14,6 @@ export default function ClientLogin() {
   const [rememberMe, setRememberMe] = useState(false);
 
   // Flow State
-  const [step, setStep] = useState(1); // 1 = Email, 2 = Password
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -42,37 +41,22 @@ export default function ClientLogin() {
     }
   }, []);
 
-  // Autofocus logic based on step transitions
+  // Autofocus email input on load
   useEffect(() => {
-    if (step === 1 && emailInputRef.current) {
+    if (emailInputRef.current) {
       emailInputRef.current.focus();
-    } else if (step === 2 && passwordInputRef.current) {
-      passwordInputRef.current.focus();
     }
-  }, [step]);
+  }, []);
 
   // Client Side validation of email format
   const validateEmail = (emailStr: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
   };
 
-  const handleNextStep = () => {
-    setLoginError(null);
-    if (!email) {
-      setLoginError("Please enter your email address.");
-      return;
-    }
-    if (!validateEmail(email)) {
-      setLoginError("Please enter a valid email address.");
-      return;
-    }
-    setStep(2);
-  };
-
   const handleEmailKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleNextStep();
+      passwordInputRef.current?.focus();
     }
   };
 
@@ -85,6 +69,14 @@ export default function ClientLogin() {
 
   const submit = async () => {
     setLoginError(null);
+    if (!email) {
+      setLoginError("Please enter your email address.");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setLoginError("Please enter a valid email address.");
+      return;
+    }
     if (!password) {
       setLoginError("Please enter your password.");
       return;
@@ -141,7 +133,7 @@ export default function ClientLogin() {
             <span className="text-white font-extrabold text-3xl">C</span>
           </div>
           <h2 className="text-3xl font-black bg-gradient-to-r from-white via-cyan-100 to-teal-200 bg-clip-text text-transparent tracking-tight">
-            RegXpert
+            RegXperts
           </h2>
           <p className="text-slate-400 text-sm mt-1">Client Management Dashboard</p>
         </div>
@@ -154,143 +146,98 @@ export default function ClientLogin() {
           </div>
         )}
 
-        {/* Interactive Step Container */}
-        <div className="relative overflow-hidden min-h-[200px]">
-          <AnimatePresence initial={false} mode="wait">
-            {step === 1 ? (
-              <motion.div
-                key="step1"
-                initial={{ x: -100, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: 100, opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="space-y-5"
-              >
-                {/* Email Input */}
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Client Email Address
-                  </label>
-                  <div className="relative">
-                    <input
-                      ref={emailInputRef}
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      onKeyDown={handleEmailKeyDown}
-                      placeholder="client@gmail.com"
-                      className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-150"
-                    />
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                      <Mail className="w-4 h-4" />
-                    </div>
-                  </div>
-                </div>
+        {/* Unified Login Form Container */}
+        <div className="space-y-5">
+          {/* Email Input */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              Client Email Address
+            </label>
+            <div className="relative">
+              <input
+                ref={emailInputRef}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={handleEmailKeyDown}
+                placeholder="client@gmail.com"
+                className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-150"
+              />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                <Mail className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
 
-                {/* Continue button */}
-                <button
-                  type="button"
-                  onClick={handleNextStep}
-                  className="w-full bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/15 hover:shadow-cyan-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 group"
-                >
-                  <span>Continue</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </motion.div>
+          {/* Password Input */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                Forgot password?
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                ref={passwordInputRef}
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handlePasswordKeyDown}
+                placeholder="••••••••"
+                className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-150"
+              />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                <Lock className="w-4 h-4" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Remember Me Checkbox */}
+          <div className="flex items-center">
+            <label className="relative flex items-center cursor-pointer select-none text-slate-300 text-sm">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-5 h-5 bg-slate-950 border border-slate-800 rounded-md mr-2.5 peer-checked:bg-cyan-600 peer-checked:border-transparent flex items-center justify-center transition-all duration-150">
+                <Check className="w-3.5 h-3.5 text-white scale-0 peer-checked:scale-100 transition-transform duration-150" />
+              </div>
+              <span>Remember this console login</span>
+            </label>
+          </div>
+
+          {/* Submit button */}
+          <button
+            type="button"
+            onClick={submit}
+            disabled={loading}
+            className="w-full bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/15 hover:shadow-cyan-500/20 disabled:bg-cyan-800 disabled:shadow-none hover:-translate-y-0.5 disabled:translate-y-0 active:translate-y-0 transition-all duration-150"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Signing In...</span>
+              </>
             ) : (
-              <motion.div
-                key="step2"
-                initial={{ x: 100, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -100, opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="space-y-5"
-              >
-                {/* Back button & email summary */}
-                <div className="flex items-center justify-between bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-xs">
-                  <span className="text-slate-400 truncate max-w-[200px]">{email}</span>
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 transition-colors"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Change</span>
-                  </button>
-                </div>
-
-                {/* Password Input */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
-                      Password
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowForgotModal(true)}
-                      className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <input
-                      ref={passwordInputRef}
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      onKeyDown={handlePasswordKeyDown}
-                      placeholder="••••••••"
-                      className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-150"
-                    />
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                      <Lock className="w-4 h-4" />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Remember Me */}
-                <div className="flex items-center">
-                  <label className="relative flex items-center cursor-pointer select-none text-slate-300 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-5 h-5 bg-slate-950 border border-slate-800 rounded-md mr-2.5 peer-checked:bg-cyan-600 peer-checked:border-transparent flex items-center justify-center transition-all duration-150">
-                      <Check className="w-3.5 h-3.5 text-white scale-0 peer-checked:scale-100 transition-transform duration-150" />
-                    </div>
-                    <span>Remember this client login</span>
-                  </label>
-                </div>
-
-                {/* Submit button */}
-                <button
-                  type="button"
-                  onClick={submit}
-                  disabled={loading}
-                  className="w-full bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/15 hover:shadow-cyan-500/20 disabled:bg-cyan-800 disabled:shadow-none hover:-translate-y-0.5 disabled:translate-y-0 active:translate-y-0 transition-all duration-150"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Signing In...</span>
-                    </>
-                  ) : (
-                    <span>Sign In</span>
-                  )}
-                </button>
-              </motion.div>
+              <span>Sign In</span>
             )}
-          </AnimatePresence>
+          </button>
         </div>
       </div>
 

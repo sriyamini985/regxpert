@@ -63,7 +63,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ children }) => {
                 >
                     <img
                         src="/assets/images/regiverse-logo-new.png"
-                        alt="RegXpert"
+                        alt="RegXperts"
                         className="w-24 h-24 object-contain"
                         style={{ filter: 'drop-shadow(0 4px 20px rgba(99,102,241,0.15))' }}
                     />
@@ -85,7 +85,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ children }) => {
                             fontFamily: "'Inter', sans-serif",
                         }}
                     >
-                        RegXpert
+                        RegXperts
                     </h1>
                     <p
                         className="text-sm mt-1.5 font-medium tracking-wide"

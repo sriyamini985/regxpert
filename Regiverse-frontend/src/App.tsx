@@ -5,6 +5,7 @@ import AppRoutes from "./Routes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "./components/ui/Toast";
 import BackgroundLayer from "./components/layout/BackgroundLayer";
+import SplashScreen from "./components/SplashScreen";
 
 export default function App() {
   return (
@@ -12,7 +13,9 @@ export default function App() {
       <AuthProvider>
         <ToastProvider>
           <BackgroundLayer />
-          <AppRoutes />
+          <SplashScreen>
+            <AppRoutes />
+          </SplashScreen>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>

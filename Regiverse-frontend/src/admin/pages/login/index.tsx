@@ -19,7 +19,7 @@ const Login = () => {
   return (
     <>
       <Helmet>
-        <title>Sign In - RegXpert</title>
+        <title>Sign In - RegXperts</title>
       </Helmet>
 
       <div className="h-screen flex items-center justify-center p-4">
@@ -30,7 +30,7 @@ const Login = () => {
           {/* LEFT */}
           <div className="w-full md:w-1/2 p-10">
             <h1 className="text-2xl font-bold mb-4">
-              Welcome to RegXpert
+              Welcome to RegXperts
             </h1>
 
             <LoginForm />

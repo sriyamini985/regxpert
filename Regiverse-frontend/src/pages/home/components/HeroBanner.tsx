@@ -78,7 +78,7 @@ const HeroBanner: React.FC = () => {
             textShadow: '0 10px 30px rgba(0,0,0,0.3)'
           }}
         >
-          Welcome to RegXpert
+          Welcome to RegXperts
         </motion.h1>
 
         {/* Subtitle with offset parallax */}

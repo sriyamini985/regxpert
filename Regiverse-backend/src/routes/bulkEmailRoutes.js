@@ -116,7 +116,7 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
         /* SEND EMAIL */
 
         const response = await resend.emails.send({
-          from: "RegXpert <onboarding@resend.dev>",
+          from: "RegXperts <onboarding@resend.dev>",
 
           to: p.email,
 
@@ -142,7 +142,7 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
 
                 <div style="padding:30px;">
                   <h1 style="color:#2563eb; margin-top:0; font-size:24px; font-weight:800; tracking-tight:-0.025em;">
-                    RegXpert
+                    RegXperts
                   </h1>
 
                   <h2 style="color:#1e293b; font-size:20px; font-weight:700; margin-top:20px;">

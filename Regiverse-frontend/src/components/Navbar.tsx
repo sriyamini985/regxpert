@@ -73,12 +73,12 @@ const Navbar = () => {
             >
               <img
                 src="/assets/images/regiverse-logo-new.png"
-                alt="RegXpert"
+                alt="RegXperts"
                 className="h-8 w-auto object-contain"
               />
 
               <span className="font-bold text-base text-black hidden sm:block">
-                RegXpert
+                RegXperts
               </span>
             </div>
 

@@ -79,7 +79,7 @@ export default function UserLayout() {
               X
             </div>
             <div>
-              <h1 className="font-black text-md leading-tight tracking-tight">RegXpert</h1>
+              <h1 className="font-black text-md leading-tight tracking-tight">RegXperts</h1>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Staff Terminal</p>
             </div>
           </div>
