@@ -6,11 +6,16 @@ interface SplashScreenProps {
 }
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ children }) => {
-    const [showSplash, setShowSplash] = useState(true);
+    const [showSplash, setShowSplash] = useState(() => {
+        if (window.location.pathname === "/print-qr") return false;
+        return sessionStorage.getItem("splashShown") !== "true";
+    });
     const [showBrand, setShowBrand] = useState(false);
     const [isFadingOut, setIsFadingOut] = useState(false);
 
     useEffect(() => {
+        if (!showSplash) return;
+
         // After 2s, reveal brand name
         const brandTimer = setTimeout(() => setShowBrand(true), 2000);
 
@@ -18,14 +23,17 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ children }) => {
         const fadeTimer = setTimeout(() => setIsFadingOut(true), 3500);
 
         // After fade-out completes (~0.6s), remove splash entirely
-        const removeTimer = setTimeout(() => setShowSplash(false), 4200);
+        const removeTimer = setTimeout(() => {
+            setShowSplash(false);
+            sessionStorage.setItem("splashShown", "true");
+        }, 4200);
 
         return () => {
             clearTimeout(brandTimer);
             clearTimeout(fadeTimer);
             clearTimeout(removeTimer);
         };
-    }, []);
+    }, [showSplash]);
 
     if (!showSplash) {
         return <>{children}</>;
