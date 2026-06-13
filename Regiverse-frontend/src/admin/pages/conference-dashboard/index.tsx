@@ -22,9 +22,13 @@ const ConferenceDashboard = () => {
     if (!conferenceId) return;
 
     fetch(`${import.meta.env.VITE_API_URL}/api/conferences`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
-        const match = data.find(
+        const list = Array.isArray(data) ? data : [];
+        const match = list.find(
           (c: any) => c._id === conferenceId || c.slug === conferenceId
         );
 

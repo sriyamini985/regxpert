@@ -50,7 +50,7 @@ interface Participant {
   workshopScans?: string[];
 }
 
-const ALL_CHECKPOINT_OPTIONS = ["Check-In", "Food Counter", "Kitbag", "Certificate", "Workshop"];
+const ALL_CHECKPOINT_OPTIONS = ["Check-In", "Food Counter", "Kitbag", "Certificate", "Workshop", "QR Code"];
 
 const BadgePrint = () => {
   const navigate = useNavigate();
@@ -112,6 +112,7 @@ const BadgePrint = () => {
     ].every(Boolean);
     if (hasWorkshopAccess) list.push("Workshop");
 
+    list.push("QR Code"); // QR Code is present by default
     return list;
   };
 
@@ -405,7 +406,13 @@ const BadgePrint = () => {
                   <h2 className="text-xl font-bold text-slate-900 w-full text-left mb-4">Badge Preview</h2>
                   
                   {/* PREVIEW CONTAINER: CR80 portrait aspect ratio (approx 5:8 scale) */}
-                  <div className="w-[240px] h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg p-5 flex flex-col justify-between items-center text-center relative overflow-hidden font-sans border-t-[8px] border-t-blue-600">
+                  <div 
+                    className="w-[240px] h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg p-5 flex flex-col items-center text-center relative overflow-hidden font-sans border-t-[8px] border-t-blue-600"
+                    style={{
+                      justifyContent: selectedCheckpoints.includes("QR Code") ? "space-between" : "center",
+                      gap: selectedCheckpoints.includes("QR Code") ? "0" : "16px"
+                    }}
+                  >
                     
                     {/* 1. Name */}
                     <div className="w-full mt-2">
@@ -429,12 +436,14 @@ const BadgePrint = () => {
                     </div>
 
                     {/* 4. QR Code */}
-                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center">
-                      <QRCode
-                        value={selectedParticipant.regId || selectedParticipant._id}
-                        size={110}
-                      />
-                    </div>
+                    {selectedCheckpoints.includes("QR Code") && (
+                      <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center">
+                        <QRCode
+                          value={selectedParticipant.regId || selectedParticipant._id}
+                          size={110}
+                        />
+                      </div>
+                    )}
 
                     {/* 5. Registration ID */}
                     <div className="w-full">
@@ -446,12 +455,14 @@ const BadgePrint = () => {
                     {/* 6. Assigned Checkpoints */}
                     <div className="w-full mb-2">
                       <div className="flex flex-wrap gap-1 justify-center max-h-[50px] overflow-hidden">
-                        {selectedCheckpoints.map((cp) => (
-                          <span key={cp} className="px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[8px] font-black uppercase">
-                            {cp}
-                          </span>
+                        {selectedCheckpoints
+                          .filter((cp) => cp !== "QR Code")
+                          .map((cp) => (
+                            <span key={cp} className="px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[8px] font-black uppercase">
+                              {cp}
+                            </span>
                         ))}
-                        {selectedCheckpoints.length === 0 && (
+                        {selectedCheckpoints.filter((cp) => cp !== "QR Code").length === 0 && (
                           <span className="text-[8px] text-slate-300 font-bold italic">No Checkpoints</span>
                         )}
                       </div>

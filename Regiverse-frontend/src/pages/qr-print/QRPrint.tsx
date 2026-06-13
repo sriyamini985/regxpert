@@ -107,7 +107,13 @@ const QRPrint = () => {
       </div>
 
       {/* CR80 Portrait Badge Container (54mm x 86mm) */}
-      <div className="badge-container">
+      <div 
+        className="badge-container"
+        style={{
+          justifyContent: badgeCheckpoints.includes("QR Code") ? "space-between" : "center",
+          gap: badgeCheckpoints.includes("QR Code") ? "0" : "6mm"
+        }}
+      >
         
         {/* 1. Name */}
         <div style={{ width: "100%", marginTop: "1mm" }}>
@@ -159,18 +165,20 @@ const QRPrint = () => {
         </div>
 
         {/* 4. QR Code */}
-        <div style={{ 
-          margin: "3mm 0", 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "center",
-          background: "#fff",
-          padding: "1.5mm",
-          borderRadius: "8px",
-          border: "1px solid #f1f5f9"
-        }}>
-          <QRCode value={badgeQrCode} size={110} />
-        </div>
+        {badgeCheckpoints.includes("QR Code") && (
+          <div style={{ 
+            margin: "3mm 0", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
+            background: "#fff",
+            padding: "1.5mm",
+            borderRadius: "8px",
+            border: "1px solid #f1f5f9"
+          }}>
+            <QRCode value={badgeQrCode} size={110} />
+          </div>
+        )}
 
         {/* 5. Registration ID */}
         <div style={{ width: "100%" }}>
@@ -196,24 +204,26 @@ const QRPrint = () => {
             maxHeight: "14mm", 
             overflow: "hidden" 
           }}>
-            {badgeCheckpoints.map((cp) => (
-              <span 
-                key={cp}
-                style={{ 
-                  fontSize: "7px", 
-                  fontWeight: 900, 
-                  background: "#eff6ff", 
-                  color: "#1d4ed8", 
-                  border: "0.5px solid #bfdbfe", 
-                  borderRadius: "3px", 
-                  padding: "0.5px 3.5px", 
-                  textTransform: "uppercase" 
-                }}
-              >
-                {cp}
-              </span>
+            {badgeCheckpoints
+              .filter((cp) => cp !== "QR Code")
+              .map((cp) => (
+                <span 
+                  key={cp}
+                  style={{ 
+                    fontSize: "7px", 
+                    fontWeight: 900, 
+                    background: "#eff6ff", 
+                    color: "#1d4ed8", 
+                    border: "0.5px solid #bfdbfe", 
+                    borderRadius: "3px", 
+                    padding: "0.5px 3.5px", 
+                    textTransform: "uppercase" 
+                  }}
+                >
+                  {cp}
+                </span>
             ))}
-            {badgeCheckpoints.length === 0 && (
+            {badgeCheckpoints.filter((cp) => cp !== "QR Code").length === 0 && (
               <span style={{ fontSize: "7px", fontWeight: 700, color: "#cbd5e1", fontStyle: "italic" }}>
                 No Checkpoints
               </span>
