@@ -8,7 +8,7 @@ export default function OperationsDashboard() {
       <div className="w-full max-w-6xl">
 
         <h1 className="text-4xl font-bold text-center mb-3">
-          REGIVERSE OPERATIONS
+          REGXPERT OPERATIONS
         </h1>
 
         <p className="text-center text-gray-500 mb-10">

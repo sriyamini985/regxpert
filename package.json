@@ -1,5 +1,5 @@
 {
-  "name": "regiverse",
+  "name": "regxpert",
   "private": true,
   "scripts": {
     "frontend": "npm start --prefix regiverse-frontend",

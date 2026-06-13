@@ -1,235 +1,439 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import FoodAccessScanner from './components/FoodAccessScanner';
-import FoodAccessLog from './components/FoodAccessLog';
-import Icon from '../../components/AppIcon';
-import Button from '../../components/ui/Button';
-import {
-    subscribeToParticipants,
-    recordFoodAccess,
-    undoFoodAccess,
-    getParticipantByQRCode,
-    Participant
-} from '../../services/participantService';
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Html5QrcodeScanner } from "html5-qrcode";
+
+import { API_URL as API } from "../../config/api";
+const days = [1, 2, 3, 4, 5];
+const meals = ["Breakfast", "Lunch", "Dinner"] as const;
+type Meal = typeof meals[number];
+
+type Step = "day" | "meal" | "scan";
 
 const FoodCounter = () => {
-    const navigate = useNavigate();
-    const [participants, setParticipants] = useState<Participant[]>([]);
-    const [accessedLogs, setAccessedLogs] = useState<Participant[]>([]);
-    const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
+  const { conferenceSlug } = useParams<"conferenceSlug">();
 
-    // Feedback state
-    const [scanResult, setScanResult] = useState<{
-        success: boolean;
-        message: string;
-        participant?: Participant;
-        type: 'success' | 'warning' | 'error';
-    } | null>(null);
+  // Step-by-step selection
+  const [step, setStep] = useState<Step>("day");
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
 
-    const [currentSession, setCurrentSession] = useState<'Breakfast' | 'Lunch' | 'Dinner'>('Breakfast');
+  // Scan state
+  const [qrInput, setQrInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [cameraStarted, setCameraStarted] = useState(false);
+  const [scannerInstance, setScannerInstance] = useState<Html5QrcodeScanner | null>(null);
 
-    // Subscribe to real-time data
-    useEffect(() => {
-        document.title = 'Food Access Counter - Regiverse';
-        const unsubscribe = subscribeToParticipants((data) => {
-            setParticipants(data);
-            // Filter for logs for CURRENT SESSION
-            const logs = data
-                .filter(p => p.foodHistory?.[currentSession])
-                .sort((a, b) => {
-                    const timeA = a.foodHistory?.[currentSession]?.timestamp ? new Date(a.foodHistory[currentSession].timestamp).getTime() : 0;
-                    const timeB = b.foodHistory?.[currentSession]?.timestamp ? new Date(b.foodHistory[currentSession].timestamp).getTime() : 0;
-                    return timeB - timeA;
-                });
-            setAccessedLogs(logs);
-        });
-        return () => unsubscribe();
-    }, [currentSession]); // Re-run when session changes
-
-    const handleScan = async (qrCode: string) => {
-        if (isProcessing) return;
-        setIsProcessing(true);
-        setScanResult(null);
-
+  // Cleanup scanner on unmount
+  useEffect(() => {
+    return () => {
+      if (scannerInstance) {
         try {
-            // 1. Find participant locally first ...
-            let participant = participants.find(p => p.qrCode === qrCode);
-
-            if (!participant) {
-                const fetched = await getParticipantByQRCode(qrCode);
-                if (fetched) participant = fetched;
-            }
-
-            if (!participant) {
-                setScanResult({
-                    success: false,
-                    message: 'Invalid QR Code. Participant not found.',
-                    type: 'error'
-                });
-                setIsProcessing(false);
-                return;
-            }
-
-            // 2. Check Food Access Status for CURRENT SESSION
-            const sessionData = participant.foodHistory?.[currentSession];
-
-            if (sessionData) {
-                setScanResult({
-                    success: false,
-                    message: `Already collected ${currentSession} at ${sessionData.timestamp ? new Date(sessionData.timestamp).toLocaleTimeString() : 'unknown time'}.`,
-                    participant,
-                    type: 'warning'
-                });
-                setIsProcessing(false);
-                return;
-            }
-
-            // 3. Record Access
-            await recordFoodAccess(participant.id, currentSession);
-
-            setScanResult({
-                success: true,
-                message: `${currentSession} authorized.`,
-                participant,
-                type: 'success'
-            });
-
-        } catch (error) {
-            console.error('Food access error:', error);
-            setScanResult({
-                success: false,
-                message: 'System error. Please try again.',
-                type: 'error'
-            });
-        }
-
-        // Reset processing after delay
-        setTimeout(() => {
-            setIsProcessing(false);
-        }, 2000);
+          scannerInstance.clear().catch(() => {});
+        } catch {}
+      }
     };
+  }, [scannerInstance]);
+  const [scanResult, setScanResult] = useState<{
+    type: "success" | "error" | "warning";
+    message: string;
+    user?: any;
+  } | null>(null);
 
-    const handleManualReset = () => {
-        setScanResult(null);
-        setIsProcessing(false);
-    };
+  // Build mealType string like "day1-lunch"
+  const getMealType = () =>
+    selectedDay && selectedMeal
+      ? `day${selectedDay}-${selectedMeal.toLowerCase()}`
+      : "";
 
-    const handleUndo = async (id: string) => {
-        if (window.confirm(`Are you sure you want to remove this ${currentSession} entry?`)) {
-            await undoFoodAccess(id, currentSession);
-        }
-    };
+  const playBeep = () => {
+    new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg").play().catch(() => {});
+  };
 
-    return (
-        <div className="page-bg">
+  /* ===========================
+     CAMERA SCANNER LOGIC
+  =========================== */
+  const startCameraScanner = () => {
+    setCameraStarted(true);
+    setScanResult(null);
 
+    setTimeout(() => {
+      try {
+        const scanner = new Html5QrcodeScanner(
+          'reader-food',
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          false
+        );
 
-            <main className="page-header">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
-                                <Icon name="Utensils" size={24} className="text-[#FF9F43]" />
-                            </div>
-                            <div>
-                                <h1 className="text-fluid-3xl font-bold text-gray-900">Food Counter</h1>
-                                <p className="text-gray-500">Scan QR codes to verify food entitlement</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-4">
-                            <div className="bg-white px-4 py-2 rounded-xl border border-gray-200 text-center shadow-sm">
-                                <span className="block text-fluid-2xl font-bold text-[#FF9F43]">{accessedLogs.length}</span>
-                                <span className="text-xs text-gray-500 uppercase tracking-wide">Served</span>
-                            </div>
-                            <Button variant="outline" onClick={() => navigate('/admin-dashboard')} iconName="ArrowLeft">
-                                Back
-                            </Button>
-                        </div>
-                    </div>
+        scanner.render(
+          (decodedText) => {
+            if (decodedText) {
+              callScanAPI(decodedText);
+              scanner.clear().catch(err => console.error(err));
+              setCameraStarted(false);
+            }
+          },
+          (err) => {}
+        );
 
-                    {/* Session Selector */}
-                    <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-                        {['Breakfast', 'Lunch', 'Dinner'].map((session) => (
-                            <button
-                                key={session}
-                                onClick={() => setCurrentSession(session as any)}
-                                className={`px-6 py-3 rounded-xl font-medium transition-all ${currentSession === session
-                                    ? 'bg-[#FF9F43] text-white shadow-md'
-                                    : 'bg-white border border-gray-200 hover:border-orange-300 text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                {session}
-                            </button>
-                        ))}
-                    </div>
+        setScannerInstance(scanner);
+      } catch (err) {
+        console.error("Camera scanner failed to init:", err);
+      }
+    }, 100);
+  };
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Left Column: Scanner & Result */}
-                        <div className="lg:col-span-2 space-y-6">
-                            <FoodAccessScanner
-                                onScan={handleScan}
-                                isProcessing={isProcessing}
-                                testCodes={participants.map(p => p.qrCode || '').filter(Boolean)}
-                            />
+  const stopCameraScanner = () => {
+    if (scannerInstance) {
+      try {
+        scannerInstance.clear().catch(() => {});
+      } catch (err) {}
+      setScannerInstance(null);
+    }
+    setCameraStarted(false);
+  };
 
-                            {/* Result Card */}
-                            {scanResult && (
-                                <div className={`p-6 rounded-lg border-2 animate-in fade-in zoom-in-95 duration-200 ${scanResult.type === 'success' ? 'bg-green-500/10 border-green-500/20' :
-                                    scanResult.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500/20' :
-                                        'bg-red-500/10 border-red-500/20'
-                                    }`}>
-                                    <div className="flex items-start gap-4">
-                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${scanResult.type === 'success' ? 'bg-green-500 text-white' :
-                                            scanResult.type === 'warning' ? 'bg-yellow-500 text-white' :
-                                                'bg-red-500 text-white'
-                                            }`}>
-                                            <Icon
-                                                name={scanResult.type === 'success' ? 'Check' : scanResult.type === 'warning' ? 'AlertTriangle' : 'X'}
-                                                size={24}
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className={`text-lg font-bold mb-1 ${scanResult.type === 'success' ? 'text-green-600' :
-                                                scanResult.type === 'warning' ? 'text-yellow-600' :
-                                                    'text-red-500'
-                                                }`}>
-                                                {scanResult.type === 'success' ? 'Authorized' : scanResult.type === 'warning' ? 'Access Denied' : 'Error'}
-                                            </h3>
-                                            <p className="text-foreground font-medium text-lg mb-2">{scanResult.message}</p>
+  /* ===========================
+     SCAN API CALL
+  =========================== */
+  const callScanAPI = async (identifier: string) => {
+    if (!identifier.trim() || !getMealType()) return;
+    setIsProcessing(true);
+    setScanResult(null);
 
-                                            {scanResult.participant && (
-                                                <div className="bg-background/50 rounded-lg p-3 text-sm">
-                                                    <div className="flex justify-between mb-1">
-                                                        <span className="text-muted-foreground">Name:</span>
-                                                        <span className="font-semibold">{scanResult.participant.name}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-muted-foreground">ID:</span>
-                                                        <span className="font-mono text-xs">{scanResult.participant.id}</span>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        {scanResult.type !== 'success' && (
-                                            <Button size="sm" variant="outline" onClick={handleManualReset}>
-                                                Reset
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+    try {
+      const res = await fetch(`${API}/api/participants/scan-food`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: identifier.trim(), mealType: getMealType() }),
+      });
+      const data = await res.json();
 
-                        {/* Right Column: Log */}
-                        <div className="h-[600px] lg:h-auto">
-                            <FoodAccessLog logs={accessedLogs} onUndo={handleUndo} sessionName={currentSession} />
-                        </div>
-                    </div>
-                </div>
-            </main>
+      if (res.status === 403) {
+        setScanResult({ type: "error", message: `🚫 Access Denied: ${data.msg}`, user: data.user });
+      } else if (res.status === 409) {
+        setScanResult({ type: "warning", message: `⚠️ ${data.msg}`, user: data.user });
+      } else if (!res.ok) {
+        setScanResult({ type: "error", message: `❌ ${data.msg || "Participant not found."}` });
+      } else {
+        playBeep();
+        setScanResult({ type: "success", message: `✅ ${data.message}`, user: data.user });
+      }
+    } catch {
+      setScanResult({ type: "error", message: "❌ Network error. Check backend connection." });
+    }
+
+    setIsProcessing(false);
+  };
+
+  /* ===========================
+     QR SCAN (barcode input)
+  =========================== */
+  const handleQRScan = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (qrInput.trim()) {
+      callScanAPI(qrInput.trim());
+      setQrInput("");
+    }
+  };
+
+  /* ===========================
+     MANUAL SEARCH
+  =========================== */
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    setSearchResults([]);
+
+    try {
+      const res = await fetch(`${API}/api/participants?identifier=${encodeURIComponent(searchQuery.trim())}&conferenceId=${conferenceSlug}`);
+      const data = await res.json();
+      setSearchResults(Array.isArray(data) ? data : data?.data || []);
+    } catch {
+      setSearchResults([]);
+    }
+    setIsSearching(false);
+  };
+
+  /* ===========================
+     RESET
+  =========================== */
+  const reset = (toStep: Step = "day") => {
+    setScanResult(null);
+    setSearchQuery("");
+    setSearchResults([]);
+    setQrInput("");
+    if (toStep === "day") { setSelectedDay(null); setSelectedMeal(null); }
+    if (toStep === "meal") { setSelectedMeal(null); }
+    setStep(toStep);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+
+      {/* HEADER */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">🍽️ Food Scan</h1>
+            <p className="text-slate-500 text-sm mt-1">
+              {step === "day" && "Step 1 — Select Day"}
+              {step === "meal" && `Step 2 — Select Meal for Day ${selectedDay}`}
+              {step === "scan" && `Day ${selectedDay} · ${selectedMeal} — Scan Participant`}
+            </p>
+          </div>
+          {step !== "day" && (
+            <button
+              onClick={() => reset(step === "meal" ? "day" : "meal")}
+              className="px-4 py-2 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition"
+            >
+              ← Back
+            </button>
+          )}
         </div>
-    );
+      </div>
+
+      {/* STEP 1: SELECT DAY */}
+      {step === "day" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
+          {days.map((day) => (
+            <button
+              key={day}
+              onClick={() => { setSelectedDay(day); setStep("meal"); }}
+              className="bg-white shadow-md rounded-3xl p-10 hover:scale-105 transition-all border border-slate-200 hover:border-orange-400 hover:shadow-orange-100"
+            >
+              <h2 className="text-2xl font-bold text-orange-500">Day {day}</h2>
+              <p className="text-gray-400 mt-2 text-sm">Select Meals</p>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* STEP 2: SELECT MEAL */}
+      {step === "meal" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {meals.map((meal) => {
+            const emoji = meal === "Breakfast" ? "☕" : meal === "Lunch" ? "🍱" : "🍽️";
+            return (
+              <button
+                key={meal}
+                onClick={() => { setSelectedMeal(meal); setStep("scan"); }}
+                className="bg-white shadow-md rounded-3xl p-12 hover:scale-105 transition-all border border-slate-200 hover:border-orange-400 hover:shadow-orange-100"
+              >
+                <div className="text-4xl mb-3">{emoji}</div>
+                <h2 className="text-xl font-bold text-slate-800">{meal}</h2>
+                <p className="text-gray-400 mt-1 text-sm">Day {selectedDay}</p>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* STEP 3: SCAN */}
+      {step === "scan" && selectedDay && selectedMeal && (
+        <div className="space-y-5">
+
+          {/* QR / BARCODE INPUT */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <h3 className="font-bold text-slate-700 mb-3">🔍 QR / Barcode Scan</h3>
+            <form onSubmit={handleQRScan} className="flex gap-3">
+              <input
+                type="text"
+                value={qrInput}
+                onChange={(e) => setQrInput(e.target.value)}
+                placeholder="Scan QR or type Reg ID / Phone..."
+                className="flex-1 px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400"
+                autoFocus
+                disabled={isProcessing}
+              />
+              <button
+                type="submit"
+                disabled={isProcessing || !qrInput.trim()}
+                className="px-6 py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 disabled:opacity-50 transition"
+              >
+                {isProcessing ? "..." : "Scan"}
+              </button>
+            </form>
+
+            {/* Webcam scanner toggle */}
+            <div className="border-t border-slate-100 mt-4 pt-4">
+              {!cameraStarted ? (
+                <button
+                  onClick={startCameraScanner}
+                  className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition text-sm font-medium text-slate-600"
+                >
+                  📷 Scan using Camera (Webcam)
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500 animate-pulse">📷 Camera active...</span>
+                    <button
+                      onClick={stopCameraScanner}
+                      className="text-xs text-red-500 underline"
+                    >
+                      Close camera
+                    </button>
+                  </div>
+                  <div className="max-w-md mx-auto overflow-hidden rounded-xl border border-slate-200">
+                    <div id="reader-food" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* MANUAL SEARCH */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <h3 className="font-bold text-slate-700 mb-3">🔎 Manual Search</h3>
+            <div className="flex gap-3 mb-4">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Search by name, phone, or Reg ID..."
+                className="flex-1 px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400"
+                disabled={isSearching}
+              />
+              <button
+                onClick={handleSearch}
+                disabled={isSearching || !searchQuery.trim()}
+                className="px-6 py-3 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 transition"
+              >
+                Search
+              </button>
+            </div>
+
+            {isSearching && <p className="text-slate-500 text-sm">Searching...</p>}
+
+            {searchResults.length === 0 && searchQuery && !isSearching && (
+              <p className="text-slate-400 text-sm bg-gray-50 rounded-xl p-4">No participants found.</p>
+            )}
+
+            {searchResults.map((p: any) => {
+              const mealKey = getMealType();
+              const alreadyCollected = p.foodLogs && (p.foodLogs[mealKey] === true);
+              const foodScanCount = p.foodLogs ? Object.values(p.foodLogs).filter(Boolean).length : 0;
+              const workshopScanCount = p.workshopScans ? p.workshopScans.length : 0;
+
+              return (
+                <div key={p._id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-4 mb-3 hover:border-slate-350 transition gap-4">
+                  <div className="space-y-2 flex-1">
+                    <div>
+                      <p className="font-bold text-slate-800 text-base">{p.name}</p>
+                      <p className="text-sm text-slate-500 font-medium">{p.phone} · <span className="font-bold text-slate-700">{p.category}</span> · <span className="font-mono">{p.regId || p._id}</span></p>
+                    </div>
+
+                    {/* Operational Progress Status Indicators */}
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {/* Check In */}
+                      <span className={`px-2.5 py-0.5 rounded text-[9px] font-black uppercase border whitespace-nowrap transition-all duration-150 ${
+                        p.isCheckedIn 
+                          ? "bg-emerald-600 text-white border-emerald-700 shadow-sm shadow-emerald-600/10" 
+                          : "bg-slate-100 text-slate-400 border-slate-200/50"
+                      }`}>
+                        Entry
+                      </span>
+
+                      {/* Badge Printed */}
+                      <span className={`px-2.5 py-0.5 rounded text-[9px] font-black uppercase border whitespace-nowrap transition-all duration-150 ${
+                        p.printed 
+                          ? "bg-indigo-600 text-white border-indigo-700 shadow-sm shadow-indigo-600/10" 
+                          : "bg-slate-100 text-slate-400 border-slate-200/50"
+                      }`}>
+                        Badge
+                      </span>
+
+                      {/* Kit bag */}
+                      <span className={`px-2.5 py-0.5 rounded text-[9px] font-black uppercase border whitespace-nowrap transition-all duration-150 ${
+                        p.kitbagCollected 
+                          ? "bg-blue-600 text-white border-blue-700 shadow-sm shadow-blue-600/10" 
+                          : "bg-slate-100 text-slate-400 border-slate-200/50"
+                      }`}>
+                        Kitbag
+                      </span>
+
+                      {/* Food Scan */}
+                      <span className={`px-2.5 py-0.5 rounded text-[9px] font-black uppercase border whitespace-nowrap transition-all duration-150 ${
+                        alreadyCollected 
+                          ? "bg-green-600 text-white border-green-700 shadow-sm shadow-green-600/10" 
+                          : foodScanCount > 0
+                          ? "bg-amber-500 text-white border-amber-600 shadow-sm shadow-amber-500/10"
+                          : "bg-slate-100 text-slate-400 border-slate-200/50"
+                      }`}>
+                        {selectedMeal} {alreadyCollected ? "Collected" : `Pending (${foodScanCount} other)`}
+                      </span>
+
+                      {/* Workshop Scan */}
+                      <span className={`px-2.5 py-0.5 rounded text-[9px] font-black uppercase border whitespace-nowrap transition-all duration-150 ${
+                        workshopScanCount > 0 
+                          ? "bg-purple-600 text-white border-purple-700 shadow-sm shadow-purple-600/10" 
+                          : "bg-slate-100 text-slate-400 border-slate-200/50"
+                      }`}>
+                        Workshop {workshopScanCount > 0 ? `(${workshopScanCount})` : ""}
+                      </span>
+
+                      {/* Certificate Issued */}
+                      <span className={`px-2.5 py-0.5 rounded text-[9px] font-black uppercase border whitespace-nowrap transition-all duration-150 ${
+                        p.certificateGiven 
+                          ? "bg-teal-600 text-white border-teal-700 shadow-sm shadow-teal-600/10" 
+                          : "bg-slate-100 text-slate-400 border-slate-200/50"
+                      }`}>
+                        Cert
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSearchResults([]);
+                      callScanAPI(p.regId || p._id);
+                    }}
+                    disabled={isProcessing || alreadyCollected}
+                    className="px-5 py-2.5 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition text-sm whitespace-nowrap h-fit self-end sm:self-center"
+                  >
+                    {alreadyCollected ? "Collected" : "✅ Mark Collected"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* SCAN RESULT FEEDBACK */}
+          {scanResult && (
+            <div className={`rounded-2xl p-6 border-2 shadow ${
+              scanResult.type === "success" ? "bg-green-50 border-green-400"
+              : scanResult.type === "warning" ? "bg-yellow-50 border-yellow-400"
+              : "bg-red-50 border-red-400"
+            }`}>
+              <p className={`text-xl font-bold ${
+                scanResult.type === "success" ? "text-green-700"
+                : scanResult.type === "warning" ? "text-yellow-700"
+                : "text-red-700"
+              }`}>
+                {scanResult.message}
+              </p>
+              {scanResult.user && (
+                <div className="mt-3 text-slate-700 text-sm space-y-1">
+                  <p><span className="font-semibold">Name:</span> {scanResult.user.name}</p>
+                  <p><span className="font-semibold">Category:</span> {scanResult.user.category}</p>
+                  <p><span className="font-semibold">Reg ID:</span> {scanResult.user.regId}</p>
+                </div>
+              )}
+              <button onClick={() => setScanResult(null)} className="mt-4 text-sm text-slate-500 underline">
+                Dismiss
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default FoodCounter;

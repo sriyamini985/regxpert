@@ -66,7 +66,7 @@ const QRCodeGenerator = () => {
 
   // Subscribe to participants from Firebase
   useEffect(() => {
-    document.title = 'QR Code Generator - Regiverse';
+    document.title = 'QR Code Generator - RegXpert';
 
     const unsubscribe = subscribeToParticipants((firebaseParticipants) => {
       const mappedParticipants: Participant[] = firebaseParticipants.map((p) => ({

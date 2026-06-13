@@ -33,7 +33,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           <div className="flex items-center gap-2">
             <img
               src="/assets/images/regiverse-symbol.png"
-              alt="Regiverse"
+              alt="RegXpert"
               className="h-10 w-auto object-contain"
             />
           </div>

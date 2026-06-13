@@ -1,6 +1,8 @@
 import express from "express";
+import mongoose from "mongoose";
 import Participant from "../models/Participant.js";
-import { createParticipant, scanQR, verifyAndScan } from "../controllers/participantController.js";
+import Conference from "../models/Conference.js";
+import { createParticipant, scanQR, verifyAndScan, scanFood, checkInParticipant, scanHall, scanWorkshop } from "../controllers/participantController.js";
 import {
   broadcastParticipantCreated,
   broadcastParticipantUpdated,
@@ -9,13 +11,70 @@ import {
 
 const router = express.Router();
 
-// 1. Verify and Scan Route
+// 1. Verify and Scan Route (Kitbag / Certificate)
 router.post("/verify-and-scan", verifyAndScan);
+
+// 2. Food Scan Route (Day + Meal specific)
+router.post("/scan-food", scanFood);
+
+// 3. General Check-In Route
+router.post("/check-in", checkInParticipant);
+
+// 4. Hall Entry/Exit Scan Route
+router.post("/scan-hall", scanHall);
+
+// 5. Workshop Scan Route
+router.post("/scan-workshop", scanWorkshop);
 
 // 2. Create Participant Route
 router.post("/", async (req, res) => {
   try {
-    const participant = await Participant.create(req.body);
+    const { name } = req.body;
+    if (!name || String(name).trim() === "") {
+      return res.status(400).json({ success: false, message: "Participant name is required" });
+    }
+    const body = { ...req.body };
+    let actualConferenceId = null;
+    if (body.conferenceId) {
+      const targetConference = await Conference.findOne({
+        $or: [
+          { _id: mongoose.Types.ObjectId.isValid(body.conferenceId) ? body.conferenceId : null },
+          { slug: body.conferenceId },
+          { name: body.conferenceId }
+        ]
+      }).catch(() => null);
+      if (targetConference) {
+        body.conferenceName = targetConference.name;
+        body.conferenceId = targetConference._id.toString();
+        actualConferenceId = targetConference._id.toString();
+      }
+    }
+
+    // Check for duplicate participant (same phone or email under the same conference)
+    if (body.phone || body.email) {
+      const query = { conferenceId: actualConferenceId };
+      const orConditions = [];
+      if (body.phone && body.phone.trim() !== "") {
+        orConditions.push({ phone: body.phone.trim() });
+      }
+      if (body.email && body.email.trim() !== "") {
+        orConditions.push({ email: body.email.trim().toLowerCase() });
+      }
+      if (orConditions.length > 0) {
+        query.$or = orConditions;
+        const existing = await Participant.findOne(query);
+        if (existing) {
+          return res.status(409).json({
+            success: false,
+            message: `A delegate with this ${
+              existing.phone === body.phone ? "phone number" : "email address"
+            } is already registered for this conference.`
+          });
+        }
+      }
+    }
+
+    const participant = await Participant.create(body);
     broadcastParticipantCreated(participant);
 
     return res.json({
@@ -33,7 +92,7 @@ router.post("/", async (req, res) => {
 // 3. OPTIMIZED SEARCH ROUTE: Returns nothing by default, searches instantly via Regex when query exists
 router.get("/", async (req, res) => {
   try {
-    const { identifier } = req.query;
+    const { identifier, conferenceId } = req.query;
     
     // REQUIREMENT: Do not load anything if the search query is empty
     if (!identifier || identifier.trim() === "") {
@@ -42,16 +101,35 @@ router.get("/", async (req, res) => {
 
     const safeSearch = identifier.trim();
 
-    // Use Mongo $regex for partial instant matching ('i' makes it case-insensitive)
-    const filteredParticipants = await Participant.find({
+    const query = {
       $or: [
         { name: { $regex: safeSearch, $options: "i" } }, 
         { phone: { $regex: safeSearch, $options: "i" } }, 
         { regId: { $regex: safeSearch, $options: "i" } }
       ]
-    })
-    .sort({ createdAt: -1 })
-    .limit(30); // Performance cap for instant dropdown responses
+    };
+
+    if (conferenceId && conferenceId.trim() !== "") {
+      const param = conferenceId.trim();
+      const targetConference = await Conference.findOne({
+        $or: [
+          { slug: param },
+          { name: param },
+          { _id: mongoose.Types.ObjectId.isValid(param) ? param : null }
+        ]
+      }).catch(() => null);
+
+      if (targetConference) {
+        query.conferenceId = targetConference._id.toString();
+      } else {
+        query.conferenceId = param;
+      }
+    }
+
+    // Use Mongo $regex for partial instant matching ('i' makes it case-insensitive)
+    const filteredParticipants = await Participant.find(query)
+      .sort({ createdAt: -1 })
+      .limit(30); // Performance cap for instant dropdown responses
     
     return res.json(filteredParticipants);
   } catch (err) {
@@ -109,12 +187,38 @@ router.delete("/:id", async (req, res) => {
 // 6. GET participants by specific Conference
 router.get("/conference/:conferenceId", async (req, res) => {
   try {
-    const conferenceId = req.params.conferenceId?.trim();
-    const participants = await Participant.find({
+    const param = req.params.conferenceId?.trim();
+    
+    const queryConditions = [
+      { conferenceId: param },
+      { conferenceName: param }
+    ];
+
+    const targetConference = await Conference.findOne({
       $or: [
-        { conferenceId: conferenceId },
-        { conferenceName: conferenceId },
-      ],
+        { slug: param },
+        { name: param }
+      ]
+    }).catch(() => null);
+
+    if (targetConference) {
+      queryConditions.push({ conferenceId: targetConference._id.toString() });
+      queryConditions.push({ conferenceName: targetConference.name });
+    }
+
+    if (mongoose.Types.ObjectId.isValid(param)) {
+      const targetByObjId = await Conference.findById(param).catch(() => null);
+      if (targetByObjId) {
+        queryConditions.push({ conferenceId: targetByObjId._id.toString() });
+        queryConditions.push({ conferenceName: targetByObjId.name });
+        if (targetByObjId.slug) {
+          queryConditions.push({ conferenceId: targetByObjId.slug });
+        }
+      }
+    }
+
+    const participants = await Participant.find({
+      $or: queryConditions,
     }).sort({ createdAt: -1 });
 
     return res.json(participants);

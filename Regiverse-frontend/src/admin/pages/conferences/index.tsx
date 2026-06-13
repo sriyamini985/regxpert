@@ -1,19 +1,26 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../../config/api";
 
 const Conferences = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const [conferences, setConferences] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const loadConferences = async () => {
+    setError(null);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/conferences`);
+      const res = await fetch(`${API_URL}/api/conferences`);
+      if (!res.ok) {
+        throw new Error(`Server returned status ${res.status}`);
+      }
       const data = await res.json();
       setConferences(Array.isArray(data) ? data : []);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load conferences", err);
+      setError(err.message || "Failed to load conferences from backend");
     }
   };
 
@@ -22,9 +29,10 @@ const Conferences = () => {
   const handleCreate = async () => {
     if (!title.trim()) return;
     setLoading(true);
+    setError(null);
     const slug = title.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now().toString().slice(-4);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/conferences`, {
+      const res = await fetch(`${API_URL}/api/conferences`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, name: title, slug }),
@@ -32,7 +40,13 @@ const Conferences = () => {
       if (res.ok) {
         setTitle("");
         loadConferences();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || `Server error ${res.status} when creating workspace`);
       }
+    } catch (err: any) {
+      console.error("Create conference failed", err);
+      setError(err.message || "Failed to create workspace");
     } finally {
       setLoading(false);
     }
@@ -54,6 +68,22 @@ const Conferences = () => {
           </div>
         </div>
 
+        {/* ERROR DISPLAY */}
+        {error && (
+          <div className="bg-rose-50 text-rose-700 border border-rose-100 p-5 rounded-2xl mb-8 flex items-center gap-3 font-medium text-sm shadow-sm">
+            <span className="text-xl">⚠️</span>
+            <div className="flex-1">
+              <span className="font-bold">Backend Connection Issue:</span> {error}
+            </div>
+            <button 
+              onClick={() => setError(null)}
+              className="text-rose-400 hover:text-rose-700 font-bold px-2.5 py-1 rounded-xl hover:bg-rose-100 transition-all"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* CREATE WORKSPACE SECTION */}
         <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm mb-10">
           <h2 className="text-lg font-bold text-slate-800 mb-4">Initialize New Workspace</h2>
@@ -69,7 +99,7 @@ const Conferences = () => {
               onClick={handleCreate}
               className="px-8 h-14 bg-slate-900 hover:bg-blue-600 text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95"
             >
-              {loading ? "Initializing..." : "Launch Environment"}
+              {loading ? "Initializing..." : "Add Event"}
             </button>
           </div>
         </div>

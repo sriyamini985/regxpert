@@ -1,97 +1,85 @@
 import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useConferenceData } from "../../../hooks/useConferenceData";
 import TopStats from "./components/TopStats";
 import DayTabs from "./components/DayTabs";
 import HighlightCards from "./components/HighlightCards";
 import ChartsSection from "./components/ChartsSection";
 
 const Dashboard = () => {
+  const { conferenceSlug } = useParams<"conferenceSlug">();
+  console.log("📊 Dashboard rendered with conferenceSlug:", conferenceSlug);
   const [selectedDay, setSelectedDay] = useState("Day 1");
 
-  const allDaysData = {
-  "Day 1": {
-    badges: { printed: 52, issued: 45 },
-    meals: { breakfast: 30, lunch: 50, dinner: 80 },
-    kitbags: { given: 80, pending: 38 },
-    certificates: { issued: 10, pending: 108 }
-  },
-  "Day 2": {
-    badges: { printed: 40, issued: 30 },
-    meals: { breakfast: 20, lunch: 40, dinner: 60 },
-    kitbags: { given: 60, pending: 20 },
-    certificates: { issued: 15, pending: 90 }
-  },
-  "Day 3": {
-    badges: { printed: 60, issued: 50 },
-    meals: { breakfast: 35, lunch: 55, dinner: 75 },
-    kitbags: { given: 90, pending: 28 },
-    certificates: { issued: 30, pending: 88 }
-  },
-  "Day 4": {
-    badges: { printed: 48, issued: 40 },
-    meals: { breakfast: 25, lunch: 45, dinner: 70 },
-    kitbags: { given: 70, pending: 48 },
-    certificates: { issued: 20, pending: 98 }
-  },
-  "Day 5": {
-    badges: { printed: 76, issued: 39 },
-    meals: { breakfast: 98, lunch: 87, dinner: 65 },
-    kitbags: { given: 12, pending: 34 },
-    certificates: { issued: 20, pending: 78 }
-  },
-};
+  // REAL-TIME data — auto-updates on every scan via Socket.IO
+  const { participants, loading, stats } = useConferenceData(conferenceSlug);
+
+  // Map "Day 1" → "day1" for food stats lookup
+  const dayKey = selectedDay.toLowerCase().replace(" ", ""); // "day1"
+
+  const mealsForDay = stats.food[dayKey] || { breakfast: 0, lunch: 0, dinner: 0 };
 
   return (
-    <div className="min-h-screen bg-[#EEF1F6] flex">
+    <div className="w-full space-y-6 p-2 sm:p-4">
 
-      {/* ✅ SIDEBAR (HIDDEN ON MOBILE) */}
-      <div className="hidden lg:block w-64 bg-white border-r p-6 space-y-6">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-         
-          
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight">📊 Onsite Operations Dashboard</h1>
+          <p className="text-slate-500 text-sm mt-0.5">Real-time attendance, kitbags, food distribution, and workshop stats.</p>
         </div>
-
-        <div>
-          <div className="space-y-3">
-          </div>
+        <div className="bg-white px-4.5 py-2.5 rounded-2xl border border-slate-200/60 shadow-sm flex items-center gap-2.5 w-fit">
+          <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+          <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Event Status: LIVE</span>
         </div>
       </div>
 
-      {/* ✅ MAIN CONTENT */}
-      <div className="flex-1 w-full p-4 sm:p-6 space-y-6">
-
-        {/* HEADER */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <div>
-
-          </div>
-
-          <div className="bg-white px-4 py-2 rounded-lg border flex items-center gap-2 w-fit">
-            <span className="text-sm">Event Status</span>
-            <span className="text-green-600 font-semibold">● LIVE</span>
-          </div>
+      {/* LOADING INDICATOR */}
+      {loading && (
+        <div className="text-center text-xs text-blue-500 animate-pulse py-1">
+          ⟳ Synchronizing live attendee data...
         </div>
+      )}
 
-        {/* STATS */}
-        <TopStats />
+      {/* STATS — real counts from database */}
+      <TopStats
+        total={stats.total}
+        checkedIn={stats.checkedIn}
+        kitbagCollected={stats.kitbagCollected}
+        certificateGiven={stats.certificateGiven}
+        printed={stats.printed}
+      />
 
-        {/* DAY TABS */}
+      {/* DAY TABS */}
+      <div className="pt-2">
         <DayTabs
           selectedDay={selectedDay}
           setSelectedDay={setSelectedDay}
         />
-
-        {/* HIGHLIGHT CARDS */}
-        <HighlightCards
-          meals={allDaysData[selectedDay].meals}
-          total={118}
-          selectedDay={selectedDay}
-        />
-
-        {/* CHARTS */}
-        <ChartsSection
-          data={allDaysData[selectedDay] || allDaysData["Day 1"]}
-        />
       </div>
+
+      {/* HIGHLIGHT CARDS — real food data for selected day */}
+      <HighlightCards
+        meals={mealsForDay}
+        total={stats.total}
+        selectedDay={selectedDay}
+      />
+
+      {/* CHARTS — real data */}
+      <ChartsSection
+        data={{
+          badges: { printed: stats.printed, issued: stats.checkedIn },
+          meals: mealsForDay,
+          kitbags: {
+            given: stats.kitbagCollected,
+            pending: Math.max(0, stats.total - stats.kitbagCollected)
+          },
+          certificates: {
+            issued: stats.certificateGiven,
+            pending: Math.max(0, stats.total - stats.certificateGiven)
+          },
+        }}
+      />
     </div>
   );
 };

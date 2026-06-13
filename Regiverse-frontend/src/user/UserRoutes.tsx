@@ -2,19 +2,20 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import UserLayout from "./layout/UserLayout";
 
-// Import your user-facing pages from src/pages/
+// User-specific pages
 import UserDashboard from "./pages/dashboard/index";
-import CheckInStation from "../pages/check-in-station/index";
-import Eventregistration from "../pages/event-registration/index";
+import CheckInStation from "./pages/check-in-station/index";   // ✅ Fixed: uses user version with real DB
+import FoodCounter from "../pages/food-counter/index";          // ✅ Fixed: uses real food-counter page
 import HallScan from "../pages/hall-entry-exit-scan/HallScan";
 import WorkshopScan from "../pages/workshop-scan/WorkshopScan";
 import MonoScan from "../pages/mono-scan/MonoScan";
-import CertificateScan from "../pages/certificate-scan/CertificateScan";
-import OperationsDashboard from "pages/OperationsDashboard";
+import CertificateScan from "../pages/certificate-scan/CertificateScan"; // ✅ Already fixed
 import RegisteredList from "./pages/RegisteredList";
 import AdminDashboard from "./pages/admin-dashboard";
 import ParticipantManagement from "./pages/participant-management";
-import UserPanel from "./pages/user-panel";
+import BadgePrint from "./pages/badge-print";
+import ScanCenter from "./pages/scan-center/ScanCenter";
+import Settings from "./pages/settings/Settings";
 
 export default function UserRoutes() {
   return (
@@ -26,8 +27,9 @@ export default function UserRoutes() {
        <Route index element={<UserDashboard />} />
         
         {/* Module Stations */}
+        <Route path="scan-center" element={<ScanCenter />} />
         <Route path="check-in" element={<CheckInStation />} />
-        <Route path="event-registration" element={<Eventregistration />} />
+        <Route path="event-registration" element={<FoodCounter />} />
         <Route path="hall-scan" element={<HallScan />} />
         <Route path="workshop" element={<WorkshopScan />} />
         <Route path="mono-scan" element={<MonoScan />} />
@@ -35,7 +37,8 @@ export default function UserRoutes() {
         <Route path="RegisteredList" element={<RegisteredList />} />
         <Route path="admin-dashboard" element={<AdminDashboard />} />
         <Route path="participant-management" element={<ParticipantManagement />} />
-        <Route path="user-panel" element={<UserPanel />} />
+        <Route path="badge-print" element={<BadgePrint />} />
+        <Route path="settings" element={<Settings />} />
 
         {/* Fallback internal redirection */}
         <Route path="*" element={<Navigate to="" replace />} />

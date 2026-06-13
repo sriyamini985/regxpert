@@ -1,5 +1,5 @@
 {
-  "name": "regiverse",
+  "name": "regxpert",
   "version": "0.1.0",
   "private": true,
   "rocketCritical": {
@@ -61,7 +61,7 @@
     "react-router-hash-link": "^2.4.3",
     "recharts": "^2.15.4",
     "redux": "^5.0.1",
-    "regiverse": "file:..",
+    "regxpert": "file:..",
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",

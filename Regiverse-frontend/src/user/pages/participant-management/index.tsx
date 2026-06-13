@@ -61,11 +61,13 @@ const defaultCategories = [
 
 const ParticipantPage = () => {
   const location = useLocation();
-  const { id } = useParams();
+  const { id, conferenceSlug } = useParams();
   const state = location.state as LocationState;
   const editingPerson = state?.person;
 
   const [categories, setCategories] = useState<string[]>(defaultCategories);
+  const [conferences, setConferences] = useState<any[]>([]);
+  const [selectedConference, setSelectedConference] = useState<string>("");
 
   const [form, setForm] = useState<Participant>({
     id: "",
@@ -109,11 +111,31 @@ const ParticipantPage = () => {
   });
 
   /* =========================
-      LOAD EDIT DATA
+      LOAD EDIT DATA & CONFERENCES
   ========================= */
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/conferences`)
+      .then(res => res.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data : [];
+        setConferences(list);
+        
+        if (!editingPerson && conferenceSlug) {
+          const match = list.find((c: any) => c.slug === conferenceSlug || c._id === conferenceSlug || c.name === conferenceSlug);
+          if (match) {
+            setSelectedConference(match._id);
+          }
+        }
+      })
+      .catch(err => console.error("Failed to load conferences", err));
+  }, [conferenceSlug, editingPerson]);
+
   useEffect(() => {
     if (editingPerson) {
       setForm(editingPerson);
+      if (editingPerson.conferenceId) {
+        setSelectedConference(editingPerson.conferenceId);
+      }
     }
   }, [editingPerson]);
 
@@ -149,9 +171,10 @@ const ParticipantPage = () => {
   ========================= */
   const handleSubmit = async () => {
     if (!validateForm()) return;
+    if (!selectedConference) return alert("❌ Please select a conference / event.");
 
     try {
-      const payload = { ...form };
+      const payload = { ...form, conferenceId: selectedConference };
 
       const url = editingPerson
         ? `${import.meta.env.VITE_API_URL}/api/participants/${form._id || form.id}`
@@ -245,6 +268,22 @@ const ParticipantPage = () => {
 
         {/* FORM */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <select
+              value={selectedConference}
+              onChange={(e) => setSelectedConference(e.target.value)}
+              className="w-full px-4 py-3 border rounded-xl bg-white font-medium text-gray-700"
+              disabled={!!editingPerson}
+            >
+              <option value="">Select Conference / Event *</option>
+              {conferences.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <input
             placeholder="Full Name *"
             value={form.name}

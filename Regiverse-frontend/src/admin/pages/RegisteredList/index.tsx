@@ -10,6 +10,7 @@ const RegisteredList = () => {
   const [participants, setParticipants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
 
   /* =========================
       LOAD CONFERENCE PARTICIPANTS
@@ -62,28 +63,31 @@ const RegisteredList = () => {
     }
   }, [conferenceId]);
 
-  /* =========================
-      PRINT HANDLER (Opens clean QRPrint tab)
-  ========================= */
-  const handlePrint = (participant: any) => {
-    // Safely package data into a URL string
-    const encodedData = encodeURIComponent(JSON.stringify(participant));
-    
-    // Open the clean print badge page in a brand new window tab
-    window.open(`/print?data=${encodedData}`, "_blank");
-  };
+  // Extract unique categories
+  const uniqueCategories = useMemo(() => {
+    const cats = participants.map((p) => p.category).filter(Boolean);
+    return Array.from(new Set(cats));
+  }, [participants]);
 
   /* =========================
-      LIVE SEARCH
+      LIVE SEARCH & FILTER
   ========================= */
   const filtered = useMemo(() => {
+    let result = participants;
+
+    // 1. Filter by category
+    if (selectedCategory) {
+      result = result.filter((p) => p.category === selectedCategory);
+    }
+
+    // 2. Filter by search query
     if (!searchQuery.trim()) {
-      return participants;
+      return result;
     }
 
     const q = searchQuery.toLowerCase();
 
-    return participants.filter((p) =>
+    return result.filter((p) =>
       [
         p.name,
         p.email,
@@ -97,7 +101,7 @@ const RegisteredList = () => {
             .includes(q)
         )
     );
-  }, [participants, searchQuery]);
+  }, [participants, searchQuery, selectedCategory]);
 
   return (
     <div className="p-24 space-y-6">
@@ -107,8 +111,39 @@ const RegisteredList = () => {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onSearch={() => {}}
-        onClear={() => setSearchQuery("")}
+        onClear={() => {
+          setSearchQuery("");
+          setSelectedCategory("");
+        }}
       />
+
+      {/* CATEGORY FILTER */}
+      <div className="flex gap-4 items-center bg-white p-4 rounded-xl shadow border border-slate-100">
+        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filter by Category:</label>
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="border rounded-lg px-4 py-2 text-sm bg-slate-50 cursor-pointer font-semibold outline-none text-slate-700 focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Categories</option>
+          {uniqueCategories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+        {(searchQuery || selectedCategory) && (
+          <button
+            onClick={() => {
+              setSearchQuery("");
+              setSelectedCategory("");
+            }}
+            className="text-xs font-semibold text-rose-500 hover:text-rose-700 transition"
+          >
+            Reset Filters
+          </button>
+        )}
+      </div>
 
       {/* LOADING */}
       {loading && (
@@ -123,7 +158,6 @@ const RegisteredList = () => {
           {filtered.length > 0 ? (
             <DelegateTable
               data={filtered}
-              onPrint={handlePrint}
             />
           ) : (
             <div className="bg-white rounded-xl shadow p-6 text-gray-500">

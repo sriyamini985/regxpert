@@ -1,34 +1,48 @@
 import { Users, BadgeCheck, Award, Package } from "lucide-react";
 
-const TopStats = () => {
+interface TopStatsProps {
+  total: number;
+  checkedIn: number;
+  printed: number;
+  certificateGiven: number;
+  kitbagCollected: number;
+}
+
+const TopStats = ({
+  total = 0,
+  checkedIn = 0,
+  printed = 0,
+  certificateGiven = 0,
+  kitbagCollected = 0,
+}: TopStatsProps) => {
   const stats = [
     {
       title: "Total Delegates",
-      value: 118,
+      value: total,
       icon: <Users size={20} />,
-      bg: "bg-blue-100",
+      bg: "bg-blue-50 text-blue-600 border-blue-100",
       iconColor: "text-blue-600"
     },
     {
-      title: "Badges Printed",
-      value: 1,
+      title: "Checked In / Badges",
+      value: checkedIn,
       icon: <BadgeCheck size={20} />,
-      bg: "bg-green-100",
-      iconColor: "text-green-600"
+      bg: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      iconColor: "text-emerald-600"
     },
     {
       title: "Certificates Issued",
-      value: 0,
+      value: certificateGiven,
       icon: <Award size={20} />,
-      bg: "bg-yellow-100",
-      iconColor: "text-yellow-600"
+      bg: "bg-amber-50 text-amber-600 border-amber-100",
+      iconColor: "text-amber-600"
     },
     {
       title: "Kit Bags Delivered",
-      value: 0,
+      value: kitbagCollected,
       icon: <Package size={20} />,
-      bg: "bg-red-100",
-      iconColor: "text-red-600"
+      bg: "bg-rose-50 text-rose-600 border-rose-100",
+      iconColor: "text-rose-600"
     }
   ];
 
@@ -37,20 +51,20 @@ const TopStats = () => {
       {stats.map((item, i) => (
         <div
           key={i}
-          className="bg-white p-5 rounded-2xl shadow-sm flex items-center gap-4 hover:shadow-md transition"
+          className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group"
         >
           {/* ICON */}
           <div
-            className={`w-12 h-12 flex items-center justify-center rounded-xl ${item.bg}`}
+            className={`w-14 h-14 flex items-center justify-center rounded-2xl border ${item.bg}`}
           >
-            <span className={item.iconColor}>{item.icon}</span>
+            <span>{item.icon}</span>
           </div>
 
           {/* TEXT */}
           <div>
-            <p className="text-sm text-gray-500">{item.title}</p>
-            <h2 className="text-2xl font-bold mt-1 text-gray-900">
-              {item.value}
+            <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{item.title}</p>
+            <h2 className="text-3xl font-black mt-1 text-slate-800 tracking-tight">
+              {item.value.toLocaleString()}
             </h2>
           </div>
         </div>

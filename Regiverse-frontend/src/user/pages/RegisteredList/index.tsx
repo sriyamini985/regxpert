@@ -1,105 +1,147 @@
-import { useEffect, useState } from "react";
-
-import SearchBar from "./components/SearchBar";
+import { useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useConferenceData } from "../../../hooks/useConferenceData";
 import DelegateTable from "./components/DelegateTable";
 
 const RegisteredList = () => {
-  const [participants, setParticipants] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { conferenceSlug } = useParams<"conferenceSlug">();
+  const { participants, loading } = useConferenceData(conferenceSlug);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
 
-  /* =======================================================
-      LIVE REAL-TIME SUGGESTIONS (DEBUNCED ON KEYSTROKE)
-  ======================================================= */
-  useEffect(() => {
-    // If search field is empty, do not load any data
-    if (!searchQuery.trim()) {
-      setParticipants([]);
-      setLoading(false);
-      return;
+  // Extract all unique categories present in the current database roster
+  const uniqueCategories = useMemo(() => {
+    const cats = participants.map((p) => p.category).filter(Boolean);
+    return Array.from(new Set(cats));
+  }, [participants]);
+
+  /* ===========================
+     CLIENT-SIDE FILTERING (Fast & Responsive)
+  =========================== */
+  const filteredParticipants = useMemo(() => {
+    let result = participants;
+
+    // 1. Filter by category
+    if (selectedCategory) {
+      result = result.filter((p) => p.category === selectedCategory);
     }
 
-    setLoading(true);
-    setErrorMessage(null);
+    // 2. Filter by search query
+    if (!searchQuery.trim()) {
+      return result;
+    }
 
-    // Debounce: Waits for the user to pause typing for 300ms before sending the request
-    const delayDebounceFn = setTimeout(async () => {
-      try {
-        const apiUrl = `${import.meta.env.VITE_API_URL}/api/participants?identifier=${encodeURIComponent(searchQuery)}`;
-        
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-          throw new Error(`Server status issue: ${response.status}`);
-        }
+    const q = searchQuery.toLowerCase().trim();
 
-        const data = await response.json();
-
-        if (Array.isArray(data)) {
-          setParticipants(data);
-        } else if (data && data.data && Array.isArray(data.data)) {
-          setParticipants(data.data);
-        } else {
-          setParticipants([]);
-        }
-      } catch (err: any) {
-        console.error("Instant Search Error:", err);
-        setErrorMessage(err.message || "Failed to search records.");
-      } finally {
-        setLoading(false);
-      }
-    }, 300);
-
-    // Cleanup function clears out the timer if user presses another key within 300ms
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
+    return result.filter((p) =>
+      [
+        p.name,
+        p.email,
+        p.phone,
+        p.regId,
+      ]
+        .filter(Boolean)
+        .some((v) =>
+          String(v)
+            .toLowerCase()
+            .includes(q)
+        )
+    );
+  }, [participants, searchQuery, selectedCategory]);
 
   return (
-    <div className="p-24 space-y-6">
-      {/* SEARCH INPUT BAR */}
-      <SearchBar
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onSearch={() => {}}
-        onClear={() => setSearchQuery("")}
-      />
+    <div className="space-y-5 font-sans text-slate-800">
 
-      {/* ERROR FEEDBACK BAR */}
-      {errorMessage && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 font-mono text-sm shadow-sm">
-          <strong>⚠️ Search Blocked:</strong> {errorMessage}
+      {/* HEADER */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">📋 Registered List</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Search participants — filter by category or type name, Reg ID, or mobile number
+          </p>
         </div>
-      )}
-
-      {/* LOADING STATE */}
-      {loading && (
-        <div className="bg-white rounded-xl shadow p-6 text-blue-600 font-medium">
-          Searching master list for "{searchQuery}"...
+        <div className="flex flex-wrap gap-3">
+          <div className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-sm font-semibold flex items-center gap-2">
+            Total Roster: {filteredParticipants.length} / {participants.length}
+          </div>
+          <div className="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-sm font-medium flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+            Real-time Sync Active
+          </div>
         </div>
-      )}
+      </div>
 
-      {/* CONDITIONAL INTERFACE RENDER */}
-      {!loading && (
-        <>
-          {searchQuery.trim() === "" ? (
-            /* INITIAL INACTIVE LOOK: No Data Loaded First */
-            <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-12 text-center text-gray-400">
-              <span className="block text-2xl mb-1">🔍</span>
-              Type a participant name, registration ID, or mobile number to fetch live suggestions instantly.
-            </div>
-          ) : participants.length > 0 ? (
-            /* SUGGESTIONS FOUND */
-            <DelegateTable data={participants} />
-          ) : (
-            /* NO SUGGESTIONS FOUND */
-            <div className="bg-white rounded-xl shadow p-6 text-gray-500 border border-gray-100">
-              No matching records found for "{searchQuery}".
-            </div>
+      {/* SEARCH BAR & CATEGORY FILTER */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Search input */}
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="🔍 Search by name, Reg ID, or mobile..."
+            className="flex-1 px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-slate-850 text-sm font-medium"
+          />
+
+          {/* Category Dropdown */}
+          <div className="min-w-[200px]">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full h-[46px] px-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-sm outline-none cursor-pointer appearance-none"
+            >
+              <option value="">All Categories</option>
+              {uniqueCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Clear Button */}
+          {(searchQuery || selectedCategory) && (
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory("");
+              }}
+              className="px-5 py-3 bg-slate-100 text-slate-600 rounded-xl font-semibold hover:bg-slate-200 transition text-sm whitespace-nowrap"
+            >
+              Clear Filters
+            </button>
           )}
-        </>
+        </div>
+      </div>
+
+      {/* LOADING */}
+      {loading && participants.length === 0 && (
+        <div className="bg-white rounded-xl shadow p-6 text-blue-600 font-medium text-sm animate-pulse">
+          ⟳ Loading participants...
+        </div>
+      )}
+
+      {/* EMPTY REGISTERED LIST (Total is 0) */}
+      {!loading && participants.length === 0 && (
+        <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-12 text-center text-gray-400">
+          <span className="block text-3xl mb-2">👥</span>
+          No delegates registered for this conference yet.
+        </div>
+      )}
+
+      {/* NO RESULTS FROM SEARCH/FILTER */}
+      {!loading && participants.length > 0 && filteredParticipants.length === 0 && (
+        <div className="bg-white rounded-xl shadow p-6 text-gray-500 border border-gray-100 text-sm">
+          No participants found matching selected filters.
+        </div>
+      )}
+
+      {/* RESULTS TABLE */}
+      {filteredParticipants.length > 0 && (
+        <DelegateTable data={filteredParticipants} />
       )}
     </div>
   );
 };
 
-export default RegisteredList; 
+export default RegisteredList;

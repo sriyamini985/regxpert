@@ -14,7 +14,7 @@ export default function AdminLayout() {
             R
           </div>
           <h1 className="font-extrabold text-2xl tracking-tight text-slate-900">
-            REGIVERSE
+            REGXPERT
           </h1>
         </div>
 
@@ -30,7 +30,7 @@ export default function AdminLayout() {
 
       {/* Mobile Navbar */}
       <header className="lg:hidden bg-white border-b border-slate-200 p-5 flex items-center justify-between sticky top-0 z-50">
-        <h1 className="font-extrabold text-xl text-slate-900">REGIVERSE</h1>
+        <h1 className="font-extrabold text-xl text-slate-900">REGXPERT</h1>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="text-2xl text-slate-900 p-2 bg-slate-50 rounded-xl active:scale-95 transition-all"

@@ -61,6 +61,16 @@ const participantSchema = new mongoose.Schema(
       default: false,
     },
 
+    printLogs: {
+      type: [
+        {
+          timestamp: { type: Date, default: Date.now },
+          staffMember: { type: String, default: "" }
+        }
+      ],
+      default: []
+    },
+
     /* =========================
        PRINT
     ========================= */
@@ -113,6 +123,11 @@ const participantSchema = new mongoose.Schema(
     },
 
     hallEntries: {
+      type: [Date],
+      default: [],
+    },
+
+    hallExits: {
       type: [Date],
       default: [],
     },
@@ -244,6 +259,31 @@ const participantSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Performance Indexes for faster roster lookup and dashboard aggregation
+participantSchema.index({ conferenceId: 1 });
+participantSchema.index({ conferenceName: 1 });
+
+// Auto-generate regId and qrCode on save if not provided
+participantSchema.pre("save", function () {
+  if (!this.regId || this.regId.trim() === "") {
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const numbers = "0123456789";
+    let alphaPart = "";
+    let numPart = "";
+    for (let j = 0; j < 4; j++) {
+      alphaPart += letters.charAt(Math.floor(Math.random() * letters.length));
+    }
+    for (let k = 0; k < 3; k++) {
+      numPart += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    }
+    this.regId = `RegID - ${alphaPart}${numPart}`;
+  }
+
+  if (!this.qrCode || this.qrCode.trim() === "") {
+    this.qrCode = `QR-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  }
+});
 
 const Participant =
   mongoose.models.Participant ||

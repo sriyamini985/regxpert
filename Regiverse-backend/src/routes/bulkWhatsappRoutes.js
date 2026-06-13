@@ -7,17 +7,19 @@ router.post("/:conferenceId/send", async (req, res) => {
 
   try {
 
-    const { message } = req.body;
+    const { message, participantIds } = req.body;
 
     console.log(
       "CONFERENCE:",
       req.params.conferenceId
     );
 
-    const participants =
-      await Participant.find({
-        conferenceId: req.params.conferenceId,
-      });
+    const query = { conferenceId: req.params.conferenceId };
+    if (participantIds && Array.isArray(participantIds)) {
+      query._id = { $in: participantIds };
+    }
+
+    const participants = await Participant.find(query);
 
     console.log(
       "TOTAL PARTICIPANTS:",

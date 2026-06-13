@@ -67,6 +67,7 @@ router.get("/", async (req, res) => {
         return {
           _id: c._id,
           name: conferenceName,
+          slug: c.slug,
           delegates,
           createdAt: c.createdAt,
         };
@@ -245,13 +246,50 @@ router.post(
         });
       }
 
-      const result = await Participant.insertMany(formatted);
+      // Check database to filter out duplicate participants (by phone or email in this conference)
+      const existingParticipants = await Participant.find({ conferenceId: conferenceId });
+      const existingPhones = new Set(existingParticipants.map(p => p.phone?.trim()).filter(Boolean));
+      const existingEmails = new Set(existingParticipants.map(p => p.email?.trim().toLowerCase()).filter(Boolean));
+
+      const uniqueFormatted = [];
+      let skippedCount = 0;
+      
+      // Also prevent duplicates within the Excel sheet itself
+      const seenPhonesInExcel = new Set();
+      const seenEmailsInExcel = new Set();
+
+      formatted.forEach(item => {
+        const phone = item.phone?.trim();
+        const email = item.email?.trim().toLowerCase();
+        
+        const isDuplicate = 
+          (phone && (existingPhones.has(phone) || seenPhonesInExcel.has(phone))) ||
+          (email && (existingEmails.has(email) || seenEmailsInExcel.has(email)));
+          
+        if (isDuplicate) {
+          skippedCount++;
+        } else {
+          if (phone) seenPhonesInExcel.add(phone);
+          if (email) seenEmailsInExcel.add(email);
+          uniqueFormatted.push(item);
+        }
+      });
+
+      if (uniqueFormatted.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: `All ${formatted.length} entries in the file were skipped as duplicates of existing records.`,
+        });
+      }
+
+      const result = await Participant.insertMany(uniqueFormatted);
       broadcastBulkImport(conferenceId);
 
       return res.status(200).json({
         success: true,
         inserted: result.length,
-        message: `${result.length} delegates imported successfully.`,
+        skipped: skippedCount,
+        message: `${result.length} delegates imported successfully.${skippedCount > 0 ? ` Skipped ${skippedCount} duplicate records.` : ""}`,
       });
     } catch (err) {
       console.error("Critical Import Exception:", err);

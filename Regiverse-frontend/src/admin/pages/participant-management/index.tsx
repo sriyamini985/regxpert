@@ -33,6 +33,9 @@ const ParticipantPage = () => {
   const editingPerson = state?.person;
 
   const [categories, setCategories] = useState<string[]>(defaultCategories);
+  const [conferences, setConferences] = useState<any[]>([]);
+  const [selectedConference, setSelectedConference] = useState<string>("");
+
   const [form, setForm] = useState<Participant>({
     name: "", phone: "", email: "", state: "", category: "", reference: "", medicalCouncilNumber: "", printed: false,
     blockKitbag: false, blockCertificate: false,
@@ -44,7 +47,30 @@ const ParticipantPage = () => {
     blockWorkshop1: false, blockWorkshop2: false, blockWorkshop3: false, blockWorkshop4: false, blockWorkshop5: false
   });
 
-  useEffect(() => { if (editingPerson) setForm(editingPerson); }, [editingPerson]);
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/conferences`)
+      .then(res => res.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data : [];
+        setConferences(list);
+        if (!editingPerson && conferenceId) {
+          const match = list.find((c: any) => c._id === conferenceId || c.slug === conferenceId || c.name === conferenceId);
+          if (match) {
+            setSelectedConference(match._id);
+          }
+        }
+      })
+      .catch(err => console.error(err));
+  }, [conferenceId, editingPerson]);
+
+  useEffect(() => {
+    if (editingPerson) {
+      setForm(editingPerson);
+      if (editingPerson.conferenceId) {
+        setSelectedConference(editingPerson.conferenceId);
+      }
+    }
+  }, [editingPerson]);
 
   const handleChange = (key: keyof Participant, value: any) => setForm(prev => ({ ...prev, [key]: value }));
 
@@ -60,16 +86,26 @@ const ParticipantPage = () => {
 
   const handleSubmit = async () => {
     if (!form.name || !form.phone || !form.category) return alert("❌ Mandatory fields missing.");
+    if (!selectedConference) return alert("❌ Please select a conference / event.");
     try {
       const url = editingPerson ? `${import.meta.env.VITE_API_URL}/api/participants/${form._id || form.id}` : `${import.meta.env.VITE_API_URL}/api/participants`;
+      
+      const payload = { ...form, conferenceId: selectedConference };
       const res = await fetch(url, {
         method: editingPerson ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, conferenceId }),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Error saving data");
+
+      const text = await res.text();
+      let result: any = {};
+      try {
+        result = JSON.parse(text);
+      } catch (e) {}
+
+      if (!res.ok) throw new Error(result.message || "Error saving data");
       alert("✅ Success");
-      navigate(`/admin/conference/${conferenceId}`);
+      navigate(`/admin/conference/${selectedConference}`);
     } catch (err: any) { alert(err.message); }
   };
 
@@ -79,6 +115,22 @@ const ParticipantPage = () => {
         <h2 className="text-2xl font-bold mb-6">{editingPerson ? "Edit Delegate" : "Registration Terminal"}</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="md:col-span-3">
+            <select
+              value={selectedConference}
+              onChange={(e) => setSelectedConference(e.target.value)}
+              className="w-full p-3 border rounded-xl bg-white font-medium text-gray-700"
+              disabled={!!editingPerson}
+            >
+              <option value="">Select Conference / Event *</option>
+              {conferences.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
           <input className="p-3 border rounded-xl" placeholder="Name *" value={form.name} onChange={e => handleChange("name", e.target.value)} />
           <input className="p-3 border rounded-xl" placeholder="Phone *" value={form.phone} onChange={e => handleChange("phone", e.target.value)} />
           <input className="p-3 border rounded-xl" placeholder="Email" value={form.email} onChange={e => handleChange("email", e.target.value)} />
