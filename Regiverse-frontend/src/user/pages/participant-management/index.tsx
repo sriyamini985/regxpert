@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 /* =========================
    TYPES
@@ -60,6 +61,7 @@ const defaultCategories = [
 ];
 
 const ParticipantPage = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const { id, conferenceSlug } = useParams();
   const state = location.state as LocationState;
@@ -257,7 +259,14 @@ const ParticipantPage = () => {
     <div className="min-h-screen bg-gray-50 flex justify-center items-start pt-20 pb-20 px-4">
       <div className="w-full max-w-5xl bg-white rounded-2xl shadow-md p-8">
         {/* HEADER */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4 mb-8">
+          <button 
+            onClick={() => navigate(-1)}
+            className="p-2.5 hover:bg-slate-100 rounded-xl transition text-slate-600 flex items-center justify-center border border-slate-200/60 shadow-sm"
+            title="Go Back"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <div>
             <h2 className="text-2xl font-semibold text-gray-800">
               {editingPerson ? "Edit Delegate" : "Add New Delegate"}

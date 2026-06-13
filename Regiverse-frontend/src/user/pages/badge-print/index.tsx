@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
 import { useAuth } from "../../../contexts/AuthContext";
 import LoadingBar from "../../../components/ui/LoadingBar";
+import { ArrowLeft } from "lucide-react";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -52,6 +53,7 @@ interface Participant {
 const ALL_CHECKPOINT_OPTIONS = ["Check-In", "Food Counter", "Kitbag", "Certificate", "Workshop"];
 
 const BadgePrint = () => {
+  const navigate = useNavigate();
   const { conferenceSlug } = useParams<{ conferenceSlug: string }>();
   const { user } = useAuth();
 
@@ -229,9 +231,18 @@ const BadgePrint = () => {
         
         {/* HEADER BAR */}
         <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Badge Printing Station</h1>
-            <p className="text-slate-500 font-medium text-sm mt-1">Configure layout, verify print logs, and print event ID cards.</p>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate(`/u/${conferenceSlug}`)}
+              className="p-2.5 hover:bg-slate-100 rounded-xl transition text-slate-600 flex items-center justify-center border border-slate-200/60 shadow-sm"
+              title="Back to Dashboard"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Badge Printing Station</h1>
+              <p className="text-slate-500 font-medium text-sm mt-1">Configure layout, verify print logs, and print event ID cards.</p>
+            </div>
           </div>
           <div className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-100 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>

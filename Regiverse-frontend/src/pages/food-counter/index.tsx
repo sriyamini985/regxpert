@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
+import { ArrowLeft } from "lucide-react";
 
 import { API_URL as API } from "../../config/api";
 const days = [1, 2, 3, 4, 5];
@@ -175,24 +176,29 @@ const FoodCounter = () => {
     <div className="max-w-4xl mx-auto space-y-6">
 
       {/* HEADER */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">🍽️ Food Scan</h1>
-            <p className="text-slate-500 text-sm mt-1">
-              {step === "day" && "Step 1 — Select Day"}
-              {step === "meal" && `Step 2 — Select Meal for Day ${selectedDay}`}
-              {step === "scan" && `Day ${selectedDay} · ${selectedMeal} — Scan Participant`}
-            </p>
-          </div>
-          {step !== "day" && (
-            <button
-              onClick={() => reset(step === "meal" ? "day" : "meal")}
-              className="px-4 py-2 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition"
-            >
-              ← Back
-            </button>
-          )}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center gap-4">
+        <button 
+          onClick={() => {
+            if (step === "day") {
+              navigate(`/u/${conferenceSlug}/scan-center`);
+            } else if (step === "meal") {
+              reset("day");
+            } else {
+              reset("meal");
+            }
+          }}
+          className="p-2.5 hover:bg-slate-100 rounded-xl transition text-slate-600 flex items-center justify-center border border-slate-200/60 shadow-sm"
+          title={step === "day" ? "Back to Scan Center" : step === "meal" ? "Back to Days" : "Back to Meals"}
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">🍽️ Food Scan</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            {step === "day" && "Step 1 — Select Day"}
+            {step === "meal" && `Step 2 — Select Meal for Day ${selectedDay}`}
+            {step === "scan" && `Day ${selectedDay} · ${selectedMeal} — Scan Participant`}
+          </p>
         </div>
       </div>
 

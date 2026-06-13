@@ -1,43 +1,48 @@
-import BadgesBarChart from "../charts/BadgesBarChart";
-// ... import your other charts here (Meals, Kitbags, etc.)
-import CertificatesChart from "../charts/CertificatesChart";
-import kitBagChart from "../charts/KitBagChart";
-import MealsPieChart from "../charts/MealsPieChart";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
+const COLORS = ["#f59e0b", "#3b82f6"];
 
-
-interface ChartsSectionProps {
+interface CertificatesChartProps {
   data: {
-    badges: {
-      printed: number;
-      notPrinted: number; // 👈 Verified match
-    };
-    meals: {
-      breakfast: number;
-      lunch: number;
-      dinner: number;
-    };
-    kitbags: {
-      given: number;
-      pending: number;
-    };
-    certificates: {
-      issued: number;
-      pending: number;
-    };
+    issued: number;
+    pending: number;
   };
 }
 
-const ChartsSection = ({ data }: ChartsSectionProps) => {
+const CertificatesChart = ({ data }: CertificatesChartProps) => {
+  const chartData = [
+    { name: "Issued", value: data.issued },
+    { name: "Pending", value: data.pending }
+  ];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Line 34 will compile perfectly now since types align */}
-      <BadgesBarChart data={data.badges} />
-      
-      {/* ... your other chart components here ... */}
+    <div className="bg-white p-4 rounded-2xl shadow-sm h-[260px] flex flex-col items-center">
+      <h3 className="text-sm font-semibold mb-2">Certificates</h3>
+
+      <div className="w-full h-[170px] flex justify-center items-center">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              innerRadius={40}
+              outerRadius={70}
+            >
+              {chartData.map((_, index) => (
+                <Cell key={index} fill={COLORS[index]} />
+              ))}
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="flex gap-3 text-xs mt-2">
+        <span className="text-yellow-500">● Issued</span>
+        <span className="text-blue-500">● Pending</span>
+      </div>
     </div>
   );
 };
 
-export default ChartsSection;
-
+export default CertificatesChart;

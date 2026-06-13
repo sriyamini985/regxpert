@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
+import { ArrowLeft } from "lucide-react";
 import LoadingBar from "../../../components/ui/LoadingBar";
 
 import { API_URL as API } from "../../../config/api";
@@ -183,12 +184,21 @@ const CheckInStation = () => {
       <main className="pt-4 px-4 max-w-4xl mx-auto">
 
         {/* TITLE */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-slate-800">📦 Kit Bag Scan</h1>
-          <p className="text-gray-500 mt-1">
-            {selectedDay ? `Day ${selectedDay} — Scan or Search Participant` : "Select a Day to Begin"}
-          </p>
-        </div>
+        {!selectedDay && (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center gap-4 mb-8">
+            <button 
+              onClick={() => navigate(`/u/${conferenceSlug}/scan-center`)}
+              className="p-2.5 hover:bg-slate-100 rounded-xl transition text-slate-600 flex items-center justify-center border border-slate-200/60 shadow-sm"
+              title="Back to Scan Center"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">📦 Kit Bag Scan</h1>
+              <p className="text-slate-500 text-sm mt-1">Select a Day to Begin</p>
+            </div>
+          </div>
+        )}
 
         {/* DAY BUTTONS */}
         {!selectedDay && (
@@ -214,20 +224,21 @@ const CheckInStation = () => {
           <div className="space-y-6">
 
             {/* HEADER BAR */}
-            <div className="flex items-center justify-between bg-white rounded-2xl shadow p-5 border border-slate-100">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-800">Day {selectedDay} — Kit Bag Scan</h2>
-                <p className="text-gray-500 text-sm">Auto QR Scan &amp; Manual Search</p>
-              </div>
-              <button
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center gap-4">
+              <button 
                 onClick={() => {
                   setSelectedDay(null);
                   navigate(`/u/${conferenceSlug}/check-in`);
                 }}
-                className="px-5 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition"
+                className="p-2.5 hover:bg-slate-100 rounded-xl transition text-slate-600 flex items-center justify-center border border-slate-200/60 shadow-sm"
+                title="Back to Day Select"
               >
-                ← Back
+                <ArrowLeft className="w-5 h-5" />
               </button>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">Day {selectedDay} — Kit Bag Scan</h2>
+                <p className="text-slate-500 text-sm mt-1">Auto QR Scan &amp; Manual Search</p>
+              </div>
             </div>
 
             {/* QR SCAN INPUT (works with barcode scanner or typing) */}

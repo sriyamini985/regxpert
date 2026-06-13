@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import { ArrowLeft } from "lucide-react";
 
 import { API_URL as API } from "../../config/api";
 
@@ -176,27 +177,28 @@ const HallScan = () => {
     <div className="max-w-4xl mx-auto space-y-6">
 
       {/* HEADER */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">🚪 Hall Entry/Exit</h1>
-            <p className="text-slate-500 text-sm mt-1">
-              {mode
-                ? `Mode: ${mode === 'entry' ? '🟢 ENTRY' : '🔴 EXIT'} Scan`
-                : "Select scanning direction to begin"}
-            </p>
-          </div>
-          {mode && (
-            <button
-              onClick={() => {
-                setMode(null);
-                navigate(`/u/${conferenceSlug}/hall-scan`);
-              }}
-              className="px-5 py-2 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition"
-            >
-              ← Back
-            </button>
-          )}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center gap-4">
+        <button 
+          onClick={() => {
+            if (mode) {
+              setMode(null);
+              navigate(`/u/${conferenceSlug}/hall-scan`);
+            } else {
+              navigate(`/u/${conferenceSlug}/scan-center`);
+            }
+          }}
+          className="p-2.5 hover:bg-slate-100 rounded-xl transition text-slate-600 flex items-center justify-center border border-slate-200/60 shadow-sm"
+          title={mode ? "Back to Mode Select" : "Back to Scan Center"}
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">🚪 Hall Entry/Exit</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            {mode
+              ? `Mode: ${mode === 'entry' ? '🟢 ENTRY' : '🔴 EXIT'} Scan`
+              : "Select scanning direction to begin"}
+          </p>
         </div>
       </div>
 

@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useConferenceData } from "../../../hooks/useConferenceData";
+import { ArrowLeft } from "lucide-react";
 import DelegateTable from "./components/DelegateTable";
 
 const RegisteredList = () => {
+  const navigate = useNavigate();
   const { conferenceSlug } = useParams<"conferenceSlug">();
   const { participants, loading } = useConferenceData(conferenceSlug);
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,11 +56,20 @@ const RegisteredList = () => {
 
       {/* HEADER */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">📋 Registered List</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Search participants — filter by category or type name, Reg ID, or mobile number
-          </p>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate(`/u/${conferenceSlug}`)}
+            className="p-2.5 hover:bg-slate-100 rounded-xl transition text-slate-600 flex items-center justify-center border border-slate-200/60 shadow-sm"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">📋 Registered List</h1>
+            <p className="text-slate-500 text-sm mt-1">
+              Search participants — filter by category or type name, Reg ID, or mobile number
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <div className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-sm font-semibold flex items-center gap-2">

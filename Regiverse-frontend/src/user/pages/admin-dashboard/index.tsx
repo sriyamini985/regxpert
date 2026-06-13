@@ -68,7 +68,10 @@ const Dashboard = () => {
       {/* CHARTS — real data */}
       <ChartsSection
         data={{
-          badges: { printed: stats.printed, issued: stats.checkedIn },
+          badges: { 
+            printed: stats.printed, 
+            notPrinted: Math.max(0, stats.total - stats.printed) 
+          },
           meals: mealsForDay,
           kitbags: {
             given: stats.kitbagCollected,

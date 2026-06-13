@@ -174,15 +174,30 @@ const Dashboard = () => {
       {/* CHARTS */}
       <ChartsSection
         data={{
-          badges: { printed: stats?.printed || 0, issued: stats?.checkedIn || 0 },
+          badges: { 
+            printed: stats?.printed || 0, 
+            notPrinted: Math.max(0, (stats?.total || 0) - (stats?.printed || 0)) 
+          },
           meals: mealsForDay,
           kitbags: {
             given: stats?.kitbagCollected || 0,
             pending: Math.max(0, (stats?.total || 0) - (stats?.kitbagCollected || 0))
           },
           certificates: {
-            given: stats?.certificateGiven || 0,
+            issued: stats?.certificateGiven || 0,
             pending: Math.max(0, (stats?.total || 0) - (stats?.certificateGiven || 0))
+          },
+          hallScans: {
+            entry: participants.filter(p => p.hallEntries && p.hallEntries.length > 0).length,
+            exit: participants.filter(p => p.hallExits && p.hallExits.length > 0).length
+          },
+          monoScans: {
+            active: stats?.checkedIn || 0,
+            total: stats?.total || 0
+          },
+          workshopScans: {
+            active: participants.filter(p => p.workshopScans && p.workshopScans.length > 0).length,
+            total: stats?.total || 0
           }
         }}
       />
