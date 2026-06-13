@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { socket } from "../services/socketService";
+import { useConference } from "../contexts/ConferenceContext";
 import { API_URL } from "../config/api";
 
 const API = API_URL;
@@ -7,6 +7,7 @@ const API = API_URL;
 export const useConferenceData = (conferenceId: string | undefined) => {
   const [participants, setParticipants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { realtimeUpdate } = useConference();
 
   /* ================================================
      FETCH DATA FROM DATABASE
@@ -19,12 +20,9 @@ export const useConferenceData = (conferenceId: string | undefined) => {
     try {
       setLoading(true);
       const fetchUrl = `${API}/api/participants/conference/${conferenceId}`;
-      console.log(`🌐 useConferenceData: Fetching from ${fetchUrl}`);
       const res = await fetch(fetchUrl);
-      console.log(`🌐 useConferenceData: Response status: ${res.status}`);
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = await res.json();
-      console.log(`🌐 useConferenceData: Fetched ${data?.length || 0} participants`);
       setParticipants(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("❌ useConferenceData: Fetch error:", err);
@@ -42,75 +40,19 @@ export const useConferenceData = (conferenceId: string | undefined) => {
   }, [fetchData]);
 
   /* ================================================
-     REAL-TIME: JOIN CONFERENCE ROOM & LISTEN TO SOCKET EVENTS
-     Any scan/create/update/delete re-fetches fresh data instantly
+     REAL-TIME PIPELINE LISTENER
   ================================================ */
   useEffect(() => {
-    if (!conferenceId) return;
+    if (!realtimeUpdate) return;
 
-    const joinRoom = () => {
-      console.log(`📡 Socket emitting join-conference for room: ${conferenceId}`);
-      socket.emit("join-conference", conferenceId);
-    };
-
-    // Join room immediately if socket is already connected
-    if (socket.connected) {
-      joinRoom();
+    if (realtimeUpdate.type === "PARTICIPANT_UPDATED") {
+      setParticipants((prev) =>
+        prev.map((p) => (p._id === realtimeUpdate.data._id ? realtimeUpdate.data : p))
+      );
+    } else if (realtimeUpdate.type === "BULK_IMPORT") {
+      fetchData();
     }
-
-    // Automatically rejoin room on every connect / reconnect event
-    socket.on("connect", joinRoom);
-
-    // ---- EVENT LISTENERS ----
-
-    // New participant registered
-    const onCreated = () => {
-      console.log("🔔 Real-time: participant created → refreshing");
-      fetchData();
-    };
-
-    // Any participant updated (check-in, kitbag, certificate, food, etc.)
-    const onUpdated = () => {
-      console.log("🔔 Real-time: participant updated → refreshing");
-      fetchData();
-    };
-
-    // Participant deleted
-    const onDeleted = () => {
-      console.log("🔔 Real-time: participant deleted → refreshing");
-      fetchData();
-    };
-
-    // Bulk import (CSV/Excel upload from admin)
-    const onBulkImport = (payload: any) => {
-      if (!payload?.conferenceId || payload.conferenceId === conferenceId) {
-        console.log("🔔 Real-time: bulk import → refreshing");
-        fetchData();
-      }
-    };
-
-    // Food scan event
-    const onFoodUpdated = () => {
-      console.log("🔔 Real-time: food updated → refreshing");
-      fetchData();
-    };
-
-    socket.on("participant-created", onCreated);
-    socket.on("participant-updated", onUpdated);
-    socket.on("participant-deleted", onDeleted);
-    socket.on("conference-data-updated", onBulkImport);
-    socket.on("food-updated", onFoodUpdated);
-
-    return () => {
-      socket.off("connect", joinRoom);
-      socket.off("participant-created", onCreated);
-      socket.off("participant-updated", onUpdated);
-      socket.off("participant-deleted", onDeleted);
-      socket.off("conference-data-updated", onBulkImport);
-      socket.off("food-updated", onFoodUpdated);
-      socket.emit("leave-conference", conferenceId);
-    };
-  }, [conferenceId, fetchData]);
+  }, [realtimeUpdate, fetchData]);
 
   /* ================================================
      COMPUTED STATS (derived from real participant data)

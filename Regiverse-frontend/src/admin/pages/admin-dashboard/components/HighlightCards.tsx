@@ -1,14 +1,15 @@
 const HighlightCards = ({ meals, total, selectedDay }: any) => {
   const cards = [
-    { title: "Breakfast", value: meals.breakfast, color: "from-red-400 to-red-500" },
-    { title: "Lunch", value: meals.lunch, color: "from-indigo-500 to-blue-600" },
-    { title: "Dinner", value: meals.dinner, color: "from-orange-400 to-orange-500" }
+    { title: "Breakfast", value: meals?.breakfast || 0, color: "from-red-400 to-red-500" },
+    { title: "Lunch", value: meals?.lunch || 0, color: "from-indigo-500 to-blue-600" },
+    { title: "Dinner", value: meals?.dinner || 0, color: "from-orange-400 to-orange-500" }
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {cards.map((card, i) => {
-        const remaining = total - card.value;
+        // Enforce basic math limits so negative numbers aren't rendered if total calculations are catching up
+        const remaining = Math.max(0, total - card.value);
 
         return (
           <div
@@ -23,13 +24,8 @@ const HighlightCards = ({ meals, total, selectedDay }: any) => {
               {card.value}
             </h2>
 
-            <p className="text-sm mt-2 opacity-90">
-              members eaten
-            </p>
-
-            <p className="text-xs opacity-80 mt-1">
-              out of {total} delegates
-            </p>
+            <p className="text-sm mt-2 opacity-90">members eaten</p>
+            <p className="text-xs opacity-80 mt-1">out of {total} total delegates</p>
 
             <div className="mt-5 bg-white/20 p-3 rounded-xl flex justify-between text-sm">
               <span>{card.value} Attended</span>

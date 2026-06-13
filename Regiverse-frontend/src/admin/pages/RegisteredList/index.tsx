@@ -12,56 +12,41 @@ const RegisteredList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  /* =========================
-      LOAD CONFERENCE PARTICIPANTS
-  ========================= */
-  useEffect(() => {
-    const fetchParticipants = async () => {
-      try {
-        setLoading(true);
+/* =======================================
+    LOAD CONFERENCE PARTICIPANTS (ADMIN VIEW)
+======================================= */
+useEffect(() => {
+  const fetchParticipants = async () => {
+    try {
+      setLoading(true);
 
-        console.log(
-          "FETCHING CONFERENCE:",
-          conferenceId
-        );
+      // We append ?admin=true so the database returns everything all the time
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/participants/conference/${conferenceId}?admin=true`
+      );
 
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/participants/conference/${conferenceId}`
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed with status ${response.status}`
-          );
-        }
-
-        const data = await response.json();
-
-        console.log(
-          "PARTICIPANTS:",
-          data
-        );
-
-        if (Array.isArray(data)) {
-          setParticipants(data);
-        } else {
-          setParticipants([]);
-        }
-      } catch (err) {
-        console.log(
-          "FETCH ERROR:",
-          err
-        );
-        setParticipants([]);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(`Failed with status ${response.status}`);
       }
-    };
 
-    if (conferenceId) {
-      fetchParticipants();
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setParticipants(data);
+      } else {
+        setParticipants([]);
+      }
+    } catch (err) {
+      console.log("FETCH ERROR:", err);
+      setParticipants([]);
+    } finally {
+      setLoading(false);
     }
-  }, [conferenceId]);
+  };
+
+  if (conferenceId) {
+    fetchParticipants();
+  }
+}, [conferenceId]);
 
   // Extract unique categories
   const uniqueCategories = useMemo(() => {

@@ -27,19 +27,29 @@ const UploadPage = () => {
         body: formData,
       });
 
-      const data = await res.json();
+      // PATCH: Safely read the response as text first to prevent JSON parsing crashes on 500 errors
+      const responseText = await res.text();
+      let data: any = {};
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        // If the server sends an HTML error page, capture it safely
+        data = { message: responseText || `HTTP Status Code: ${res.status}` };
+      }
 
-      if (data.success || res.ok) {
+      // Check if the request was actually successful
+      if (res.ok && (data.success || data.inserted)) {
         alert(`${data.inserted || 'All'} delegates imported successfully!`);
         // Navigate back to the dashboard so they can see the updated count
         navigate(`/admin/conference/${conferenceId}`); 
       } else {
-        alert("Import failed: " + (data.message || "Unknown error"));
+        alert("Import failed: " + (data.message || data.error || "Unknown error"));
       }
 
-    } catch (err) {
-      console.log(err);
-      alert("Server Error during upload");
+    } catch (err: any) {
+      console.error(err);
+      alert("Server Connection Error during upload: " + err.message);
     } finally {
       setLoading(false);
     }

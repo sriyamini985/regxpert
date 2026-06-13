@@ -2,7 +2,15 @@ import express from "express";
 import mongoose from "mongoose";
 import Participant from "../models/Participant.js";
 import Conference from "../models/Conference.js";
-import { createParticipant, scanQR, verifyAndScan, scanFood, checkInParticipant, scanHall, scanWorkshop } from "../controllers/participantController.js";
+import { 
+  createParticipant, 
+  scanQR, 
+  verifyAndScan, 
+  scanFood, 
+  checkInParticipant, 
+  scanHall, 
+  scanWorkshop 
+} from "../controllers/participantController.js";
 import {
   broadcastParticipantCreated,
   broadcastParticipantUpdated,
@@ -26,7 +34,7 @@ router.post("/scan-hall", scanHall);
 // 5. Workshop Scan Route
 router.post("/scan-workshop", scanWorkshop);
 
-// 2. Create Participant Route
+// 6. Create Participant Route (with validation & duplicate checks)
 router.post("/", async (req, res) => {
   try {
     const { name } = req.body;
@@ -89,12 +97,11 @@ router.post("/", async (req, res) => {
   }
 });
 
-// 3. OPTIMIZED SEARCH ROUTE: Returns nothing by default, searches instantly via Regex when query exists
+// 7. Scoped instant participant search
 router.get("/", async (req, res) => {
   try {
     const { identifier, conferenceId } = req.query;
     
-    // REQUIREMENT: Do not load anything if the search query is empty
     if (!identifier || identifier.trim() === "") {
       return res.json([]);
     }
@@ -126,10 +133,9 @@ router.get("/", async (req, res) => {
       }
     }
 
-    // Use Mongo $regex for partial instant matching ('i' makes it case-insensitive)
     const filteredParticipants = await Participant.find(query)
       .sort({ createdAt: -1 })
-      .limit(30); // Performance cap for instant dropdown responses
+      .limit(30);
     
     return res.json(filteredParticipants);
   } catch (err) {
@@ -137,7 +143,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 4. Update Route (Fixed variable references and Mongoose warning)
+// 8. Update Participant Route
 router.put("/:id", async (req, res) => {
   try {
     const updatedParticipant = await Participant.findOneAndUpdate(
@@ -167,11 +173,16 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// 5. Delete Route
+// 9. Delete Participant Route
 router.delete("/:id", async (req, res) => {
   try {
+    const participant = await Participant.findById(req.params.id);
+    const conferenceId = participant ? participant.conferenceId : null;
     await Participant.findByIdAndDelete(req.params.id);
-    broadcastParticipantDeleted(req.params.id);
+    
+    if (participant) {
+      broadcastParticipantDeleted(req.params.id, conferenceId);
+    }
 
     return res.json({
       success: true,
@@ -184,7 +195,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// 6. GET participants by specific Conference
+// 10. GET participants by specific Conference
 router.get("/conference/:conferenceId", async (req, res) => {
   try {
     const param = req.params.conferenceId?.trim();
