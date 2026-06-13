@@ -11,11 +11,20 @@ interface MealsPieChartProps {
 }
 
 const MealsPieChart = ({ data }: MealsPieChartProps) => {
-  const chartData = [
-    { name: "Breakfast", value: data.breakfast },
-    { name: "Lunch", value: data.lunch },
-    { name: "Dinner", value: data.dinner }
-  ];
+  const breakfastVal = data?.breakfast || 0;
+  const lunchVal = data?.lunch || 0;
+  const dinnerVal = data?.dinner || 0;
+  const totalMeals = breakfastVal + lunchVal + dinnerVal;
+
+  const chartData = totalMeals > 0
+    ? [
+        { name: "Breakfast", value: breakfastVal, color: "#ef4444" },
+        { name: "Lunch", value: lunchVal, color: "#3b82f6" },
+        { name: "Dinner", value: dinnerVal, color: "#f97316" }
+      ]
+    : [
+        { name: "No meals logged", value: 1, color: "#E5E7EB" }
+      ];
 
   return (
     <div className="bg-white p-4 rounded-2xl shadow-sm h-[260px] flex flex-col items-center">
@@ -30,11 +39,11 @@ const MealsPieChart = ({ data }: MealsPieChartProps) => {
               innerRadius={40}
               outerRadius={70}
             >
-              {chartData.map((_, index) => (
-                <Cell key={index} fill={COLORS[index]} />
+              {chartData.map((entry, index) => (
+                <Cell key={index} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip formatter={(value, name) => [totalMeals > 0 ? value : 0, name]} />
           </PieChart>
         </ResponsiveContainer>
       </div>
