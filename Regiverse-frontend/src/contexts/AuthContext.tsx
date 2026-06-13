@@ -3,12 +3,17 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const AuthContext = createContext<any>(null);
 
 export const AuthProvider = ({ children }: any) => {
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
+  const [user, setUser] = useState<any>(() => {
     const saved = localStorage.getItem("user");
-    if (saved) setUser(JSON.parse(saved));
-  }, []);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
 
   const login = async (email: string, password: string, role: string) => {
     // 1. Admin Logic
