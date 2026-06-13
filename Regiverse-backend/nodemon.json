@@ -3,6 +3,7 @@
     "*.xlsx",
     "*.xls",
     "*.csv",
-    "uploads/*"
+    "uploads/*",
+    "mock-emails.json"
   ]
 }

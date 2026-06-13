@@ -1,7 +1,10 @@
 import express from "express";
 import QRCode from "qrcode";
+import mongoose from "mongoose";
 import Participant from "../models/Participant.js";
+import Conference from "../models/Conference.js";
 import { Resend } from "resend";
+import fs from "fs/promises";
 
 const router = express.Router();
 
@@ -11,16 +14,13 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
        CHECK RESEND KEY
     ========================= */
 
-    if (!process.env.RESEND_API_KEY) {
-      console.log("❌ RESEND_API_KEY MISSING");
-
-      return res.status(500).json({
-        success: false,
-        message: "Missing RESEND_API_KEY",
-      });
+    const isMockMode = !process.env.RESEND_API_KEY;
+    let resend = null;
+    if (!isMockMode) {
+      resend = new Resend(process.env.RESEND_API_KEY);
+    } else {
+      console.log("⚠️ RESEND_API_KEY IS MISSING. OPERATING IN MOCK MODE.");
     }
-
-    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const { subject, message, bannerImage, participantIds } = req.body;
 
@@ -49,7 +49,40 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
        GET PARTICIPANTS
     ========================= */
 
-    const query = { conferenceId: req.params.conferenceId };
+    const param = req.params.conferenceId?.trim();
+    
+    const queryConditions = [
+      { conferenceId: param },
+      { conferenceName: param }
+    ];
+
+    const targetConference = await Conference.findOne({
+      $or: [
+        { slug: param },
+        { name: param }
+      ]
+    }).catch(() => null);
+
+    if (targetConference) {
+      queryConditions.push({ conferenceId: targetConference._id.toString() });
+      queryConditions.push({ conferenceName: targetConference.name });
+    }
+
+    if (mongoose.Types.ObjectId.isValid(param)) {
+      const targetByObjId = await Conference.findById(param).catch(() => null);
+      if (targetByObjId) {
+        queryConditions.push({ conferenceId: targetByObjId._id.toString() });
+        queryConditions.push({ conferenceName: targetByObjId.name });
+        if (targetByObjId.slug) {
+          queryConditions.push({ conferenceId: targetByObjId.slug });
+        }
+      }
+    }
+
+    const query = {
+      $or: queryConditions
+    };
+
     if (participantIds && Array.isArray(participantIds)) {
       query._id = { $in: participantIds };
     }
@@ -115,108 +148,134 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
 
         /* SEND EMAIL */
 
-        const response = await resend.emails.send({
-          from: "RegXperts <onboarding@resend.dev>",
+        let response;
+        if (isMockMode) {
+          // Mock email broadcasting: log and simulate success
+          const mockLogEntry = {
+            timestamp: new Date().toISOString(),
+            from: `${p.conferenceName || "Conference"} <onboarding@resend.dev>`,
+            to: p.email,
+            subject: subject || `Conference QR - ${p.conferenceName}`,
+            message: message || "Please find your conference QR code below.",
+            qrCodeValue: p.regId || p._id.toString(),
+            hasBanner: !!bannerBuffer,
+          };
 
-          to: p.email,
+          try {
+            let existingLogs = [];
+            try {
+              const fileData = await fs.readFile("mock-emails.json", "utf-8");
+              existingLogs = JSON.parse(fileData);
+            } catch (readErr) {
+              // File not found or empty
+            }
+            existingLogs.push(mockLogEntry);
+            await fs.writeFile("mock-emails.json", JSON.stringify(existingLogs, null, 2), "utf-8");
+          } catch (writeErr) {
+            console.log("❌ FAILED TO WRITE MOCK EMAIL TO FILE:", writeErr.message);
+          }
 
-          subject:
-            subject || `Conference QR - ${p.conferenceName}`,
+          console.log(`📧 [MOCK EMAIL] Sent successfully to: ${p.email}`);
+          response = { data: { id: `mock-id-${Date.now()}` }, error: null };
+        } else {
+          response = await resend.emails.send({
+            from: `${p.conferenceName || "Conference"} <onboarding@resend.dev>`,
 
-          html: `
-            <div style="font-family:Arial, sans-serif;padding:20px;background:#f4f7fb;">
-              
-              <div style="
-                max-width:600px;
-                margin:auto;
-                background:white;
-                border-radius:16px;
-                overflow:hidden;
-                box-shadow:0 4px 12px rgba(0,0,0,0.05);
-              ">
-                ${bannerBuffer ? `
-                  <div style="text-align:center; width:100%; max-height:240px; overflow:hidden; border-bottom:1px solid #eff2f6;">
-                    <img src="cid:bannerImage" style="width:100%; max-width:100%; height:auto; display:block;" alt="Banner" />
-                  </div>
-                ` : ''}
+            to: p.email,
 
-                <div style="padding:30px;">
-                  <h1 style="color:#2563eb; margin-top:0; font-size:24px; font-weight:800; tracking-tight:-0.025em;">
-                    RegXperts
-                  </h1>
+            subject:
+              subject || `Conference QR - ${p.conferenceName}`,
 
-                  <h2 style="color:#1e293b; font-size:20px; font-weight:700; margin-top:20px;">
-                    Hello ${p.name}
-                  </h2>
+            html: `
+              <div style="font-family:Arial, sans-serif;padding:20px;background:#f4f7fb;">
+                
+                <div style="
+                  max-width:600px;
+                  margin:auto;
+                  background:white;
+                  border-radius:16px;
+                  overflow:hidden;
+                  box-shadow:0 4px 12px rgba(0,0,0,0.05);
+                ">
+                  ${bannerBuffer ? `
+                    <div style="text-align:center; width:100%; max-height:240px; overflow:hidden; border-bottom:1px solid #eff2f6;">
+                      <img src="cid:bannerImage" style="width:100%; max-width:100%; height:auto; display:block;" alt="Banner" />
+                    </div>
+                  ` : ''}
 
-                  <p style="
-                    font-size:16px;
-                    line-height:1.7;
-                    color:#334155;
-                  ">
-                    ${
-                      message ||
-                      "Please find your conference QR code below."
-                    }
-                  </p>
+                  <div style="padding:30px;">
+                    <h1 style="color:#2563eb; margin-top:0; font-size:24px; font-weight:800; tracking-tight:-0.025em;">
+                      ${p.conferenceName || "Conference"}
+                    </h1>
 
-                  <div style="
-                    text-align:center;
-                    margin:30px 0;
-                  ">
+                    <h2 style="color:#1e293b; font-size:20px; font-weight:700; margin-top:20px;">
+                      Hello ${p.name}
+                    </h2>
 
-                    <img
-                      src="cid:qrcode"
-                      width="220"
-                      alt="QR Code"
-                    />
-
-                  </div>
-
-                  <div style="
-                    background:#f0f7ff;
-                    padding:20px;
-                    border-radius:12px;
-                    border:1px solid #e0f2fe;
-                  ">
-
-                    <p style="margin: 0 0 10px 0; color:#1e3a8a; font-size:14px;">
-                      <b>Conference:</b>
-                      ${p.conferenceName}
+                    <p style="
+                      font-size:16px;
+                      line-height:1.7;
+                      color:#334155;
+                    ">
+                      ${
+                        message ||
+                        "Please find your conference QR code below."
+                      }
                     </p>
 
-                    <p style="margin: 0; color:#1e3a8a; font-size:14px;">
-                      <b>Registration ID:</b>
-                      ${p.regId || p._id}
-                    </p>
+                    <div style="
+                      text-align:center;
+                      margin:30px 0;
+                    ">
 
+                      <img
+                        src="cid:qrcode"
+                        width="220"
+                        alt="QR Code"
+                      />
+
+                    </div>
+
+                    <div style="
+                      background:#f0f7ff;
+                      padding:20px;
+                      border-radius:12px;
+                      border:1px solid #e0f2fe;
+                    ">
+
+                      <p style="margin: 0; color:#1e3a8a; font-size:14px;">
+                        <b>Conference:</b>
+                        ${p.conferenceName}
+                      </p>
+
+                    </div>
+
+                    <p style="
+                      margin-top:25px;
+                      color:#64748b;
+                      font-size:14px;
+                      line-height:1.5;
+                    ">
+                      Please carry this QR code during conference entry.
+                    </p>
                   </div>
 
-                  <p style="
-                    margin-top:25px;
-                    color:#64748b;
-                    font-size:14px;
-                    line-height:1.5;
-                  ">
-                    Please carry this QR code during conference entry.
-                  </p>
                 </div>
 
               </div>
+            `,
 
-            </div>
-          `,
-
-          attachments: emailAttachments,
-        });
+            attachments: emailAttachments,
+          });
+        }
 
         console.log(
-          "✅ RESEND RESPONSE:",
+          "✅ EMAIL RESPONSE:",
           JSON.stringify(response, null, 2)
         );
 
         if (response.error) {
-          console.log("❌ RESEND ERROR:", response.error);
+          console.log("❌ EMAIL SEND ERROR:", response.error);
 
           failed++;
         } else {
