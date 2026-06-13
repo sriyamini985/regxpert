@@ -128,21 +128,14 @@ export default function UserLayout() {
         </div>
 
         {/* User Session Footer */}
-        <div className="p-4 border-t border-slate-900 bg-slate-950 flex items-center justify-between">
-          <div className="truncate mr-2">
+        <div className="p-4 border-t border-slate-900 bg-slate-950 flex items-center">
+          <div className="truncate">
             <p className="text-xs font-semibold truncate text-slate-300">{user?.email || "Operator Station"}</p>
             <p className="text-[9px] text-emerald-400 flex items-center gap-1 font-bold mt-0.5 uppercase tracking-wider">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
               Online
             </p>
           </div>
-          <button
-            onClick={logout}
-            className="p-2 bg-slate-900 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 rounded-xl transition-all duration-150"
-            title="Sign Out"
-          >
-            <LogOut className="w-4.5 h-4.5" />
-          </button>
         </div>
       </aside>
 

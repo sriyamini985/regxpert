@@ -211,10 +211,11 @@ const BadgePrint = () => {
         state: editState,
         regId: selectedParticipant.regId || selectedParticipant._id,
         qrCode: selectedParticipant.qrCode || selectedParticipant.regId || selectedParticipant._id,
-        checkpoints: selectedCheckpoints
+        checkpoints: selectedCheckpoints,
+        backUrl: `/u/${conferenceSlug}/badge-print`
       };
 
-      window.open(`/print-qr?data=${encodeURIComponent(JSON.stringify(payload))}`, "_blank");
+      window.open(`/print-qr?data=${encodeURIComponent(JSON.stringify(payload))}`, "_self");
 
     } catch (err) {
       console.error(err);

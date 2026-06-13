@@ -6,9 +6,7 @@ import UserRoutes from "./user/UserRoutes";
 
 // Auth & Core
 import AdminRoutes from "./admin/AdminRoutes";
-import ClientRoutes from "./client/ClientRoutes";
 import AdminLogin from "./auth/pages/AdminLogin";
-import ClientLogin from "./auth/pages/ClientLogin";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
 import OperationsDashboard from "./pages/OperationsDashboard";
@@ -52,10 +50,8 @@ const AppRoutes: React.FC = () => {
       <ScrollToTop />
       <Routes>
         <Route path="/admin-login" element={<PublicRoute><AdminLogin /></PublicRoute>} />
-        <Route path="/client-login" element={<PublicRoute><ClientLogin /></PublicRoute>} />
         
         <Route path="/admin/*" element={<PrivateRoute role="admin"><AdminRoutes /></PrivateRoute>} />
-        <Route path="/client/*" element={<PrivateRoute role="client"><ClientRoutes /></PrivateRoute>} />
         <Route path="/u/*" element={<PrivateRoute role="user"><UserRoutes /></PrivateRoute>} />
         
         <Route path="/print-qr" element={<QRPrint />} />

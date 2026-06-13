@@ -19,15 +19,19 @@ const QRPrint = () => {
   const [searchParams] = useSearchParams();
   const raw = searchParams.get("data");
 
-  const participant: ParticipantPayload | null = raw ? JSON.parse(decodeURIComponent(raw)) : null;
+  const participant: (ParticipantPayload & { backUrl?: string }) | null = raw ? JSON.parse(decodeURIComponent(raw)) : null;
+  const badgeBackUrl = participant?.backUrl || "";
 
   useEffect(() => {
     if (!participant) return;
     const timer = setTimeout(() => {
       window.print();
+      if (badgeBackUrl) {
+        window.location.href = badgeBackUrl;
+      }
     }, 600);
     return () => clearTimeout(timer);
-  }, [participant]);
+  }, [participant, badgeBackUrl]);
 
   if (!participant) {
     return <div className="p-10 text-center font-bold text-red-500">No participant found</div>;
@@ -98,6 +102,18 @@ const QRPrint = () => {
       {/* Screen only top panel */}
       <div className="no-print bg-slate-900 text-white p-4 flex gap-6 items-center justify-center sticky top-0 z-50 shadow-md">
         <span className="text-sm font-semibold">🖨️ CR80 Badge Print Preview</span>
+        <button 
+          onClick={() => {
+            if (badgeBackUrl) {
+              window.location.href = badgeBackUrl;
+            } else {
+              window.history.back();
+            }
+          }}
+          className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-1.5 rounded-lg font-bold text-sm transition-all"
+        >
+          ← Back
+        </button>
         <button 
           onClick={() => window.print()}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-bold text-sm transition-all"

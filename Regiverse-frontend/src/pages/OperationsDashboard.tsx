@@ -15,8 +15,8 @@ export default function OperationsDashboard() {
           Conference Management Control Center
         </p>
 
-        {/* 3-Column Grid for the 3 Roles */}
-        <div className="grid md:grid-cols-3 gap-6">
+        {/* 2-Column Grid for the Roles */}
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
 
           {/* 1. Admin Card */}
           <div className="bg-white rounded-xl shadow p-6 flex flex-col">
@@ -35,24 +35,7 @@ export default function OperationsDashboard() {
             </button>
           </div>
 
-          {/* 2. Client Card */}
-          <div className="bg-white rounded-xl shadow p-6 flex flex-col">
-            <h2 className="text-2xl font-semibold mb-4">
-              Client Panel
-            </h2>
-            <p className="mb-6 text-gray-500 flex-grow">
-              Client conference management,
-              delegates and registrations.
-            </p>
-            <button
-              onClick={() => navigate("/client-login")}
-              className="w-full bg-black hover:bg-zinc-800 transition-colors text-white py-3 rounded-lg font-medium"
-            >
-              Open Client
-            </button>
-          </div>
-
-          {/* 3. User (Staff) Card - NEWLY ADDED */}
+          {/* 2. User (Staff) Card */}
           <div className="bg-white rounded-xl shadow p-6 flex flex-col">
             <h2 className="text-2xl font-semibold mb-4 text-blue-600">
               Staff Terminal
