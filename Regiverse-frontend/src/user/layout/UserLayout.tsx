@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Outlet, Link, useParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { 
@@ -15,7 +15,9 @@ import {
   ClipboardList, 
   BarChart3, 
   Settings as SettingsIcon,
-  LogOut
+  LogOut,
+  Menu,
+  X
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -24,6 +26,7 @@ export default function UserLayout() {
   const { conferenceSlug } = useParams<{ conferenceSlug: string }>();
   const { logout, user } = useAuth();
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
 
   // Restructured IA menu sections
   const sections = [
@@ -68,20 +71,40 @@ export default function UserLayout() {
   ];
 
   return (
-    <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
-      {/* Restructured Operator Sidebar */}
-      <aside className="w-64 bg-slate-950 text-white flex flex-col justify-between shadow-2xl border-r border-slate-900/60">
-        <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex h-screen bg-slate-100 overflow-hidden font-sans relative">
+      
+      {/* Backdrop overlay on mobile when sidebar is open */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-slate-950/60 lg:hidden backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Collapsible Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-950 text-white flex flex-col justify-between shadow-2xl border-r border-slate-900/60 transform lg:translate-x-0 lg:static transition-transform duration-300 ease-in-out ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}>
+        <div className="flex flex-col flex-grow min-h-0">
           
           {/* Brand Header */}
-          <div className="p-5 border-b border-slate-900 flex items-center gap-3">
-            <div className="bg-gradient-to-tr from-blue-600 to-cyan-500 w-10 h-10 rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-blue-500/20">
-              X
+          <div className="p-5 border-b border-slate-900 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-tr from-blue-600 to-cyan-500 w-10 h-10 rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-blue-500/20">
+                X
+              </div>
+              <div>
+                <h1 className="font-black text-md leading-tight tracking-tight">RegXperts</h1>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Staff Terminal</p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-black text-md leading-tight tracking-tight">RegXperts</h1>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Staff Terminal</p>
-            </div>
+            {/* Close button inside sidebar on mobile */}
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="lg:hidden p-1 hover:bg-slate-900 rounded-lg text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Active Workspace Banner */}
@@ -110,6 +133,7 @@ export default function UserLayout() {
                       <Link
                         key={item.path}
                         to={item.path}
+                        onClick={() => setIsOpen(false)} // Close sidebar on mobile item selection
                         className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
                           isActive
                             ? "bg-blue-600 text-white shadow-lg shadow-blue-600/15"
@@ -140,8 +164,24 @@ export default function UserLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-x-hidden overflow-y-auto p-8 bg-slate-50">
+      <main className="flex-grow flex flex-col overflow-hidden min-w-0">
+        {/* Top Header Toggle Bar for Mobile viewports */}
+        <header className="lg:hidden bg-slate-950 text-white flex items-center justify-between p-4 border-b border-slate-900 shadow-md">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsOpen(true)}
+              className="p-1 hover:bg-slate-900 rounded-lg text-slate-300 hover:text-white"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <span className="font-extrabold text-sm tracking-tight text-white">RegXperts Terminal</span>
+          </div>
+          <div className="text-[9px] bg-blue-600/20 text-blue-400 border border-blue-500/25 px-2.5 py-1 rounded-full font-bold uppercase tracking-wide">
+            {conferenceSlug}
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 md:p-8 bg-slate-50">
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 12 }}
