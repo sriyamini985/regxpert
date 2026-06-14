@@ -80,7 +80,7 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
     /* =========================
        CHECK BREVO API KEYS
     ========================= */
-    const apiKey = process.env.BREVO_SMTP_KEY; // The API key/SMTP key is the same
+    const apiKey = process.env.BREVO_API_KEY || process.env.BREVO_SMTP_KEY; // Accept either BREVO_API_KEY or BREVO_SMTP_KEY
     const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.BREVO_SMTP_USER; // Use the verified sender email
     const isMockMode = !apiKey || !senderEmail;
 
