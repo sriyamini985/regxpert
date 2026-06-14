@@ -89,46 +89,48 @@ useEffect(() => {
   }, [participants, searchQuery, selectedCategory]);
 
   return (
-    <div className="p-24 space-y-6">
-
-      {/* SEARCH */}
-      <SearchBar
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onSearch={() => {}}
-        onClear={() => {
-          setSearchQuery("");
-          setSelectedCategory("");
-        }}
-      />
-
-      {/* CATEGORY FILTER */}
-      <div className="flex gap-4 items-center bg-white p-4 rounded-xl shadow border border-slate-100">
-        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filter by Category:</label>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="border rounded-lg px-4 py-2 text-sm bg-slate-50 cursor-pointer font-semibold outline-none text-slate-700 focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">All Categories</option>
-          {uniqueCategories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
-        {(searchQuery || selectedCategory) && (
-          <button
-            onClick={() => {
-              setSearchQuery("");
-              setSelectedCategory("");
-            }}
-            className="text-xs font-semibold text-rose-500 hover:text-rose-700 transition"
-          >
-            Reset Filters
-          </button>
-        )}
-      </div>
+    <div className="min-h-[calc(100vh-5rem)] bg-[#F4F7FB] p-4 sm:p-6 md:p-12 space-y-6 font-sans">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* SEARCH */}
+        <SearchBar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onSearch={() => {}}
+          onClear={() => {
+            setSearchQuery("");
+            setSelectedCategory("");
+          }}
+        />
+ 
+        {/* CATEGORY FILTER */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center bg-white p-4 rounded-xl shadow border border-slate-100">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filter by Category:</label>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="border rounded-lg px-4 py-2 text-sm bg-slate-50 cursor-pointer font-semibold outline-none text-slate-700 focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
+            >
+              <option value="">All Categories</option>
+              {uniqueCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+            {(searchQuery || selectedCategory) && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCategory("");
+                }}
+                className="text-xs font-semibold text-rose-500 hover:text-rose-700 transition shrink-0"
+              >
+                Reset Filters
+              </button>
+            )}
+          </div>
+        </div>
 
       {/* LOADING */}
       {loading && (
@@ -151,6 +153,7 @@ useEffect(() => {
           )}
         </>
       )}
+      </div>
     </div>
   );
 };

@@ -89,19 +89,19 @@ export default function ScanCenter() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-4 font-sans">
+    <div className="max-w-7xl mx-auto px-4 py-4 font-sans">
       {/* Header Banner */}
-      <div className="mb-10 bg-slate-900 text-white rounded-3xl p-8 relative overflow-hidden border border-slate-800 shadow-2xl">
+      <div className="mb-10 bg-slate-900 text-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 relative overflow-hidden border border-slate-800 shadow-2xl">
         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none" />
         <div className="relative z-10 max-w-2xl">
           <span className="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full inline-flex items-center gap-1.5 mb-4">
             <Camera className="w-3.5 h-3.5" />
             <span>Scan Center Hub</span>
           </span>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
             On-Ground Operations Panel
           </h1>
-          <p className="text-slate-400 mt-2 text-sm md:text-base leading-relaxed">
+          <p className="text-slate-400 mt-2 text-xs sm:text-sm md:text-base leading-relaxed">
             Select one of the dedicated terminal modules below to launch the camera-based QR scanner. Ensure your browser camera permissions are enabled for this terminal session.
           </p>
         </div>
