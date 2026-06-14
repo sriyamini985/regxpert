@@ -5,6 +5,7 @@ const conferenceSchema = new mongoose.Schema(
     name: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     isActive: { type: Boolean, default: false }, // Tracks workspace deployment status
+    bannerImage: { type: String }, // Stored as base64 string
   },
   { timestamps: true }
 );
