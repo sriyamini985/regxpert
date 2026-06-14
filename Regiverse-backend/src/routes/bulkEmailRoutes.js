@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import mongoose from "mongoose";
 import Participant from "../models/Participant.js";
 import Conference from "../models/Conference.js";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import fs from "fs/promises";
 
 const router = express.Router();
@@ -11,15 +11,22 @@ const router = express.Router();
 router.post("/:conferenceId/send-emails", async (req, res) => {
   try {
     /* =========================
-       CHECK RESEND KEY
+       CHECK BREVO SMTP KEYS
     ========================= */
 
-    const isMockMode = !process.env.RESEND_API_KEY;
-    let resend = null;
+    const isMockMode = !process.env.BREVO_SMTP_KEY || !process.env.BREVO_SMTP_USER;
+    let transporter = null;
     if (!isMockMode) {
-      resend = new Resend(process.env.RESEND_API_KEY);
+      transporter = nodemailer.createTransport({
+        host: "smtp-relay.brevo.com",
+        port: 587,
+        auth: {
+          user: process.env.BREVO_SMTP_USER,
+          pass: process.env.BREVO_SMTP_KEY,
+        },
+      });
     } else {
-      console.log("⚠️ RESEND_API_KEY IS MISSING. OPERATING IN MOCK MODE.");
+      console.log("⚠️ BREVO_SMTP_KEY or BREVO_SMTP_USER IS MISSING. OPERATING IN MOCK MODE.");
     }
 
     const { subject, message, bannerImage, participantIds } = req.body;
@@ -133,7 +140,7 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
           {
             filename: "qrcode.png",
             content: qrBuffer,
-            contentId: "qrcode",
+            cid: "qrcode",
           },
         ];
 
@@ -142,18 +149,17 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
           emailAttachments.push({
             filename: `banner.${ext}`,
             content: bannerBuffer,
-            contentId: "bannerImage",
+            cid: "bannerImage",
           });
         }
 
         /* SEND EMAIL */
 
-        let response;
         if (isMockMode) {
           // Mock email broadcasting: log and simulate success
           const mockLogEntry = {
             timestamp: new Date().toISOString(),
-            from: `${p.conferenceName || "Conference"} <onboarding@resend.dev>`,
+            from: `"${p.conferenceName || "Conference"}" <mock@brevo.com>`,
             to: p.email,
             subject: subject || `Conference QR - ${p.conferenceName}`,
             message: message || "Please find your conference QR code below.",
@@ -176,16 +182,12 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
           }
 
           console.log(`📧 [MOCK EMAIL] Sent successfully to: ${p.email}`);
-          response = { data: { id: `mock-id-${Date.now()}` }, error: null };
+          sent++;
         } else {
-          response = await resend.emails.send({
-            from: `${p.conferenceName || "Conference"} <onboarding@resend.dev>`,
-
+          const info = await transporter.sendMail({
+            from: `"${p.conferenceName || "Conference"}" <${process.env.BREVO_SMTP_USER}>`,
             to: p.email,
-
-            subject:
-              subject || `Conference QR - ${p.conferenceName}`,
-
+            subject: subject || `Conference QR - ${p.conferenceName}`,
             html: `
               <div style="font-family:'Inter', Arial, sans-serif; padding:30px 15px; background-color:#0f0f12; color:#e4e4e7; min-height:100%;">
                 
@@ -292,23 +294,10 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
                 </div>
               </div>
             `,
-
             attachments: emailAttachments,
           });
-        }
 
-        console.log(
-          "✅ EMAIL RESPONSE:",
-          JSON.stringify(response, null, 2)
-        );
-
-        if (response.error) {
-          console.log("❌ EMAIL SEND ERROR:", response.error);
-
-          failed++;
-        } else {
-          console.log("✅ EMAIL SENT:", p.email);
-
+          console.log("✅ EMAIL SENT:", p.email, info.messageId);
           sent++;
         }
       } catch (err) {
