@@ -127,13 +127,13 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
           }
         );
 
-        /* PREPARE ATTACHMENTS */
+        /* PREPARE ATTACHMENTS (for inline reference and download support) */
 
         const emailAttachments = [
           {
             filename: "qrcode.png",
             content: qrBuffer,
-            cid: "qrcode",
+            contentId: "qrcode",
           },
         ];
 
@@ -142,7 +142,7 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
           emailAttachments.push({
             filename: `banner.${ext}`,
             content: bannerBuffer,
-            cid: "bannerImage",
+            contentId: "bannerImage",
           });
         }
 
@@ -210,7 +210,7 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
                   </div>
 
                   <!-- Optional Campaign Banner -->
-                  ${bannerBuffer ? `
+                  ${bannerBuffer && bannerMime ? `
                     <div style="text-align:center; width:100%; max-height:240px; overflow:hidden; border-bottom:1px solid #27272a;">
                       <img src="cid:bannerImage" style="width:100%; max-width:100%; height:auto; display:block;" alt="Event Banner" />
                     </div>
