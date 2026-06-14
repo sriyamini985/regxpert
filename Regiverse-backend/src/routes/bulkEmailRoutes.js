@@ -187,81 +187,109 @@ router.post("/:conferenceId/send-emails", async (req, res) => {
               subject || `Conference QR - ${p.conferenceName}`,
 
             html: `
-              <div style="font-family:Arial, sans-serif;padding:20px;background:#f4f7fb;">
+              <div style="font-family:'Inter', Arial, sans-serif; padding:30px 15px; background-color:#0f0f12; color:#e4e4e7; min-height:100%;">
                 
                 <div style="
-                  max-width:600px;
-                  margin:auto;
-                  background:white;
-                  border-radius:16px;
+                  max-width:550px;
+                  margin:0 auto;
+                  background-color:#18181b;
+                  border-radius:20px;
                   overflow:hidden;
-                  box-shadow:0 4px 12px rgba(0,0,0,0.05);
+                  border:1px solid #27272a;
+                  box-shadow:0 10px 30px rgba(0,0,0,0.3);
                 ">
+                  
+                  <!-- Header Banner -->
+                  <div style="background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); padding:35px 20px; text-align:center; border-bottom:1px solid #27272a;">
+                    <span style="background-color:rgba(255,255,255,0.15); color:#ffffff; padding:6px 16px; border-radius:50px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; display:inline-block; margin-bottom:15px; border:1px solid rgba(255,255,255,0.25);">
+                      ✓ Registration Confirmed
+                    </span>
+                    <h1 style="color:#ffffff; margin:0; font-size:24px; font-weight:800; line-height:1.2; letter-spacing:-0.02em;">
+                      ${p.conferenceName || "Conference"}
+                    </h1>
+                  </div>
+
+                  <!-- Optional Campaign Banner -->
                   ${bannerBuffer ? `
-                    <div style="text-align:center; width:100%; max-height:240px; overflow:hidden; border-bottom:1px solid #eff2f6;">
-                      <img src="cid:bannerImage" style="width:100%; max-width:100%; height:auto; display:block;" alt="Banner" />
+                    <div style="text-align:center; width:100%; max-height:240px; overflow:hidden; border-bottom:1px solid #27272a;">
+                      <img src="cid:bannerImage" style="width:100%; max-width:100%; height:auto; display:block;" alt="Event Banner" />
                     </div>
                   ` : ''}
 
-                  <div style="padding:30px;">
-                    <h1 style="color:#2563eb; margin-top:0; font-size:24px; font-weight:800; tracking-tight:-0.025em;">
-                      ${p.conferenceName || "Conference"}
-                    </h1>
-
-                    <h2 style="color:#1e293b; font-size:20px; font-weight:700; margin-top:20px;">
-                      Hello ${p.name}
-                    </h2>
-
-                    <p style="
-                      font-size:16px;
-                      line-height:1.7;
-                      color:#334155;
-                    ">
+                  <!-- Body -->
+                  <div style="padding:30px 25px;">
+                    <p style="font-size:16px; color:#a1a1aa; margin:0 0 15px 0; line-height:1.6;">
+                      Hi <strong style="color:#ffffff;">${p.name}</strong>,
+                    </p>
+                    <p style="font-size:15px; color:#d4d4d8; margin:0 0 30px 0; line-height:1.6;">
                       ${
                         message ||
-                        "Please find your conference QR code below."
+                        "Thank you for registering! Your spot has been reserved. Here are your event pass and details:"
                       }
                     </p>
 
-                    <div style="
-                      text-align:center;
-                      margin:30px 0;
-                    ">
-
-                      <img
-                        src="cid:qrcode"
-                        width="220"
-                        alt="QR Code"
-                      />
-
+                    <!-- QR Code Section -->
+                    <div style="background-color:#121214; border-radius:16px; border:1px solid #27272a; padding:25px; text-align:center; margin-bottom:30px;">
+                      <span style="color:#818cf8; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.1em; display:block; margin-bottom:15px;">
+                        Your Event Pass QR Code
+                      </span>
+                      <div style="display:inline-block; background-color:#ffffff; padding:15px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+                        <img src="cid:qrcode" width="200" height="200" style="display:block;" alt="QR Code" />
+                      </div>
+                      <span style="color:#71717a; font-size:12px; display:block; margin-top:15px; font-weight:500;">
+                        Scan this QR code at the event venue
+                      </span>
                     </div>
 
-                    <div style="
-                      background:#f0f7ff;
-                      padding:20px;
-                      border-radius:12px;
-                      border:1px solid #e0f2fe;
-                    ">
-
-                      <p style="margin: 0; color:#1e3a8a; font-size:14px;">
-                        <b>Conference:</b>
-                        ${p.conferenceName}
-                      </p>
-
+                    <!-- Attendee Info Card -->
+                    <div style="background-color:#121214; border-radius:16px; border:1px solid #27272a; overflow:hidden; margin-bottom:30px;">
+                      <div style="border-bottom:1px solid #27272a; padding:12px 20px; background-color:rgba(255,255,255,0.02);">
+                        <span style="color:#a1a1aa; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.1em;">
+                          Attendee Information
+                        </span>
+                      </div>
+                      <div style="padding:15px 20px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:14px; color:#d4d4d8;">
+                          <tr>
+                            <td style="padding:8px 0; color:#71717a; width:35%; font-weight:600;">Name</td>
+                            <td style="padding:8px 0; color:#ffffff; font-weight:700;">${p.name}</td>
+                          </tr>
+                          <tr>
+                            <td style="padding:8px 0; color:#71717a; font-weight:600; border-top:1px solid #27272a;">Email</td>
+                            <td style="padding:8px 0; color:#ffffff; font-weight:600; border-top:1px solid #27272a; word-break:break-all;">${p.email}</td>
+                          </tr>
+                          ${p.phone ? `
+                          <tr>
+                            <td style="padding:8px 0; color:#71717a; font-weight:600; border-top:1px solid #27272a;">Mobile</td>
+                            <td style="padding:8px 0; color:#ffffff; font-weight:600; border-top:1px solid #27272a;">${p.phone}</td>
+                          </tr>
+                          ` : ''}
+                          ${p.category ? `
+                          <tr>
+                            <td style="padding:8px 0; color:#71717a; font-weight:600; border-top:1px solid #27272a;">Category</td>
+                            <td style="padding:8px 0; color:#ffffff; font-weight:600; border-top:1px solid #27272a;">${p.category}</td>
+                          </tr>
+                          ` : ''}
+                        </table>
+                      </div>
                     </div>
 
-                    <p style="
-                      margin-top:25px;
-                      color:#64748b;
-                      font-size:14px;
-                      line-height:1.5;
-                    ">
-                      Please carry this QR code during conference entry.
+                  </div>
+
+                  <!-- Footer -->
+                  <div style="background-color:#121214; padding:25px; text-align:center; border-top:1px solid #27272a;">
+                    <p style="margin:0 0 8px 0; color:#e4e4e7; font-size:13px; font-weight:700;">
+                      ${p.conferenceName || "Conference"}
+                    </p>
+                    <p style="margin:0 0 15px 0; color:#71717a; font-size:11px; font-weight:500;">
+                      Event Registration Confirmation
+                    </p>
+                    <p style="margin:0; color:#52525b; font-size:11px; font-weight:400;">
+                      © 2026 ${p.conferenceName || "Conference"}. All rights reserved.
                     </p>
                   </div>
 
                 </div>
-
               </div>
             `,
 
