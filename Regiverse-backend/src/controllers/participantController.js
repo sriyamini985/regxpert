@@ -10,9 +10,17 @@ import xlsx from "xlsx";
 
 // Centralized helper function to find a participant by name, phone, email, qrCode, regId, or partial regId suffix (case-insensitive)
 const findParticipantByIdentifier = async (identifier) => {
+  console.log(`[SCAN DEBUG] Received identifier: "${identifier}" (Type: ${typeof identifier})`);
   if (!identifier) return null;
   let safeIdentifier = String(identifier).trim();
   if (safeIdentifier === "") return null;
+
+  // Log char codes to detect hidden symbols
+  const charCodes = [];
+  for (let i = 0; i < Math.min(safeIdentifier.length, 100); i++) {
+    charCodes.push(safeIdentifier.charCodeAt(i));
+  }
+  console.log(`[SCAN DEBUG] Cleaned safeIdentifier: "${safeIdentifier}" (CharCodes: ${charCodes.join(",")})`);
 
   // Multi-line or key-value format parser
   let nameFromQR = "";
@@ -40,18 +48,20 @@ const findParticipantByIdentifier = async (identifier) => {
     }
   }
 
+  console.log(`[SCAN DEBUG] Parsed details: regIdFromQR="${regIdFromQR}", nameFromQR="${nameFromQR}", emailFromQR="${emailFromQR}", phoneFromQR="${phoneFromQR}"`);
+
   const conditions = [];
 
   // 1. If structured attributes were successfully parsed:
   if (regIdFromQR) {
-    conditions.push({ regId: { $regex: new RegExp(`^${regIdFromQR}$`, "i") } });
-    conditions.push({ regId: { $regex: new RegExp(regIdFromQR + "$", "i") } });
+    conditions.push({ regId: { $regex: new RegExp(`^\\s*${regIdFromQR}\\s*$`, "i") } });
+    conditions.push({ regId: { $regex: new RegExp(regIdFromQR + "\\s*$", "i") } });
   }
   if (nameFromQR) {
-    conditions.push({ name: { $regex: new RegExp(`^${nameFromQR}$`, "i") } });
+    conditions.push({ name: { $regex: new RegExp(`^\\s*${nameFromQR}\\s*$`, "i") } });
   }
   if (emailFromQR) {
-    conditions.push({ email: { $regex: new RegExp(`^${emailFromQR}$`, "i") } });
+    conditions.push({ email: { $regex: new RegExp(`^\\s*${emailFromQR}\\s*$`, "i") } });
   }
   if (phoneFromQR) {
     conditions.push({ phone: phoneFromQR });
@@ -67,11 +77,11 @@ const findParticipantByIdentifier = async (identifier) => {
     }
 
     conditions.push({ phone: cleanRaw });
-    conditions.push({ email: { $regex: new RegExp(`^${cleanRaw}$`, "i") } });
-    conditions.push({ qrCode: { $regex: new RegExp(`^${cleanRaw}$`, "i") } });
-    conditions.push({ regId: { $regex: new RegExp(`^${cleanRaw}$`, "i") } });
-    conditions.push({ regId: { $regex: new RegExp(cleanRaw + "$", "i") } });
-    conditions.push({ name: { $regex: new RegExp(`^${cleanRaw}$`, "i") } });
+    conditions.push({ email: { $regex: new RegExp(`^\\s*${cleanRaw}\\s*$`, "i") } });
+    conditions.push({ qrCode: { $regex: new RegExp(`^\\s*${cleanRaw}\\s*$`, "i") } });
+    conditions.push({ regId: { $regex: new RegExp(`^\\s*${cleanRaw}\\s*$`, "i") } });
+    conditions.push({ regId: { $regex: new RegExp(cleanRaw + "\\s*$", "i") } });
+    conditions.push({ name: { $regex: new RegExp(`^\\s*${cleanRaw}\\s*$`, "i") } });
   }
 
   if (mongoose.Types.ObjectId.isValid(safeIdentifier)) {
@@ -82,8 +92,12 @@ const findParticipantByIdentifier = async (identifier) => {
     conditions.push({ _id: regIdFromQR });
   }
 
+  console.log(`[SCAN DEBUG] Generated ${conditions.length} query conditions:`, JSON.stringify(conditions));
+
   if (conditions.length === 0) return null;
-  return await Participant.findOne({ $or: conditions });
+  const result = await Participant.findOne({ $or: conditions });
+  console.log(`[SCAN DEBUG] Query result:`, result ? `Found (ID: ${result._id}, Name: "${result.name}")` : "Not Found");
+  return result;
 };
 
 // 1. BULK EXCEL IMPORT CONTROLLER
