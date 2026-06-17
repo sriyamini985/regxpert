@@ -644,12 +644,12 @@ const BadgePrint = () => {
                   
                   {/* PREVIEW CONTAINER: CR80 portrait aspect ratio vs A5 aspect ratio */}
                   <div 
-                    className={`h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans pt-6 pb-6 justify-between transition-all duration-300 ${
-                      badgeSize === "A5" ? "w-[268px]" : "w-[240px]"
+                    className={`h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans transition-all duration-300 justify-center ${
+                      badgeSize === "A5" ? "w-[268px] gap-6" : "w-[240px] gap-3"
                     }`}
                   >
                     {/* B. Center Attendee Details */}
-                    <div className="flex-grow flex flex-col items-center justify-center w-full px-4 box-border gap-1.5">
+                    <div className="flex-none flex flex-col items-center justify-center w-full px-4 box-border gap-1.5">
                       
                       {/* Photo Placeholder */}
                       {printPhoto && (

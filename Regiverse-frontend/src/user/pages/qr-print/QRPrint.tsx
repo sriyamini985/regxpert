@@ -155,7 +155,7 @@ const QRPrint = () => {
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             text-align: center;
             background: white;
@@ -165,6 +165,7 @@ const QRPrint = () => {
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             padding: 0;
+            gap: ${badgeSize === "A5" ? "8mm" : "3mm"};
           }
 
           @media print {
@@ -199,8 +200,10 @@ const QRPrint = () => {
               page-break-inside: avoid !important;
               display: flex !important;
               flex-direction: column !important;
+              justify-content: center !important;
               align-items: center !important;
               background: white !important;
+              gap: ${badgeSize === "A5" ? "8mm !important" : "3mm !important"};
             }
           }
         `}
@@ -286,9 +289,8 @@ const QRPrint = () => {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                flexGrow: 1,
                 width: "100%",
-                padding: badgeSize === "A5" ? "18mm 10mm 2mm 10mm" : "6.5mm 3.5mm 0.5mm 3.5mm",
+                padding: badgeSize === "A5" ? "0 10mm" : "0 3.5mm",
                 boxSizing: "border-box"
               }}>
                 {/* 1. Portrait Photo Frame */}
