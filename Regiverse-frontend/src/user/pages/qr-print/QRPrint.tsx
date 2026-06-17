@@ -91,13 +91,23 @@ const QRPrint = () => {
               background: white;
             }
             .badge-container {
-              margin: 0;
-              border: none;
-              box-shadow: none;
-              border-radius: 0;
-              border-top: 6px solid #2563eb;
-              page-break-inside: avoid;
+              position: absolute !important;
+              top: 0 !important;
+              left: 0 !important;
+              width: 54mm !important;
+              height: 86mm !important;
+              margin: 0 !important;
+              padding: 4mm !important;
+              box-sizing: border-box !important;
+              border: none !important;
+              box-shadow: none !important;
+              border-radius: 0 !important;
+              border-top: 6px solid #2563eb !important;
+              page-break-inside: avoid !important;
               display: flex !important;
+              flex-direction: column !important;
+              align-items: center !important;
+              background: white !important;
             }
           }
         `}
