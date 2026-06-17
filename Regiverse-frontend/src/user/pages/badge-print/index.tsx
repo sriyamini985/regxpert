@@ -88,6 +88,7 @@ const BadgePrint = () => {
   const [editName, setEditName] = useState("");
   const [editDestination, setEditDestination] = useState("");
   const [editState, setEditState] = useState("");
+  const [selectedCheckpoints, setSelectedCheckpoints] = useState<string[]>([]);
   const [badgeSize, setBadgeSize] = useState<string>("standard");
   const [printPhoto, setPrintPhoto] = useState<boolean>(true);
   const [printName, setPrintName] = useState<boolean>(true);
