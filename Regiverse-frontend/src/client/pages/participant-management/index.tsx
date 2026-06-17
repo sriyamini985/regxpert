@@ -21,6 +21,7 @@ type Participant = {
   blockDay5Breakfast: boolean; blockDay5Lunch: boolean; blockDay5Dinner: boolean;
   blockWorkshop1: boolean; blockWorkshop2: boolean; blockWorkshop3: boolean;
   blockWorkshop4: boolean; blockWorkshop5: boolean;
+  dynamicData?: Record<string, any>;
 };
 
 const defaultCategories = ["Delegates", "PG Delegates", "Accompanying Person", "Chairman", "Vice President"];
@@ -40,7 +41,8 @@ const ParticipantPage = () => {
     blockDay3Breakfast: false, blockDay3Lunch: false, blockDay3Dinner: false,
     blockDay4Breakfast: false, blockDay4Lunch: false, blockDay4Dinner: false,
     blockDay5Breakfast: false, blockDay5Lunch: false, blockDay5Dinner: false,
-    blockWorkshop1: false, blockWorkshop2: false, blockWorkshop3: false, blockWorkshop4: false, blockWorkshop5: false
+    blockWorkshop1: false, blockWorkshop2: false, blockWorkshop3: false, blockWorkshop4: false, blockWorkshop5: false,
+    dynamicData: {}
   });
 
   useEffect(() => { if (editingPerson) setForm(editingPerson); }, [editingPerson]);
@@ -55,6 +57,39 @@ const ParticipantPage = () => {
         handleChange("category", newCat);
       }
     } else handleChange("category", val);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 1024 * 1024) {
+      alert("❌ Image size must be less than 1MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setForm(prev => ({
+        ...prev,
+        dynamicData: {
+          ...(prev.dynamicData || {}),
+          Photo: base64
+        }
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setForm(prev => ({
+      ...prev,
+      dynamicData: {
+        ...(prev.dynamicData || {}),
+        Photo: ""
+      }
+    }));
   };
 
   const handleSubmit = async () => {
@@ -78,6 +113,46 @@ const ParticipantPage = () => {
         <h2 className="text-2xl font-bold mb-6">{editingPerson ? "Edit Delegate" : "Registration Terminal"}</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {/* Participant Photo Section */}
+          <div className="md:col-span-3 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+            {form.dynamicData?.Photo ? (
+              <div className="flex flex-col items-center gap-3">
+                <img 
+                  src={form.dynamicData.Photo} 
+                  alt="Preview" 
+                  className="w-32 h-32 rounded-2xl object-cover border border-slate-200 shadow-sm"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="px-4 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-xs font-semibold hover:bg-rose-100 transition"
+                >
+                  Remove Photo
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <label className="cursor-pointer text-sm font-semibold text-blue-600 hover:text-blue-700">
+                    Upload Photo
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleImageChange}
+                    />
+                  </label>
+                  <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 1MB</p>
+                </div>
+              </div>
+            )}
+          </div>
+
           <input className="p-3 border rounded-xl" placeholder="Name *" value={form.name} onChange={e => handleChange("name", e.target.value)} />
           <input className="p-3 border rounded-xl" placeholder="Phone *" value={form.phone} onChange={e => handleChange("phone", e.target.value)} />
           <input className="p-3 border rounded-xl" placeholder="Email" value={form.email} onChange={e => handleChange("email", e.target.value)} />
