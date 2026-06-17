@@ -88,8 +88,11 @@ const BadgePrint = () => {
   const [editName, setEditName] = useState("");
   const [editDestination, setEditDestination] = useState("");
   const [editState, setEditState] = useState("");
-  const [selectedCheckpoints, setSelectedCheckpoints] = useState<string[]>([]);
   const [badgeSize, setBadgeSize] = useState<string>("standard");
+  const [printPhoto, setPrintPhoto] = useState<boolean>(true);
+  const [printName, setPrintName] = useState<boolean>(true);
+  const [printQR, setPrintQR] = useState<boolean>(true);
+  const [printRegId, setPrintRegId] = useState<boolean>(true);
 
   // Load all participants for conference on mount
   useEffect(() => {
@@ -262,7 +265,11 @@ const BadgePrint = () => {
         backUrl: `/u/${conferenceSlug}/badge-print`,
         conferenceName: selectedParticipant.conferenceName || "",
         dynamicData: selectedParticipant.dynamicData || {},
-        badgeSize: badgeSize
+        badgeSize: badgeSize,
+        printPhoto: printPhoto,
+        printName: printName,
+        printQR: printQR,
+        printRegId: printRegId
       };
 
       sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
@@ -333,7 +340,11 @@ const BadgePrint = () => {
           qrCode: qrContent, // Send full formatted details text block
           checkpoints: assignments,
           conferenceName: p.conferenceName || "",
-          dynamicData: p.dynamicData || {}
+          dynamicData: p.dynamicData || {},
+          printPhoto: printPhoto,
+          printName: printName,
+          printQR: printQR,
+          printRegId: printRegId
         };
       });
 
@@ -533,6 +544,52 @@ const BadgePrint = () => {
                         </select>
                       </div>
 
+                      {/* BADGE FIELDS TO PRINT */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Badge Fields to Print</label>
+                        <div className="grid grid-cols-2 gap-2 mt-1">
+                          <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 hover:bg-slate-100 rounded-lg cursor-pointer transition select-none text-xs">
+                            <input
+                              type="checkbox"
+                              checked={printPhoto}
+                              onChange={(e) => setPrintPhoto(e.target.checked)}
+                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className="font-bold text-slate-700">Photo / Image</span>
+                          </label>
+
+                          <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 hover:bg-slate-100 rounded-lg cursor-pointer transition select-none text-xs">
+                            <input
+                              type="checkbox"
+                              checked={printName}
+                              onChange={(e) => setPrintName(e.target.checked)}
+                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className="font-bold text-slate-700">Full Name</span>
+                          </label>
+
+                          <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 hover:bg-slate-100 rounded-lg cursor-pointer transition select-none text-xs">
+                            <input
+                              type="checkbox"
+                              checked={printQR}
+                              onChange={(e) => setPrintQR(e.target.checked)}
+                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className="font-bold text-slate-700">QR Code</span>
+                          </label>
+
+                          <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 hover:bg-slate-100 rounded-lg cursor-pointer transition select-none text-xs">
+                            <input
+                              type="checkbox"
+                              checked={printRegId}
+                              onChange={(e) => setPrintRegId(e.target.checked)}
+                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className="font-bold text-slate-700">Registration ID</span>
+                          </label>
+                        </div>
+                      </div>
+
                       {/* CHECKPOINTS */}
                       <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Print Checkpoints</label>
@@ -594,28 +651,32 @@ const BadgePrint = () => {
                     <div className="flex-grow flex flex-col items-center justify-center w-full px-4 box-border gap-1.5">
                       
                       {/* Photo Placeholder */}
-                      <div className={`bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-inner transition-all duration-300 ${
-                        badgeSize === "A5" ? "w-[110px] h-[132px]" : "w-[60px] h-[72px]"
-                      }`}>
-                        {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.Avatar ? (
-                          <img 
-                            src={selectedParticipant.dynamicData.Photo || selectedParticipant.dynamicData.Avatar} 
-                            alt="Delegate" 
-                            className="w-full h-full object-cover" 
-                          />
-                        ) : (
-                          <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
-                          </svg>
-                        )}
-                      </div>
+                      {printPhoto && (
+                        <div className={`bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-inner transition-all duration-300 ${
+                          badgeSize === "A5" ? "w-[110px] h-[132px]" : "w-[60px] h-[72px]"
+                        }`}>
+                          {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.Avatar ? (
+                            <img 
+                              src={selectedParticipant.dynamicData.Photo || selectedParticipant.dynamicData.Avatar} 
+                              alt="Delegate" 
+                              className="w-full h-full object-cover" 
+                            />
+                          ) : (
+                            <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
+                            </svg>
+                          )}
+                        </div>
+                      )}
 
                       {/* 1. Name */}
-                      <h3 className={`font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1 transition-all duration-300 ${
-                        badgeSize === "A5" ? "text-lg" : "text-sm"
-                      }`}>
-                        {editName || "PARTICIPANT NAME"}
-                      </h3>
+                      {printName && (
+                        <h3 className={`font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1 transition-all duration-300 ${
+                          badgeSize === "A5" ? "text-lg" : "text-sm"
+                        }`}>
+                          {editName || "PARTICIPANT NAME"}
+                        </h3>
+                      )}
 
                       {/* 2. Designation / Org Suffix */}
                       {selectedParticipant.dynamicData?.Organization && (
@@ -628,23 +689,27 @@ const BadgePrint = () => {
                     </div>
 
                     {/* C. QR Code Section */}
-                    <div className="flex flex-col items-center justify-center pb-2 box-border">
-                      {selectedCheckpoints.includes("QR Code") && (
-                        <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center mb-1">
-                          <QRCode
-                            value={selectedParticipant.regId || selectedParticipant._id}
-                            size={badgeSize === "A5" ? 85 : 70}
-                          />
-                        </div>
-                      )}
-                      
-                      {/* Registration ID */}
-                      <p className={`font-mono font-bold text-slate-600 tracking-wider leading-none transition-all duration-300 ${
-                        badgeSize === "A5" ? "text-[12px]" : "text-[9px]"
-                      }`}>
-                        {selectedParticipant.regId || selectedParticipant._id}
-                      </p>
-                    </div>
+                    {(printQR || printRegId) && (
+                      <div className="flex flex-col items-center justify-center pb-2 box-border">
+                        {printQR && selectedCheckpoints.includes("QR Code") && (
+                          <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center mb-1">
+                            <QRCode
+                              value={selectedParticipant.regId || selectedParticipant._id}
+                              size={badgeSize === "A5" ? 85 : 70}
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Registration ID */}
+                        {printRegId && (
+                          <p className={`font-mono font-bold text-slate-600 tracking-wider leading-none transition-all duration-300 ${
+                            badgeSize === "A5" ? "text-[12px]" : "text-[9px]"
+                          }`}>
+                            {selectedParticipant.regId || selectedParticipant._id}
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                   </div>
 
