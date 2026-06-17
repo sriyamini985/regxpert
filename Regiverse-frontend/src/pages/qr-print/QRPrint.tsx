@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import QRCode from "react-qr-code";
 
@@ -28,6 +28,7 @@ interface RootPayload {
   conferenceName?: string;
   dynamicData?: Record<string, any>;
   backUrl?: string;
+  badgeSize?: string;
 }
 
 const getCategoryColor = (category: string) => {
@@ -76,6 +77,10 @@ const QRPrint = () => {
   // Normalize single vs bulk print payloads
   const badges: BadgePayload[] = payload?.badges || (payload ? [payload as BadgePayload] : []);
 
+  const [badgeSize, setBadgeSize] = useState<string>(() => {
+    return payload?.badgeSize || (payload?.badges && payload.badges[0]?.badgeSize) || "standard";
+  });
+
   // 1. Dynamic html2pdf script loader
   useEffect(() => {
     const script = document.createElement("script");
@@ -113,7 +118,7 @@ const QRPrint = () => {
       filename:     badges.length === 1 ? `badge-${badges[0].regId || "pass"}.pdf` : `badges-bulk-${badges.length}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
       html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: [54, 86], orientation: 'portrait' }
+      jsPDF:        { unit: 'mm', format: badgeSize === "A5" ? 'a5' : [54, 86], orientation: 'portrait' }
     };
 
     (window as any).html2pdf().from(element).set(opt).save();
@@ -137,8 +142,8 @@ const QRPrint = () => {
           
           /* Container styling for preview on screen */
           .badge-container {
-            width: 54mm;
-            height: 86mm;
+            width: ${badgeSize === "A5" ? "148mm" : "54mm"};
+            height: ${badgeSize === "A5" ? "210mm" : "86mm"};
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -164,7 +169,7 @@ const QRPrint = () => {
               visibility: visible !important;
             }
             @page { 
-              size: 54mm 86mm; 
+              size: ${badgeSize === "A5" ? "148mm 210mm" : "54mm 86mm"}; 
               margin: 0 !important; 
             }
             html, body { 
@@ -174,8 +179,8 @@ const QRPrint = () => {
             }
             .badge-container {
               position: relative !important;
-              width: 54mm !important;
-              height: 86mm !important;
+              width: ${badgeSize === "A5" ? "148mm !important" : "54mm !important"};
+              height: ${badgeSize === "A5" ? "210mm !important" : "86mm !important"};
               margin: 0 !important;
               padding: 0 !important;
               box-sizing: border-box !important;
@@ -200,6 +205,17 @@ const QRPrint = () => {
           <span className="px-3 py-1 bg-slate-800 text-slate-400 rounded-full text-xs font-mono">
             Count: {badges.length} Badge(s)
           </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-400">Size:</span>
+            <select
+              value={badgeSize}
+              onChange={(e) => setBadgeSize(e.target.value)}
+              className="bg-slate-800 text-white border border-slate-700 px-3 py-1 rounded-lg text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            >
+              <option value="standard">Standard (CR80)</option>
+              <option value="A5">A5 Size Badge</option>
+            </select>
+          </div>
           <button 
             onClick={() => {
               if (badgeBackUrl) {
@@ -259,13 +275,13 @@ const QRPrint = () => {
                 justifyContent: "center",
                 flexGrow: 1,
                 width: "100%",
-                padding: "6.5mm 3.5mm 0.5mm 3.5mm",
+                padding: badgeSize === "A5" ? "18mm 10mm 2mm 10mm" : "6.5mm 3.5mm 0.5mm 3.5mm",
                 boxSizing: "border-box"
               }}>
                 {/* 1. Portrait Photo Frame */}
                 <div style={{
-                  width: "18mm",
-                  height: "22mm",
+                  width: badgeSize === "A5" ? "45mm" : "18mm",
+                  height: badgeSize === "A5" ? "55mm" : "22mm",
                   background: "#f8fafc",
                   border: "1px solid #e2e8f0",
                   borderRadius: "4px",
@@ -273,13 +289,13 @@ const QRPrint = () => {
                   alignItems: "center",
                   justifyContent: "center",
                   overflow: "hidden",
-                  marginBottom: "1.5mm",
+                  marginBottom: badgeSize === "A5" ? "4mm" : "1.5mm",
                   boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)"
                 }}>
                   {photoUrl ? (
                     <img src={photoUrl} alt="Participant" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
-                    <svg style={{ width: "8mm", height: "8mm", color: "#cbd5e1" }} fill="currentColor" viewBox="0 0 24 24">
+                    <svg style={{ width: badgeSize === "A5" ? "20mm" : "8mm", height: badgeSize === "A5" ? "20mm" : "8mm", color: "#cbd5e1" }} fill="currentColor" viewBox="0 0 24 24">
                       <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
                     </svg>
                   )}
@@ -287,7 +303,7 @@ const QRPrint = () => {
 
                 {/* 2. Full Name */}
                 <h1 style={{ 
-                  fontSize: "13px", 
+                  fontSize: badgeSize === "A5" ? "32px" : "13px", 
                   fontWeight: 900, 
                   color: "#000000", 
                   margin: 0, 
@@ -305,10 +321,10 @@ const QRPrint = () => {
                 {/* 3. Designation & Organization Details */}
                 {orgStr && (
                   <p style={{
-                    fontSize: "7.5px",
+                    fontSize: badgeSize === "A5" ? "18px" : "7.5px",
                     fontWeight: 600,
                     color: "#475569",
-                    margin: "0.5mm 0 0 0",
+                    margin: badgeSize === "A5" ? "1.5mm 0 0 0" : "0.5mm 0 0 0",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
@@ -320,10 +336,10 @@ const QRPrint = () => {
                 )}
                 
                 <p style={{
-                  fontSize: "7px",
+                  fontSize: badgeSize === "A5" ? "16px" : "7px",
                   fontWeight: 600,
                   color: "#64748b",
-                  margin: "0.2mm 0 0 0",
+                  margin: badgeSize === "A5" ? "1mm 0 0 0" : "0.2mm 0 0 0",
                   textTransform: "uppercase"
                 }}>
                   {badgeState || "India"}
@@ -336,30 +352,30 @@ const QRPrint = () => {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: "0 3.5mm 1.5mm 3.5mm",
+                padding: badgeSize === "A5" ? "0 10mm 4mm 10mm" : "0 3.5mm 1.5mm 3.5mm",
                 boxSizing: "border-box"
               }}>
                 {badgeCheckpoints.includes("QR Code") && (
                   <div style={{ 
-                    margin: "0 0 1mm 0", 
+                    margin: badgeSize === "A5" ? "0 0 3mm 0" : "0 0 1mm 0", 
                     display: "flex", 
                     alignItems: "center", 
                     justifyContent: "center",
                     background: "#ffffff",
-                    padding: "1.2mm",
-                    borderRadius: "4px",
+                    padding: badgeSize === "A5" ? "3.2mm" : "1.2mm",
+                    borderRadius: badgeSize === "A5" ? "10px" : "4px",
                     border: "0.5px solid #cbd5e1"
                   }}>
-                    <QRCode value={badgeQrCode} size={90} />
+                    <QRCode value={badgeQrCode} size={badgeSize === "A5" ? 180 : 90} />
                   </div>
                 )}
                 <p style={{ 
-                  fontSize: "9px", 
+                  fontSize: badgeSize === "A5" ? "22px" : "9px", 
                   fontFamily: "monospace", 
                   fontWeight: 800, 
                   color: "#1e293b", 
                   margin: 0,
-                  letterSpacing: "0.2px"
+                  letterSpacing: badgeSize === "A5" ? "0.5px" : "0.2px"
                 }}>
                   {badgeRegId}
                 </p>
@@ -369,18 +385,18 @@ const QRPrint = () => {
               <div style={{
                 width: "100%",
                 background: getCategoryColor(badgeDestination),
-                padding: "2.5mm 0",
+                padding: badgeSize === "A5" ? "6mm 0" : "2.5mm 0",
                 textAlign: "center",
                 boxSizing: "border-box",
                 flexShrink: 0
               }}>
                 <p style={{
-                  fontSize: "10.5px",
+                  fontSize: badgeSize === "A5" ? "26px" : "10.5px",
                   fontWeight: 900,
                   color: "#ffffff",
                   margin: 0,
                   textTransform: "uppercase",
-                  letterSpacing: "0.8px",
+                  letterSpacing: badgeSize === "A5" ? "2px" : "0.8px",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis"

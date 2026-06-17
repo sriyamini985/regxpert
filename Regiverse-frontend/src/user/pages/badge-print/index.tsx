@@ -89,6 +89,7 @@ const BadgePrint = () => {
   const [editDestination, setEditDestination] = useState("");
   const [editState, setEditState] = useState("");
   const [selectedCheckpoints, setSelectedCheckpoints] = useState<string[]>([]);
+  const [badgeSize, setBadgeSize] = useState<string>("standard");
 
   // Load all participants for conference on mount
   useEffect(() => {
@@ -260,7 +261,8 @@ const BadgePrint = () => {
         checkpoints: selectedCheckpoints,
         backUrl: `/u/${conferenceSlug}/badge-print`,
         conferenceName: selectedParticipant.conferenceName || "",
-        dynamicData: selectedParticipant.dynamicData || {}
+        dynamicData: selectedParticipant.dynamicData || {},
+        badgeSize: badgeSize
       };
 
       sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
@@ -337,7 +339,8 @@ const BadgePrint = () => {
 
       const payload = {
         badges: badgesPayload,
-        backUrl: `/u/${conferenceSlug}/badge-print`
+        backUrl: `/u/${conferenceSlug}/badge-print`,
+        badgeSize: badgeSize
       };
 
       sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
@@ -518,6 +521,18 @@ const BadgePrint = () => {
                         />
                       </div>
 
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Badge Print Size</label>
+                        <select
+                          value={badgeSize}
+                          onChange={(e) => setBadgeSize(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800"
+                        >
+                          <option value="standard">Standard Card (CR80)</option>
+                          <option value="A5">A5 Size Badge</option>
+                        </select>
+                      </div>
+
                       {/* CHECKPOINTS */}
                       <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Print Checkpoints</label>
@@ -569,15 +584,19 @@ const BadgePrint = () => {
                 <div className="bg-white rounded-[2.5rem] shadow-sm p-6 border border-slate-200 flex flex-col items-center justify-between">
                   <h2 className="text-xl font-bold text-slate-900 w-full text-left mb-4">Badge Preview</h2>
                   
-                  {/* PREVIEW CONTAINER: CR80 portrait aspect ratio */}
+                  {/* PREVIEW CONTAINER: CR80 portrait aspect ratio vs A5 aspect ratio */}
                   <div 
-                    className="w-[240px] h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans pt-6 pb-0 justify-between"
+                    className={`h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans pt-6 pb-0 justify-between transition-all duration-300 ${
+                      badgeSize === "A5" ? "w-[268px]" : "w-[240px]"
+                    }`}
                   >
                     {/* B. Center Attendee Details */}
                     <div className="flex-grow flex flex-col items-center justify-center w-full px-4 box-border gap-1.5">
                       
                       {/* Photo Placeholder */}
-                      <div className="w-[60px] h-[72px] bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-inner">
+                      <div className={`bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-inner transition-all duration-300 ${
+                        badgeSize === "A5" ? "w-[85px] h-[102px]" : "w-[60px] h-[72px]"
+                      }`}>
                         {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.Avatar ? (
                           <img 
                             src={selectedParticipant.dynamicData.Photo || selectedParticipant.dynamicData.Avatar} 
@@ -585,26 +604,32 @@ const BadgePrint = () => {
                             className="w-full h-full object-cover" 
                           />
                         ) : (
-                          <svg className="w-8 h-8 text-slate-300" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
                             <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
                           </svg>
                         )}
                       </div>
 
                       {/* 1. Name */}
-                      <h3 className="text-sm font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1">
+                      <h3 className={`font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1 transition-all duration-300 ${
+                        badgeSize === "A5" ? "text-lg" : "text-sm"
+                      }`}>
                         {editName || "PARTICIPANT NAME"}
                       </h3>
 
                       {/* 2. Designation / Org Suffix */}
                       {selectedParticipant.dynamicData?.Organization && (
-                        <p className="text-[8px] font-semibold text-slate-500 uppercase truncate max-w-full">
+                        <p className={`font-semibold text-slate-500 uppercase truncate max-w-full transition-all duration-300 ${
+                          badgeSize === "A5" ? "text-[11px]" : "text-[8px]"
+                        }`}>
                           {selectedParticipant.dynamicData.Organization}
                         </p>
                       )}
 
                       {/* 3. City / State */}
-                      <p className="text-[8px] font-bold text-slate-400 uppercase truncate">
+                      <p className={`font-bold text-slate-400 uppercase truncate transition-all duration-300 ${
+                        badgeSize === "A5" ? "text-[10px]" : "text-[8px]"
+                      }`}>
                         {editState || "Hyderabad, India"}
                       </p>
                     </div>
@@ -615,20 +640,26 @@ const BadgePrint = () => {
                         <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center mb-1">
                           <QRCode
                             value={selectedParticipant.regId || selectedParticipant._id}
-                            size={70}
+                            size={badgeSize === "A5" ? 110 : 70}
                           />
                         </div>
                       )}
                       
                       {/* Registration ID */}
-                      <p className="text-[9px] font-mono font-bold text-slate-600 tracking-wider leading-none">
+                      <p className={`font-mono font-bold text-slate-600 tracking-wider leading-none transition-all duration-300 ${
+                        badgeSize === "A5" ? "text-[12px]" : "text-[9px]"
+                      }`}>
                         {selectedParticipant.regId || selectedParticipant._id}
                       </p>
                     </div>
 
                     {/* D. Color-Coded Ribbon Category Banner */}
-                    <div className={`w-full py-2.5 text-center box-border mt-auto ${getCategoryColor(editDestination)}`}>
-                      <p className="text-[10px] font-black text-white tracking-widest uppercase truncate px-2">
+                    <div className={`w-full text-center box-border mt-auto transition-all duration-300 ${
+                      badgeSize === "A5" ? "py-3.5" : "py-2.5"
+                    } ${getCategoryColor(editDestination)}`}>
+                      <p className={`font-black text-white tracking-widest uppercase truncate px-2 transition-all duration-300 ${
+                        badgeSize === "A5" ? "text-[14px]" : "text-[10px]"
+                      }`}>
                         {editDestination || "DELEGATE"}
                       </p>
                     </div>
@@ -636,7 +667,7 @@ const BadgePrint = () => {
                   </div>
 
                   <p className="text-xs text-slate-400 font-medium text-center mt-4 px-4">
-                    Rendered in CR80 Portrait format (3.375" x 2.125").
+                    Rendered in {badgeSize === "A5" ? "A5 Portrait format (148mm x 210mm)" : "CR80 Portrait format (3.375\" x 2.125\")"}.
                   </p>
                 </div>
 
