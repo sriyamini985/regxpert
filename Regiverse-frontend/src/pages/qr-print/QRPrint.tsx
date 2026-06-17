@@ -356,8 +356,8 @@ const QRPrint = () => {
                 {showPhoto && (
                   <div style={{
                     position: "relative",
-                    width: badgeSize === "A5" ? "60mm" : "21mm",
-                    height: badgeSize === "A5" ? "72mm" : "25mm",
+                    width: badgeSize === "A5" ? "66mm" : "23mm",
+                    height: badgeSize === "A5" ? "79mm" : "27.5mm",
                     background: "#f8fafc",
                     border: "1px solid #e2e8f0",
                     borderRadius: "4px",
@@ -406,29 +406,7 @@ const QRPrint = () => {
                   </h1>
                 )}
 
-                {/* Category Pill Tag */}
-                {badgeDestination && (
-                  <div style={{
-                    marginTop: badgeSize === "A5" ? "3mm" : "1.2mm",
-                    padding: badgeSize === "A5" ? "1.5mm 5mm" : "0.5mm 2.2mm",
-                    background: `${themeColor}12`,
-                    border: `1px solid ${themeColor}40`,
-                    borderRadius: "100px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center"
-                  }}>
-                    <span style={{
-                      fontSize: badgeSize === "A5" ? "11px" : "5.5px",
-                      fontWeight: 800,
-                      color: themeColor,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px"
-                    }}>
-                      {badgeDestination}
-                    </span>
-                  </div>
-                )}
+
 
                 {/* 3. Designation & Organization Details */}
                 {orgStr && (

@@ -523,15 +523,7 @@ const BadgePrint = () => {
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">City / State</label>
-                        <input
-                          type="text"
-                          value={editState}
-                          onChange={(e) => setEditState(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800"
-                        />
-                      </div>
+
 
                       <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Badge Print Size</label>
@@ -695,7 +687,7 @@ const BadgePrint = () => {
                           {/* Photo Placeholder */}
                           {printPhoto && (
                             <div className={`bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-md transition-all duration-300 relative ${
-                              badgeSize === "A5" ? "w-[120px] h-[144px]" : "w-[75px] h-[90px]"
+                              badgeSize === "A5" ? "w-[132px] h-[158px]" : "w-[82px] h-[98px]"
                             }`} style={{ padding: "1.5px" }}>
                               {/* Viewfinder Corner Accents */}
                               <div className="absolute top-0 left-0 border-t-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
@@ -726,23 +718,7 @@ const BadgePrint = () => {
                             </h3>
                           )}
 
-                          {/* Category Pill Tag */}
-                          {editDestination && (
-                            <div 
-                              className="inline-flex items-center justify-center font-extrabold uppercase tracking-wide select-none transition-all duration-300"
-                              style={{
-                                marginTop: badgeSize === "A5" ? "6px" : "2px",
-                                padding: badgeSize === "A5" ? "4px 12px" : "1px 6px",
-                                backgroundColor: `${themeColor}15`,
-                                border: `0.5px solid ${themeColor}50`,
-                                borderRadius: "100px",
-                                fontSize: badgeSize === "A5" ? "10px" : "6px",
-                                color: themeColor
-                              }}
-                            >
-                              {editDestination}
-                            </div>
-                          )}
+
 
                           {/* 2. Designation / Org Suffix */}
                           {selectedParticipant.dynamicData?.Organization && (
