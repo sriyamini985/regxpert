@@ -285,8 +285,65 @@ const QRPrint = () => {
           return (
             <div key={index} className="badge-container">
               
+              {/* Premium Background Accents */}
+              <div style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                pointerEvents: "none",
+                zIndex: 0,
+                overflow: "hidden"
+              }}>
+                {/* Top-Right modern gradient shape */}
+                <svg style={{ position: "absolute", top: "-10%", right: "-10%", width: "60%", height: "60%", opacity: 0.07 }} viewBox="0 0 200 200">
+                  <defs>
+                    <linearGradient id={`grad-tr-${index}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor={themeColor} />
+                      <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="120" cy="80" r="100" fill={`url(#grad-tr-${index})`} />
+                  <circle cx="120" cy="80" r="80" fill="none" stroke={`url(#grad-tr-${index})`} strokeWidth="2" strokeDasharray="5,5" />
+                </svg>
+
+                {/* Bottom-Left elegant abstract polygons/waves */}
+                <svg style={{ position: "absolute", bottom: "-15%", left: "-15%", width: "80%", height: "80%", opacity: 0.05 }} viewBox="0 0 200 200">
+                  <defs>
+                    <linearGradient id={`grad-bl-${index}`} x1="100%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor={themeColor} />
+                      <stop offset="100%" stopColor="#4f46e5" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M 0 200 L 0 50 Q 80 120 200 100 L 200 200 Z" fill={`url(#grad-bl-${index})`} />
+                  <path d="M 0 50 Q 80 120 200 100" fill="none" stroke="#e2e8f0" strokeWidth="1" />
+                  <circle cx="50" cy="150" r="40" fill="none" stroke={themeColor} strokeWidth="1" strokeDasharray="3,3" />
+                </svg>
+
+                {/* Light Watermark Pattern in Center */}
+                <div style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%) rotate(-15deg)",
+                  fontSize: badgeSize === "A5" ? "40px" : "14px",
+                  fontWeight: 900,
+                  color: "#cbd5e1",
+                  opacity: 0.03,
+                  fontFamily: "system-ui, sans-serif",
+                  textTransform: "uppercase",
+                  letterSpacing: "4px",
+                  whiteSpace: "nowrap"
+                }}>
+                  REGXPERTS
+                </div>
+              </div>
+
               {/* B. Middle Section: Attendee Profile */}
               <div style={{
+                position: "relative",
+                zIndex: 1,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -299,8 +356,8 @@ const QRPrint = () => {
                 {showPhoto && (
                   <div style={{
                     position: "relative",
-                    width: badgeSize === "A5" ? "75mm" : "26mm",
-                    height: badgeSize === "A5" ? "90mm" : "31mm",
+                    width: badgeSize === "A5" ? "60mm" : "21mm",
+                    height: badgeSize === "A5" ? "72mm" : "25mm",
                     background: "#f8fafc",
                     border: "1px solid #e2e8f0",
                     borderRadius: "4px",
@@ -309,19 +366,19 @@ const QRPrint = () => {
                     justifyContent: "center",
                     overflow: "hidden",
                     marginBottom: badgeSize === "A5" ? "2mm" : "1mm",
-                    boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
                     padding: "1.5px"
                   }}>
                     {/* Viewfinder Corner Accents */}
-                    <div style={{ position: "absolute", top: 0, left: 0, width: badgeSize === "A5" ? "12px" : "5px", height: badgeSize === "A5" ? "12px" : "5px", borderTop: `1.5px solid ${themeColor}`, borderLeft: `1.5px solid ${themeColor}` }} />
-                    <div style={{ position: "absolute", top: 0, right: 0, width: badgeSize === "A5" ? "12px" : "5px", height: badgeSize === "A5" ? "12px" : "5px", borderTop: `1.5px solid ${themeColor}`, borderRight: `1.5px solid ${themeColor}` }} />
-                    <div style={{ position: "absolute", bottom: 0, left: 0, width: badgeSize === "A5" ? "12px" : "5px", height: badgeSize === "A5" ? "12px" : "5px", borderBottom: `1.5px solid ${themeColor}`, borderLeft: `1.5px solid ${themeColor}` }} />
-                    <div style={{ position: "absolute", bottom: 0, right: 0, width: badgeSize === "A5" ? "12px" : "5px", height: badgeSize === "A5" ? "12px" : "5px", borderBottom: `1.5px solid ${themeColor}`, borderRight: `1.5px solid ${themeColor}` }} />
+                    <div style={{ position: "absolute", top: 0, left: 0, width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderTop: `1.5px solid ${themeColor}`, borderLeft: `1.5px solid ${themeColor}` }} />
+                    <div style={{ position: "absolute", top: 0, right: 0, width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderTop: `1.5px solid ${themeColor}`, borderRight: `1.5px solid ${themeColor}` }} />
+                    <div style={{ position: "absolute", bottom: 0, left: 0, width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderBottom: `1.5px solid ${themeColor}`, borderLeft: `1.5px solid ${themeColor}` }} />
+                    <div style={{ position: "absolute", bottom: 0, right: 0, width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderBottom: `1.5px solid ${themeColor}`, borderRight: `1.5px solid ${themeColor}` }} />
 
                     {photoUrl ? (
                       <img src={photoUrl} alt="Participant" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "2px" }} />
                     ) : (
-                      <svg style={{ width: badgeSize === "A5" ? "32mm" : "12mm", height: badgeSize === "A5" ? "32mm" : "12mm", color: "#cbd5e1" }} fill="currentColor" viewBox="0 0 24 24">
+                      <svg style={{ width: badgeSize === "A5" ? "24mm" : "9mm", height: badgeSize === "A5" ? "24mm" : "9mm", color: "#cbd5e1" }} fill="currentColor" viewBox="0 0 24 24">
                         <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
                       </svg>
                     )}
@@ -331,17 +388,19 @@ const QRPrint = () => {
                 {/* 2. Full Name */}
                 {showName && (
                   <h1 style={{ 
-                    fontSize: badgeSize === "A5" ? "32px" : "13px", 
-                    fontWeight: 900, 
-                    color: "#000000", 
+                    fontSize: badgeSize === "A5" ? "30px" : "12px", 
+                    fontWeight: 800, 
+                    color: "#0f172a", 
                     margin: 0, 
-                    lineHeight: 1.2,
+                    lineHeight: 1.15,
                     textTransform: "uppercase",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     display: "-webkit-box",
                     WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical"
+                    WebkitBoxOrient: "vertical",
+                    letterSpacing: badgeSize === "A5" ? "0.5px" : "0.1px",
+                    fontFamily: "system-ui, -apple-system, sans-serif"
                   }}>
                     {badgeName}
                   </h1>
@@ -350,21 +409,21 @@ const QRPrint = () => {
                 {/* Category Pill Tag */}
                 {badgeDestination && (
                   <div style={{
-                    marginTop: badgeSize === "A5" ? "2mm" : "0.5mm",
-                    padding: badgeSize === "A5" ? "1px 6px" : "0.5px 2px",
-                    background: `${themeColor}15`,
-                    border: `0.5px solid ${themeColor}50`,
+                    marginTop: badgeSize === "A5" ? "3mm" : "1.2mm",
+                    padding: badgeSize === "A5" ? "1.5mm 5mm" : "0.5mm 2.2mm",
+                    background: `${themeColor}12`,
+                    border: `1px solid ${themeColor}40`,
                     borderRadius: "100px",
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center"
                   }}>
                     <span style={{
-                      fontSize: badgeSize === "A5" ? "10px" : "6px",
+                      fontSize: badgeSize === "A5" ? "11px" : "5.5px",
                       fontWeight: 800,
                       color: themeColor,
                       textTransform: "uppercase",
-                      letterSpacing: "0.2px"
+                      letterSpacing: "0.5px"
                     }}>
                       {badgeDestination}
                     </span>
@@ -391,6 +450,8 @@ const QRPrint = () => {
 
               {/* Decorative Divider */}
               <div style={{
+                position: "relative",
+                zIndex: 1,
                 width: badgeSize === "A5" ? "60mm" : "20mm",
                 height: "1px",
                 background: "linear-gradient(to right, transparent, #e2e8f0, transparent)",
@@ -400,6 +461,8 @@ const QRPrint = () => {
               {/* C. QR Code & Reg ID Section */}
               {(showQR || showRegId) && (
                 <div style={{
+                  position: "relative",
+                  zIndex: 1,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -414,31 +477,30 @@ const QRPrint = () => {
                       alignItems: "center", 
                       justifyContent: "center",
                       background: "#ffffff",
-                      padding: badgeSize === "A5" ? "2mm" : "0.8mm",
-                      borderRadius: badgeSize === "A5" ? "10px" : "4px",
-                      border: `1px solid ${themeColor}30`,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
+                      padding: badgeSize === "A5" ? "3mm" : "1.5mm",
+                      borderRadius: badgeSize === "A5" ? "12px" : "6px",
+                      border: `1.5px solid ${themeColor}25`,
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.03)"
                     }}>
-                      <QRCode value={badgeQrCode} size={badgeSize === "A5" ? 85 : 55} />
+                      <QRCode value={badgeQrCode} size={badgeSize === "A5" ? 115 : 72} />
                     </div>
                   )}
                   {showRegId && (
                     <div style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: badgeSize === "A5" ? "1mm" : "0.4mm",
-                      marginTop: badgeSize === "A5" ? "0.5mm" : "0.2mm"
+                      justifyContent: "center",
+                      marginTop: badgeSize === "A5" ? "2.5mm" : "1mm"
                     }}>
-                      <span style={{ fontSize: badgeSize === "A5" ? "20px" : "8px", fontWeight: 950, color: themeColor }}>#</span>
                       <p style={{ 
-                        fontSize: badgeSize === "A5" ? "22px" : "9px", 
-                        fontFamily: "monospace", 
-                        fontWeight: 800, 
-                        color: "#1e293b", 
+                        fontSize: badgeSize === "A5" ? "14px" : "7px", 
+                        fontWeight: 700, 
+                        color: "#475569", 
                         margin: 0,
-                        letterSpacing: badgeSize === "A5" ? "0.8px" : "0.3px"
+                        letterSpacing: "0.2px",
+                        fontFamily: "system-ui, -apple-system, sans-serif"
                       }}>
-                        {badgeRegId}
+                        Reg ID: <span style={{ color: "#0f172a", fontWeight: 800 }}>{badgeRegId}</span>
                       </p>
                     </div>
                   )}

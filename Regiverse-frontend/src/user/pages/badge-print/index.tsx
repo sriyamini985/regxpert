@@ -651,19 +651,57 @@ const BadgePrint = () => {
                           badgeSize === "A5" ? "w-[268px] gap-3" : "w-[240px] gap-1.5"
                         }`}
                       >
+                        {/* Premium Background Accents */}
+                        <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
+                          {/* Top-Right modern gradient shape */}
+                          <svg className="absolute -top-[10%] -right-[10%] w-[60%] h-[60%] opacity-[0.07] transition-all duration-300" viewBox="0 0 200 200">
+                            <defs>
+                              <linearGradient id="preview-grad-tr" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor={themeColor} />
+                                <stop offset="100%" stopColor="#06b6d4" />
+                              </linearGradient>
+                            </defs>
+                            <circle cx="120" cy="80" r="100" fill="url(#preview-grad-tr)" />
+                            <circle cx="120" cy="80" r="80" fill="none" stroke="url(#preview-grad-tr)" strokeWidth="2" strokeDasharray="5,5" />
+                          </svg>
+
+                          {/* Bottom-Left elegant abstract polygons/waves */}
+                          <svg className="absolute -bottom-[15%] -left-[15%] w-[80%] h-[80%] opacity-[0.05] transition-all duration-300" viewBox="0 0 200 200">
+                            <defs>
+                              <linearGradient id="preview-grad-bl" x1="100%" y1="100%" x2="0%" y2="0%">
+                                <stop offset="0%" stopColor={themeColor} />
+                                <stop offset="100%" stopColor="#4f46e5" />
+                              </linearGradient>
+                            </defs>
+                            <path d="M 0 200 L 0 50 Q 80 120 200 100 L 200 200 Z" fill="url(#preview-grad-bl)" />
+                            <path d="M 0 50 Q 80 120 200 100" fill="none" stroke="#e2e8f0" strokeWidth="1" />
+                            <circle cx="50" cy="150" r="40" fill="none" stroke={themeColor} strokeWidth="1" strokeDasharray="3,3" />
+                          </svg>
+
+                          {/* Light Watermark Pattern in Center */}
+                          <div 
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-[15deg] font-black text-slate-300 opacity-[0.03] uppercase tracking-[4px] whitespace-nowrap transition-all duration-300"
+                            style={{
+                              fontSize: badgeSize === "A5" ? "40px" : "32px"
+                            }}
+                          >
+                            REGXPERTS
+                          </div>
+                        </div>
+
                         {/* B. Center Attendee Details */}
-                        <div className="flex-none flex flex-col items-center justify-center w-full px-4 box-border gap-1">
+                        <div className="flex-none flex flex-col items-center justify-center w-full px-4 box-border gap-1 relative z-10">
                           
                           {/* Photo Placeholder */}
                           {printPhoto && (
-                            <div className={`bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-inner transition-all duration-300 relative ${
-                              badgeSize === "A5" ? "w-[150px] h-[180px]" : "w-[90px] h-[108px]"
+                            <div className={`bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-md transition-all duration-300 relative ${
+                              badgeSize === "A5" ? "w-[120px] h-[144px]" : "w-[75px] h-[90px]"
                             }`} style={{ padding: "1.5px" }}>
                               {/* Viewfinder Corner Accents */}
-                              <div className="absolute top-0 left-0 border-t-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "12px" : "6px", height: badgeSize === "A5" ? "12px" : "6px", borderColor: themeColor }} />
-                              <div className="absolute top-0 right-0 border-t-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "12px" : "6px", height: badgeSize === "A5" ? "12px" : "6px", borderColor: themeColor }} />
-                              <div className="absolute bottom-0 left-0 border-b-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "12px" : "6px", height: badgeSize === "A5" ? "12px" : "6px", borderColor: themeColor }} />
-                              <div className="absolute bottom-0 right-0 border-b-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "12px" : "6px", height: badgeSize === "A5" ? "12px" : "6px", borderColor: themeColor }} />
+                              <div className="absolute top-0 left-0 border-t-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                              <div className="absolute top-0 right-0 border-t-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                              <div className="absolute bottom-0 left-0 border-b-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                              <div className="absolute bottom-0 right-0 border-b-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
                               
                               {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.Avatar ? (
                                 <img 
@@ -672,7 +710,7 @@ const BadgePrint = () => {
                                   className="w-full h-full object-cover rounded-[3px]" 
                                 />
                               ) : (
-                                <svg className={`${badgeSize === "A5" ? "w-12 h-12" : "w-9 h-9"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
+                                <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
                                 </svg>
                               )}
@@ -718,7 +756,7 @@ const BadgePrint = () => {
 
                         {/* Decorative Divider */}
                         <div 
-                          className="transition-all duration-300"
+                          className="transition-all duration-300 relative z-10"
                           style={{
                             width: badgeSize === "A5" ? "210px" : "160px",
                             height: "1px",
@@ -730,18 +768,18 @@ const BadgePrint = () => {
 
                         {/* C. QR Code Section */}
                         {(printQR || printRegId) && (
-                          <div className="flex flex-col items-center justify-center pb-2 box-border">
+                          <div className="flex flex-col items-center justify-center pb-2 box-border relative z-10">
                             {printQR && selectedCheckpoints.includes("QR Code") && (
                               <div 
-                                className="bg-white p-1 rounded-xl shadow-inner flex items-center justify-center mb-1 transition-all duration-300"
+                                className="bg-white p-2 rounded-xl shadow-md flex items-center justify-center mb-1 transition-all duration-300"
                                 style={{
-                                  border: `1px solid ${themeColor}30`,
-                                  boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
+                                  border: `1.5px solid ${themeColor}25`,
+                                  boxShadow: "0 4px 12px rgba(0,0,0,0.03)"
                                 }}
                               >
                                 <QRCode
                                   value={selectedParticipant.regId || selectedParticipant._id}
-                                  size={badgeSize === "A5" ? 55 : 45}
+                                  size={badgeSize === "A5" ? 72 : 60}
                                 />
                               </div>
                             )}
@@ -751,11 +789,11 @@ const BadgePrint = () => {
                               <div 
                                 className="flex items-center gap-1 mt-0.5 justify-center transition-all duration-300"
                               >
-                                <span style={{ fontSize: badgeSize === "A5" ? "12px" : "8px", fontWeight: 950, color: themeColor }}>#</span>
-                                <p className={`font-mono font-bold text-slate-800 tracking-wider leading-none transition-all duration-300 ${
-                                  badgeSize === "A5" ? "text-[12px]" : "text-[9px]"
-                                }`}>
-                                  {selectedParticipant.regId || selectedParticipant._id}
+                                <p className="font-sans text-slate-500 font-bold tracking-wider leading-none"
+                                   style={{
+                                     fontSize: badgeSize === "A5" ? "12px" : "8px"
+                                   }}>
+                                  Reg ID: <span className="text-slate-800 font-extrabold">{selectedParticipant.regId || selectedParticipant._id}</span>
                                 </p>
                               </div>
                             )}
