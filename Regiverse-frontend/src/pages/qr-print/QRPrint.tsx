@@ -29,7 +29,7 @@ const QRPrint = () => {
       if (badgeBackUrl) {
         window.location.href = badgeBackUrl;
       }
-    }, 600);
+    }, 1000); // Increased to 1000ms to ensure full layout and QR load
     return () => clearTimeout(timer);
   }, [participant, badgeBackUrl]);
 

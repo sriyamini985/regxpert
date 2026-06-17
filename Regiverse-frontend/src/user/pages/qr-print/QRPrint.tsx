@@ -25,7 +25,7 @@ const QRPrint = () => {
     if (!participant) return;
     const timer = setTimeout(() => {
       window.print();
-    }, 600);
+    }, 1000); // Increased to 1000ms to ensure full layout load
     return () => clearTimeout(timer);
   }, [participant]);
 
