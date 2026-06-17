@@ -571,25 +571,8 @@ const BadgePrint = () => {
                   
                   {/* PREVIEW CONTAINER: CR80 portrait aspect ratio */}
                   <div 
-                    className="w-[240px] h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans p-0 justify-between"
+                    className="w-[240px] h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans pt-6 pb-0 justify-between"
                   >
-                    {/* A. Conference Title Header */}
-                    <div className="w-full pt-4 px-4 pb-1 box-border border-b border-slate-100/60 flex items-center gap-1.5 text-left">
-                      <div className="w-4 h-4 bg-blue-50 border border-blue-100 rounded flex items-center justify-center">
-                        <svg className="w-2.5 h-2.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[7.5px] font-black text-slate-800 uppercase tracking-wider truncate leading-none">
-                          {selectedParticipant.conferenceName || "EVENT PROFILE"}
-                        </p>
-                        <p className="text-[6px] text-slate-400 font-semibold truncate leading-none mt-0.5">
-                          {selectedParticipant.dynamicData?.Dates || "08th - 11th Jan 2026"}
-                        </p>
-                      </div>
-                    </div>
-
                     {/* B. Center Attendee Details */}
                     <div className="flex-grow flex flex-col items-center justify-center w-full px-4 box-border gap-1.5">
                       

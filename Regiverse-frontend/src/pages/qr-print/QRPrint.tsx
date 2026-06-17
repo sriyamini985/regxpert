@@ -251,61 +251,6 @@ const QRPrint = () => {
           return (
             <div key={index} className="badge-container">
               
-              {/* A. Top Section: Conference Branding */}
-              <div style={{
-                width: "100%",
-                padding: "3.5mm 3.5mm 1mm 3.5mm",
-                boxSizing: "border-box",
-                display: "flex",
-                gap: "2mm",
-                alignItems: "center",
-                textAlign: "left",
-                borderBottom: "0.5px solid #f1f5f9"
-              }}>
-                {/* Vector Event Logo Placeholder */}
-                <div style={{
-                  width: "7mm",
-                  height: "7mm",
-                  background: "#eff6ff",
-                  border: "1px solid #dbeafe",
-                  borderRadius: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0
-                }}>
-                  <svg style={{ width: "4.5mm", height: "4.5mm", color: "#2563eb" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flexGrow: 1 }}>
-                  <p style={{
-                    fontSize: "6.5px",
-                    fontWeight: 900,
-                    color: "#0f172a",
-                    margin: 0,
-                    textTransform: "uppercase",
-                    lineHeight: 1.15,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap"
-                  }}>
-                    {badgeConferenceName || "EVENT PROFILE"}
-                  </p>
-                  <p style={{
-                    fontSize: "5.5px",
-                    fontWeight: 600,
-                    color: "#64748b",
-                    margin: "0.2mm 0 0 0",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap"
-                  }}>
-                    {datesStr} | {venueStr}
-                  </p>
-                </div>
-              </div>
-
               {/* B. Middle Section: Attendee Profile */}
               <div style={{
                 display: "flex",
@@ -314,7 +259,7 @@ const QRPrint = () => {
                 justifyContent: "center",
                 flexGrow: 1,
                 width: "100%",
-                padding: "1.5mm 3.5mm 0.5mm 3.5mm",
+                padding: "6.5mm 3.5mm 0.5mm 3.5mm",
                 boxSizing: "border-box"
               }}>
                 {/* 1. Portrait Photo Frame */}
