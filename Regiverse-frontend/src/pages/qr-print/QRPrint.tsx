@@ -280,8 +280,8 @@ const QRPrint = () => {
               }}>
                 {/* 1. Portrait Photo Frame */}
                 <div style={{
-                  width: badgeSize === "A5" ? "45mm" : "18mm",
-                  height: badgeSize === "A5" ? "55mm" : "22mm",
+                  width: badgeSize === "A5" ? "54mm" : "18mm",
+                  height: badgeSize === "A5" ? "66mm" : "22mm",
                   background: "#f8fafc",
                   border: "1px solid #e2e8f0",
                   borderRadius: "4px",
@@ -295,7 +295,7 @@ const QRPrint = () => {
                   {photoUrl ? (
                     <img src={photoUrl} alt="Participant" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
-                    <svg style={{ width: badgeSize === "A5" ? "20mm" : "8mm", height: badgeSize === "A5" ? "20mm" : "8mm", color: "#cbd5e1" }} fill="currentColor" viewBox="0 0 24 24">
+                    <svg style={{ width: badgeSize === "A5" ? "24mm" : "8mm", height: badgeSize === "A5" ? "24mm" : "8mm", color: "#cbd5e1" }} fill="currentColor" viewBox="0 0 24 24">
                       <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
                     </svg>
                   )}
@@ -366,7 +366,7 @@ const QRPrint = () => {
                     borderRadius: badgeSize === "A5" ? "10px" : "4px",
                     border: "0.5px solid #cbd5e1"
                   }}>
-                    <QRCode value={badgeQrCode} size={badgeSize === "A5" ? 180 : 90} />
+                    <QRCode value={badgeQrCode} size={badgeSize === "A5" ? 140 : 90} />
                   </div>
                 )}
                 <p style={{ 

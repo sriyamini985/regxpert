@@ -595,7 +595,7 @@ const BadgePrint = () => {
                       
                       {/* Photo Placeholder */}
                       <div className={`bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-inner transition-all duration-300 ${
-                        badgeSize === "A5" ? "w-[85px] h-[102px]" : "w-[60px] h-[72px]"
+                        badgeSize === "A5" ? "w-[110px] h-[132px]" : "w-[60px] h-[72px]"
                       }`}>
                         {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.Avatar ? (
                           <img 
@@ -640,7 +640,7 @@ const BadgePrint = () => {
                         <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center mb-1">
                           <QRCode
                             value={selectedParticipant.regId || selectedParticipant._id}
-                            size={badgeSize === "A5" ? 110 : 70}
+                            size={badgeSize === "A5" ? 85 : 70}
                           />
                         </div>
                       )}
