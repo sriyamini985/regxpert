@@ -334,16 +334,6 @@ const QRPrint = () => {
                     {orgStr}
                   </p>
                 )}
-                
-                <p style={{
-                  fontSize: badgeSize === "A5" ? "16px" : "7px",
-                  fontWeight: 600,
-                  color: "#64748b",
-                  margin: badgeSize === "A5" ? "1mm 0 0 0" : "0.2mm 0 0 0",
-                  textTransform: "uppercase"
-                }}>
-                  {badgeState || "India"}
-                </p>
               </div>
 
               {/* C. QR Code & Reg ID Section */}
@@ -352,7 +342,7 @@ const QRPrint = () => {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: badgeSize === "A5" ? "0 10mm 4mm 10mm" : "0 3.5mm 1.5mm 3.5mm",
+                padding: badgeSize === "A5" ? "0 10mm 15mm 10mm" : "0 3.5mm 6mm 3.5mm",
                 boxSizing: "border-box"
               }}>
                 {badgeCheckpoints.includes("QR Code") && (
@@ -378,30 +368,6 @@ const QRPrint = () => {
                   letterSpacing: badgeSize === "A5" ? "0.5px" : "0.2px"
                 }}>
                   {badgeRegId}
-                </p>
-              </div>
-
-              {/* D. Bottom Section: Category Ribbon Banner */}
-              <div style={{
-                width: "100%",
-                background: getCategoryColor(badgeDestination),
-                padding: badgeSize === "A5" ? "6mm 0" : "2.5mm 0",
-                textAlign: "center",
-                boxSizing: "border-box",
-                flexShrink: 0
-              }}>
-                <p style={{
-                  fontSize: badgeSize === "A5" ? "26px" : "10.5px",
-                  fontWeight: 900,
-                  color: "#ffffff",
-                  margin: 0,
-                  textTransform: "uppercase",
-                  letterSpacing: badgeSize === "A5" ? "2px" : "0.8px",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis"
-                }}>
-                  {badgeDestination || "DELEGATE"}
                 </p>
               </div>
 

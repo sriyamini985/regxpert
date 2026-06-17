@@ -586,7 +586,7 @@ const BadgePrint = () => {
                   
                   {/* PREVIEW CONTAINER: CR80 portrait aspect ratio vs A5 aspect ratio */}
                   <div 
-                    className={`h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans pt-6 pb-0 justify-between transition-all duration-300 ${
+                    className={`h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans pt-6 pb-6 justify-between transition-all duration-300 ${
                       badgeSize === "A5" ? "w-[268px]" : "w-[240px]"
                     }`}
                   >
@@ -625,13 +625,6 @@ const BadgePrint = () => {
                           {selectedParticipant.dynamicData.Organization}
                         </p>
                       )}
-
-                      {/* 3. City / State */}
-                      <p className={`font-bold text-slate-400 uppercase truncate transition-all duration-300 ${
-                        badgeSize === "A5" ? "text-[10px]" : "text-[8px]"
-                      }`}>
-                        {editState || "Hyderabad, India"}
-                      </p>
                     </div>
 
                     {/* C. QR Code Section */}
@@ -650,17 +643,6 @@ const BadgePrint = () => {
                         badgeSize === "A5" ? "text-[12px]" : "text-[9px]"
                       }`}>
                         {selectedParticipant.regId || selectedParticipant._id}
-                      </p>
-                    </div>
-
-                    {/* D. Color-Coded Ribbon Category Banner */}
-                    <div className={`w-full text-center box-border mt-auto transition-all duration-300 ${
-                      badgeSize === "A5" ? "py-3.5" : "py-2.5"
-                    } ${getCategoryColor(editDestination)}`}>
-                      <p className={`font-black text-white tracking-widest uppercase truncate px-2 transition-all duration-300 ${
-                        badgeSize === "A5" ? "text-[14px]" : "text-[10px]"
-                      }`}>
-                        {editDestination || "DELEGATE"}
                       </p>
                     </div>
 
