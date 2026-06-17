@@ -14,32 +14,75 @@ const findParticipantByIdentifier = async (identifier) => {
   let safeIdentifier = String(identifier).trim();
   if (safeIdentifier === "") return null;
 
-  // Extract Registration ID if scanned string is a multi-line details block
-  if (safeIdentifier.includes("Reg ID:")) {
-    const match = safeIdentifier.match(/Reg ID:\s*([^\n\r]+)/i);
-    if (match && match[1]) {
-      safeIdentifier = match[1].trim();
-    }
-  } else if (safeIdentifier.includes("RegID:")) {
-    const match = safeIdentifier.match(/RegID:\s*([^\n\r]+)/i);
-    if (match && match[1]) {
-      safeIdentifier = match[1].trim();
+  // Multi-line or key-value format parser
+  let nameFromQR = "";
+  let regIdFromQR = "";
+  let emailFromQR = "";
+  let phoneFromQR = "";
+
+  const lines = safeIdentifier.split(/[\n\r]+/);
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    const lowerLine = trimmedLine.toLowerCase();
+    
+    if (lowerLine.startsWith("reg id:") || lowerLine.startsWith("regid:")) {
+      const parts = trimmedLine.split(":");
+      if (parts[1]) regIdFromQR = parts.slice(1).join(":").trim();
+    } else if (lowerLine.startsWith("name:")) {
+      const parts = trimmedLine.split(":");
+      if (parts[1]) nameFromQR = parts.slice(1).join(":").trim();
+    } else if (lowerLine.startsWith("email:")) {
+      const parts = trimmedLine.split(":");
+      if (parts[1]) emailFromQR = parts.slice(1).join(":").trim();
+    } else if (lowerLine.startsWith("phone:") || lowerLine.startsWith("mobile:") || lowerLine.startsWith("phone number:")) {
+      const parts = trimmedLine.split(":");
+      if (parts[1]) phoneFromQR = parts.slice(1).join(":").trim();
     }
   }
 
-  const conditions = [
-    { phone: safeIdentifier },
-    { email: { $regex: new RegExp(`^${safeIdentifier}$`, "i") } },
-    { qrCode: { $regex: new RegExp(`^${safeIdentifier}$`, "i") } },
-    { regId: { $regex: new RegExp(`^${safeIdentifier}$`, "i") } },
-    { regId: { $regex: new RegExp(safeIdentifier + "$", "i") } }, // matches suffix like "KHFR480" for "RegID - KHFR480"
-    { name: { $regex: new RegExp(`^${safeIdentifier}$`, "i") } }
-  ];
+  const conditions = [];
+
+  // 1. If structured attributes were successfully parsed:
+  if (regIdFromQR) {
+    conditions.push({ regId: { $regex: new RegExp(`^${regIdFromQR}$`, "i") } });
+    conditions.push({ regId: { $regex: new RegExp(regIdFromQR + "$", "i") } });
+  }
+  if (nameFromQR) {
+    conditions.push({ name: { $regex: new RegExp(`^${nameFromQR}$`, "i") } });
+  }
+  if (emailFromQR) {
+    conditions.push({ email: { $regex: new RegExp(`^${emailFromQR}$`, "i") } });
+  }
+  if (phoneFromQR) {
+    conditions.push({ phone: phoneFromQR });
+  }
+
+  // 2. Also match against raw identifier as fallback (cleaning common prefix labels)
+  if (safeIdentifier) {
+    let cleanRaw = safeIdentifier;
+    if (safeIdentifier.toLowerCase().startsWith("name:")) {
+      cleanRaw = safeIdentifier.substring(5).trim();
+    } else if (safeIdentifier.toLowerCase().startsWith("reg id:") || safeIdentifier.toLowerCase().startsWith("regid:")) {
+      cleanRaw = safeIdentifier.split(":").slice(1).join(":").trim();
+    }
+
+    conditions.push({ phone: cleanRaw });
+    conditions.push({ email: { $regex: new RegExp(`^${cleanRaw}$`, "i") } });
+    conditions.push({ qrCode: { $regex: new RegExp(`^${cleanRaw}$`, "i") } });
+    conditions.push({ regId: { $regex: new RegExp(`^${cleanRaw}$`, "i") } });
+    conditions.push({ regId: { $regex: new RegExp(cleanRaw + "$", "i") } });
+    conditions.push({ name: { $regex: new RegExp(`^${cleanRaw}$`, "i") } });
+  }
 
   if (mongoose.Types.ObjectId.isValid(safeIdentifier)) {
     conditions.push({ _id: safeIdentifier });
   }
+  
+  if (regIdFromQR && mongoose.Types.ObjectId.isValid(regIdFromQR)) {
+    conditions.push({ _id: regIdFromQR });
+  }
 
+  if (conditions.length === 0) return null;
   return await Participant.findOne({ $or: conditions });
 };
 
