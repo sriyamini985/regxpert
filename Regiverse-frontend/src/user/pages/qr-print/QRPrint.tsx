@@ -51,7 +51,26 @@ const QRPrint = () => {
   const [searchParams] = useSearchParams();
   const raw = searchParams.get("data");
 
-  const payload: RootPayload | null = raw ? JSON.parse(decodeURIComponent(raw)) : null;
+  let payload: RootPayload | null = null;
+  if (raw) {
+    try {
+      payload = JSON.parse(decodeURIComponent(raw));
+    } catch (e) {
+      console.error("Failed to parse URL search data", e);
+    }
+  }
+
+  if (!payload) {
+    const sessionData = sessionStorage.getItem("print_badge_data");
+    if (sessionData) {
+      try {
+        payload = JSON.parse(sessionData);
+      } catch (e) {
+        console.error("Failed to parse sessionStorage print data", e);
+      }
+    }
+  }
+
   const badgeBackUrl = payload?.backUrl || "";
 
   // Normalize single vs bulk print payloads

@@ -263,7 +263,8 @@ const BadgePrint = () => {
         dynamicData: selectedParticipant.dynamicData || {}
       };
 
-      window.open(`/print-qr?data=${encodeURIComponent(JSON.stringify(payload))}`, "_self");
+      sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
+      window.open("/print-qr", "_self");
 
     } catch (err) {
       console.error(err);
@@ -339,7 +340,8 @@ const BadgePrint = () => {
         backUrl: `/u/${conferenceSlug}/badge-print`
       };
 
-      window.open(`/print-qr?data=${encodeURIComponent(JSON.stringify(payload))}`, "_self");
+      sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
+      window.open("/print-qr", "_self");
 
     } catch (err) {
       console.error(err);
