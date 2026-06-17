@@ -646,7 +646,7 @@ const BadgePrint = () => {
                         {/* Premium Background Accents */}
                         <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
                           {/* Top-Right modern gradient shape */}
-                          <svg className="absolute -top-[10%] -right-[10%] w-[60%] h-[60%] opacity-[0.07] transition-all duration-300" viewBox="0 0 200 200">
+                          <svg className="absolute -top-[10%] -right-[10%] w-[60%] h-[60%] opacity-[0.22] transition-all duration-300" viewBox="0 0 200 200">
                             <defs>
                               <linearGradient id="preview-grad-tr" x1="0%" y1="0%" x2="100%" y2="100%">
                                 <stop offset="0%" stopColor={themeColor} />
@@ -658,7 +658,7 @@ const BadgePrint = () => {
                           </svg>
 
                           {/* Bottom-Left elegant abstract polygons/waves */}
-                          <svg className="absolute -bottom-[15%] -left-[15%] w-[80%] h-[80%] opacity-[0.05] transition-all duration-300" viewBox="0 0 200 200">
+                          <svg className="absolute -bottom-[15%] -left-[15%] w-[80%] h-[80%] opacity-[0.18] transition-all duration-300" viewBox="0 0 200 200">
                             <defs>
                               <linearGradient id="preview-grad-bl" x1="100%" y1="100%" x2="0%" y2="0%">
                                 <stop offset="0%" stopColor={themeColor} />
@@ -672,7 +672,7 @@ const BadgePrint = () => {
 
                           {/* Light Watermark Pattern in Center */}
                           <div 
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-[15deg] font-black text-slate-300 opacity-[0.03] uppercase tracking-[4px] whitespace-nowrap transition-all duration-300"
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-[15deg] font-black text-slate-300 opacity-[0.12] uppercase tracking-[4px] whitespace-nowrap transition-all duration-300"
                             style={{
                               fontSize: badgeSize === "A5" ? "40px" : "32px"
                             }}
@@ -687,7 +687,7 @@ const BadgePrint = () => {
                           {/* Photo Placeholder */}
                           {printPhoto && (
                             <div className={`bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-md transition-all duration-300 relative ${
-                              badgeSize === "A5" ? "w-[132px] h-[158px]" : "w-[82px] h-[98px]"
+                              badgeSize === "A5" ? "w-[116px] h-[139px]" : "w-[70px] h-[84px]"
                             }`} style={{ padding: "1.5px" }}>
                               {/* Viewfinder Corner Accents */}
                               <div className="absolute top-0 left-0 border-t-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />

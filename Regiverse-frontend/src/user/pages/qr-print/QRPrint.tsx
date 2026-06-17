@@ -297,7 +297,7 @@ const QRPrint = () => {
                 overflow: "hidden"
               }}>
                 {/* Top-Right modern gradient shape */}
-                <svg style={{ position: "absolute", top: "-10%", right: "-10%", width: "60%", height: "60%", opacity: 0.07 }} viewBox="0 0 200 200">
+                <svg style={{ position: "absolute", top: "-10%", right: "-10%", width: "60%", height: "60%", opacity: 0.22 }} viewBox="0 0 200 200">
                   <defs>
                     <linearGradient id={`grad-tr-${index}`} x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor={themeColor} />
@@ -309,7 +309,7 @@ const QRPrint = () => {
                 </svg>
 
                 {/* Bottom-Left elegant abstract polygons/waves */}
-                <svg style={{ position: "absolute", bottom: "-15%", left: "-15%", width: "80%", height: "80%", opacity: 0.05 }} viewBox="0 0 200 200">
+                <svg style={{ position: "absolute", bottom: "-15%", left: "-15%", width: "80%", height: "80%", opacity: 0.18 }} viewBox="0 0 200 200">
                   <defs>
                     <linearGradient id={`grad-bl-${index}`} x1="100%" y1="100%" x2="0%" y2="0%">
                       <stop offset="0%" stopColor={themeColor} />
@@ -330,7 +330,7 @@ const QRPrint = () => {
                   fontSize: badgeSize === "A5" ? "40px" : "14px",
                   fontWeight: 900,
                   color: "#cbd5e1",
-                  opacity: 0.03,
+                  opacity: 0.12,
                   fontFamily: "system-ui, sans-serif",
                   textTransform: "uppercase",
                   letterSpacing: "4px",
@@ -356,8 +356,8 @@ const QRPrint = () => {
                 {showPhoto && (
                   <div style={{
                     position: "relative",
-                    width: badgeSize === "A5" ? "66mm" : "23mm",
-                    height: badgeSize === "A5" ? "79mm" : "27.5mm",
+                    width: badgeSize === "A5" ? "58mm" : "20mm",
+                    height: badgeSize === "A5" ? "70mm" : "24mm",
                     background: "#f8fafc",
                     border: "1px solid #e2e8f0",
                     borderRadius: "4px",
