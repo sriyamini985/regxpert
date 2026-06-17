@@ -56,18 +56,18 @@ const ALL_CHECKPOINT_OPTIONS = ["Check-In", "Food Counter", "Kitbag", "Certifica
 const getCategoryColor = (category: string) => {
   const cat = String(category).toLowerCase();
   if (cat.includes("faculty") || cat.includes("speaker") || cat.includes("presenter") || cat.includes("guest")) {
-    return "bg-indigo-900 border-indigo-950"; // Premium Indigo color scheme
+    return "#312e81"; // Premium Indigo color scheme
   }
   if (cat.includes("organizer") || cat.includes("staff") || cat.includes("admin")) {
-    return "bg-emerald-900 border-emerald-950";
+    return "#064e3b";
   }
   if (cat.includes("exhibitor") || cat.includes("sponsor")) {
-    return "bg-amber-900 border-amber-950";
+    return "#854d0e";
   }
   if (cat.includes("volunteer")) {
-    return "bg-rose-900 border-rose-950";
+    return "#991b1b";
   }
-  return "bg-blue-900 border-blue-950"; // Navy for delegates
+  return "#1e3a8a"; // Navy for delegates
 };
 
 const BadgePrint = () => {
@@ -643,76 +643,128 @@ const BadgePrint = () => {
                   <h2 className="text-xl font-bold text-slate-900 w-full text-left mb-4">Badge Preview</h2>
                   
                   {/* PREVIEW CONTAINER: CR80 portrait aspect ratio vs A5 aspect ratio */}
-                  <div 
-                    className={`h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans transition-all duration-300 justify-center ${
-                      badgeSize === "A5" ? "w-[268px] gap-6" : "w-[240px] gap-3"
-                    }`}
-                  >
-                    {/* B. Center Attendee Details */}
-                    <div className="flex-none flex flex-col items-center justify-center w-full px-4 box-border gap-1.5">
-                      
-                      {/* Photo Placeholder */}
-                      {printPhoto && (
-                        <div className={`bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-inner transition-all duration-300 ${
-                          badgeSize === "A5" ? "w-[110px] h-[132px]" : "w-[60px] h-[72px]"
-                        }`}>
-                          {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.Avatar ? (
-                            <img 
-                              src={selectedParticipant.dynamicData.Photo || selectedParticipant.dynamicData.Avatar} 
-                              alt="Delegate" 
-                              className="w-full h-full object-cover" 
-                            />
-                          ) : (
-                            <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
-                            </svg>
+                  {(() => {
+                    const themeColor = getCategoryColor(editDestination);
+                    return (
+                      <div 
+                        className={`h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans transition-all duration-300 justify-center ${
+                          badgeSize === "A5" ? "w-[268px] gap-3" : "w-[240px] gap-1.5"
+                        }`}
+                      >
+                        {/* B. Center Attendee Details */}
+                        <div className="flex-none flex flex-col items-center justify-center w-full px-4 box-border gap-1">
+                          
+                          {/* Photo Placeholder */}
+                          {printPhoto && (
+                            <div className={`bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-inner transition-all duration-300 relative ${
+                              badgeSize === "A5" ? "w-[150px] h-[180px]" : "w-[90px] h-[108px]"
+                            }`} style={{ padding: "1.5px" }}>
+                              {/* Viewfinder Corner Accents */}
+                              <div className="absolute top-0 left-0 border-t-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "12px" : "6px", height: badgeSize === "A5" ? "12px" : "6px", borderColor: themeColor }} />
+                              <div className="absolute top-0 right-0 border-t-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "12px" : "6px", height: badgeSize === "A5" ? "12px" : "6px", borderColor: themeColor }} />
+                              <div className="absolute bottom-0 left-0 border-b-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "12px" : "6px", height: badgeSize === "A5" ? "12px" : "6px", borderColor: themeColor }} />
+                              <div className="absolute bottom-0 right-0 border-b-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "12px" : "6px", height: badgeSize === "A5" ? "12px" : "6px", borderColor: themeColor }} />
+                              
+                              {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.Avatar ? (
+                                <img 
+                                  src={selectedParticipant.dynamicData.Photo || selectedParticipant.dynamicData.Avatar} 
+                                  alt="Delegate" 
+                                  className="w-full h-full object-cover rounded-[3px]" 
+                                />
+                              ) : (
+                                <svg className={`${badgeSize === "A5" ? "w-12 h-12" : "w-9 h-9"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
+                                </svg>
+                              )}
+                            </div>
+                          )}
+
+                          {/* 1. Name */}
+                          {printName && (
+                            <h3 className={`font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1 transition-all duration-300 ${
+                              badgeSize === "A5" ? "text-lg" : "text-sm"
+                            }`}>
+                              {editName || "PARTICIPANT NAME"}
+                            </h3>
+                          )}
+
+                          {/* Category Pill Tag */}
+                          {editDestination && (
+                            <div 
+                              className="inline-flex items-center justify-center font-extrabold uppercase tracking-wide select-none transition-all duration-300"
+                              style={{
+                                marginTop: badgeSize === "A5" ? "6px" : "2px",
+                                padding: badgeSize === "A5" ? "4px 12px" : "1px 6px",
+                                backgroundColor: `${themeColor}15`,
+                                border: `0.5px solid ${themeColor}50`,
+                                borderRadius: "100px",
+                                fontSize: badgeSize === "A5" ? "10px" : "6px",
+                                color: themeColor
+                              }}
+                            >
+                              {editDestination}
+                            </div>
+                          )}
+
+                          {/* 2. Designation / Org Suffix */}
+                          {selectedParticipant.dynamicData?.Organization && (
+                            <p className={`font-semibold text-slate-500 uppercase truncate max-w-full transition-all duration-300 ${
+                              badgeSize === "A5" ? "text-[11px]" : "text-[8px]"
+                            }`} style={{ marginTop: badgeSize === "A5" ? "4px" : "2px" }}>
+                              {selectedParticipant.dynamicData.Organization}
+                            </p>
                           )}
                         </div>
-                      )}
 
-                      {/* 1. Name */}
-                      {printName && (
-                        <h3 className={`font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1 transition-all duration-300 ${
-                          badgeSize === "A5" ? "text-lg" : "text-sm"
-                        }`}>
-                          {editName || "PARTICIPANT NAME"}
-                        </h3>
-                      )}
+                        {/* Decorative Divider */}
+                        <div 
+                          className="transition-all duration-300"
+                          style={{
+                            width: badgeSize === "A5" ? "210px" : "160px",
+                            height: "1px",
+                            background: "linear-gradient(to right, transparent, #e2e8f0, transparent)",
+                            marginTop: badgeSize === "A5" ? "6px" : "2px",
+                            marginBottom: badgeSize === "A5" ? "6px" : "2px"
+                          }}
+                        />
 
-                      {/* 2. Designation / Org Suffix */}
-                      {selectedParticipant.dynamicData?.Organization && (
-                        <p className={`font-semibold text-slate-500 uppercase truncate max-w-full transition-all duration-300 ${
-                          badgeSize === "A5" ? "text-[11px]" : "text-[8px]"
-                        }`}>
-                          {selectedParticipant.dynamicData.Organization}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* C. QR Code Section */}
-                    {(printQR || printRegId) && (
-                      <div className="flex flex-col items-center justify-center pb-2 box-border">
-                        {printQR && selectedCheckpoints.includes("QR Code") && (
-                          <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center mb-1">
-                            <QRCode
-                              value={selectedParticipant.regId || selectedParticipant._id}
-                              size={badgeSize === "A5" ? 85 : 70}
-                            />
+                        {/* C. QR Code Section */}
+                        {(printQR || printRegId) && (
+                          <div className="flex flex-col items-center justify-center pb-2 box-border">
+                            {printQR && selectedCheckpoints.includes("QR Code") && (
+                              <div 
+                                className="bg-white p-1 rounded-xl shadow-inner flex items-center justify-center mb-1 transition-all duration-300"
+                                style={{
+                                  border: `1px solid ${themeColor}30`,
+                                  boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
+                                }}
+                              >
+                                <QRCode
+                                  value={selectedParticipant.regId || selectedParticipant._id}
+                                  size={badgeSize === "A5" ? 55 : 45}
+                                />
+                              </div>
+                            )}
+                            
+                            {/* Registration ID */}
+                            {printRegId && (
+                              <div 
+                                className="flex items-center gap-1 mt-0.5 justify-center transition-all duration-300"
+                              >
+                                <span style={{ fontSize: badgeSize === "A5" ? "12px" : "8px", fontWeight: 950, color: themeColor }}>#</span>
+                                <p className={`font-mono font-bold text-slate-800 tracking-wider leading-none transition-all duration-300 ${
+                                  badgeSize === "A5" ? "text-[12px]" : "text-[9px]"
+                                }`}>
+                                  {selectedParticipant.regId || selectedParticipant._id}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
-                        
-                        {/* Registration ID */}
-                        {printRegId && (
-                          <p className={`font-mono font-bold text-slate-600 tracking-wider leading-none transition-all duration-300 ${
-                            badgeSize === "A5" ? "text-[12px]" : "text-[9px]"
-                          }`}>
-                            {selectedParticipant.regId || selectedParticipant._id}
-                          </p>
-                        )}
-                      </div>
-                    )}
 
-                  </div>
+                      </div>
+                    );
+                  })()}
 
                   <p className="text-xs text-slate-400 font-medium text-center mt-4 px-4">
                     Rendered in {badgeSize === "A5" ? "A5 Portrait format (148mm x 210mm)" : "CR80 Portrait format (3.375\" x 2.125\")"}.
