@@ -643,43 +643,7 @@ const BadgePrint = () => {
                           badgeSize === "A5" ? "w-[268px] gap-3" : "w-[240px] gap-1.5"
                         }`}
                       >
-                        {/* Premium Background Accents */}
-                        <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
-                          {/* Top-Right modern gradient shape */}
-                          <svg className="absolute -top-[10%] -right-[10%] w-[60%] h-[60%] opacity-[0.22] transition-all duration-300" viewBox="0 0 200 200">
-                            <defs>
-                              <linearGradient id="preview-grad-tr" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor={themeColor} />
-                                <stop offset="100%" stopColor="#06b6d4" />
-                              </linearGradient>
-                            </defs>
-                            <circle cx="120" cy="80" r="100" fill="url(#preview-grad-tr)" />
-                            <circle cx="120" cy="80" r="80" fill="none" stroke="url(#preview-grad-tr)" strokeWidth="2" strokeDasharray="5,5" />
-                          </svg>
 
-                          {/* Bottom-Left elegant abstract polygons/waves */}
-                          <svg className="absolute -bottom-[15%] -left-[15%] w-[80%] h-[80%] opacity-[0.18] transition-all duration-300" viewBox="0 0 200 200">
-                            <defs>
-                              <linearGradient id="preview-grad-bl" x1="100%" y1="100%" x2="0%" y2="0%">
-                                <stop offset="0%" stopColor={themeColor} />
-                                <stop offset="100%" stopColor="#4f46e5" />
-                              </linearGradient>
-                            </defs>
-                            <path d="M 0 200 L 0 50 Q 80 120 200 100 L 200 200 Z" fill="url(#preview-grad-bl)" />
-                            <path d="M 0 50 Q 80 120 200 100" fill="none" stroke="#e2e8f0" strokeWidth="1" />
-                            <circle cx="50" cy="150" r="40" fill="none" stroke={themeColor} strokeWidth="1" strokeDasharray="3,3" />
-                          </svg>
-
-                          {/* Light Watermark Pattern in Center */}
-                          <div 
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-[15deg] font-black text-slate-300 opacity-[0.12] uppercase tracking-[4px] whitespace-nowrap transition-all duration-300"
-                            style={{
-                              fontSize: badgeSize === "A5" ? "40px" : "32px"
-                            }}
-                          >
-                            REGXPERTS
-                          </div>
-                        </div>
 
                         {/* B. Center Attendee Details */}
                         <div className="flex-none flex flex-col items-center justify-center w-full px-4 box-border gap-1 relative z-10">

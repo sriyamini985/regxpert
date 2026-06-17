@@ -285,60 +285,7 @@ const QRPrint = () => {
           return (
             <div key={index} className="badge-container">
               
-              {/* Premium Background Accents */}
-              <div style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                pointerEvents: "none",
-                zIndex: 0,
-                overflow: "hidden"
-              }}>
-                {/* Top-Right modern gradient shape */}
-                <svg style={{ position: "absolute", top: "-10%", right: "-10%", width: "60%", height: "60%", opacity: 0.22 }} viewBox="0 0 200 200">
-                  <defs>
-                    <linearGradient id={`grad-tr-${index}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor={themeColor} />
-                      <stop offset="100%" stopColor="#06b6d4" />
-                    </linearGradient>
-                  </defs>
-                  <circle cx="120" cy="80" r="100" fill={`url(#grad-tr-${index})`} />
-                  <circle cx="120" cy="80" r="80" fill="none" stroke={`url(#grad-tr-${index})`} strokeWidth="2" strokeDasharray="5,5" />
-                </svg>
 
-                {/* Bottom-Left elegant abstract polygons/waves */}
-                <svg style={{ position: "absolute", bottom: "-15%", left: "-15%", width: "80%", height: "80%", opacity: 0.18 }} viewBox="0 0 200 200">
-                  <defs>
-                    <linearGradient id={`grad-bl-${index}`} x1="100%" y1="100%" x2="0%" y2="0%">
-                      <stop offset="0%" stopColor={themeColor} />
-                      <stop offset="100%" stopColor="#4f46e5" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M 0 200 L 0 50 Q 80 120 200 100 L 200 200 Z" fill={`url(#grad-bl-${index})`} />
-                  <path d="M 0 50 Q 80 120 200 100" fill="none" stroke="#e2e8f0" strokeWidth="1" />
-                  <circle cx="50" cy="150" r="40" fill="none" stroke={themeColor} strokeWidth="1" strokeDasharray="3,3" />
-                </svg>
-
-                {/* Light Watermark Pattern in Center */}
-                <div style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%) rotate(-15deg)",
-                  fontSize: badgeSize === "A5" ? "40px" : "14px",
-                  fontWeight: 900,
-                  color: "#cbd5e1",
-                  opacity: 0.12,
-                  fontFamily: "system-ui, sans-serif",
-                  textTransform: "uppercase",
-                  letterSpacing: "4px",
-                  whiteSpace: "nowrap"
-                }}>
-                  REGXPERTS
-                </div>
-              </div>
 
               {/* B. Middle Section: Attendee Profile */}
               <div style={{
