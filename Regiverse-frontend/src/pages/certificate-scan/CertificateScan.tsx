@@ -246,7 +246,7 @@ const CertificateScan: React.FC = () => {
           {/* QR / BARCODE INPUT */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <h3 className="font-bold text-slate-700 mb-3">🔍 QR / Barcode Scan</h3>
-            <form onSubmit={handleQRScan} className="flex gap-3">
+            <form onSubmit={handleQRScan} className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
                 value={qrInput}
@@ -259,7 +259,7 @@ const CertificateScan: React.FC = () => {
               <button
                 type="submit"
                 disabled={isProcessing || !qrInput.trim()}
-                className="px-6 py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 disabled:opacity-50 transition"
+                className="px-6 py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 disabled:opacity-50 transition w-full sm:w-auto"
               >
                 {isProcessing ? "..." : "Scan"}
               </button>
@@ -391,7 +391,7 @@ const CertificateScan: React.FC = () => {
                     <button
                       onClick={() => issueCertificate(p)}
                       disabled={isProcessing || p.certificateGiven}
-                      className="px-5 py-2.5 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition text-sm whitespace-nowrap h-fit self-end sm:self-center"
+                      className="px-5 py-2.5 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition text-sm whitespace-nowrap h-fit self-end sm:self-center w-full sm:w-auto"
                     >
                       {p.certificateGiven ? "Issued" : "🎓 Issue"}
                     </button>

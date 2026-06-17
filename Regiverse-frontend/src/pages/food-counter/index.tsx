@@ -245,7 +245,7 @@ const FoodCounter = () => {
           {/* QR / BARCODE INPUT */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <h3 className="font-bold text-slate-700 mb-3">🔍 QR / Barcode Scan</h3>
-            <form onSubmit={handleQRScan} className="flex gap-3">
+            <form onSubmit={handleQRScan} className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
                 value={qrInput}
@@ -258,7 +258,7 @@ const FoodCounter = () => {
               <button
                 type="submit"
                 disabled={isProcessing || !qrInput.trim()}
-                className="px-6 py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 disabled:opacity-50 transition"
+                className="px-6 py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 disabled:opacity-50 transition w-full sm:w-auto"
               >
                 {isProcessing ? "..." : "Scan"}
               </button>
@@ -295,7 +295,7 @@ const FoodCounter = () => {
           {/* MANUAL SEARCH */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <h3 className="font-bold text-slate-700 mb-3">🔎 Manual Search</h3>
-            <div className="flex gap-3 mb-4">
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
               <input
                 type="text"
                 value={searchQuery}
@@ -308,7 +308,7 @@ const FoodCounter = () => {
               <button
                 onClick={handleSearch}
                 disabled={isSearching || !searchQuery.trim()}
-                className="px-6 py-3 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 transition"
+                className="px-6 py-3 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 transition w-full sm:w-auto"
               >
                 Search
               </button>

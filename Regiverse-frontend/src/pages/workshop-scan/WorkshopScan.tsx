@@ -243,7 +243,7 @@ const WorkshopScan = () => {
             <h3 className="font-bold text-slate-700 mb-3">🔍 QR / Barcode Scan</h3>
             
             {/* Form for physical scanner */}
-            <form onSubmit={handleQRScanSubmit} className="flex gap-3 mb-4">
+            <form onSubmit={handleQRScanSubmit} className="flex flex-col sm:flex-row gap-3 mb-4">
               <input
                 type="text"
                 value={qrInput}
@@ -256,7 +256,7 @@ const WorkshopScan = () => {
               <button
                 type="submit"
                 disabled={isProcessing || !qrInput.trim()}
-                className="px-6 py-3 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 disabled:opacity-50 transition"
+                className="px-6 py-3 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 disabled:opacity-50 transition w-full sm:w-auto"
               >
                 Scan
               </button>
@@ -394,7 +394,7 @@ const WorkshopScan = () => {
                           callScanAPI(p.regId || p._id);
                         }}
                         disabled={isProcessing || alreadyAttended || isBlocked}
-                        className="px-5 py-2.5 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition text-sm whitespace-nowrap h-fit self-end sm:self-center"
+                        className="px-5 py-2.5 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition text-sm whitespace-nowrap h-fit self-end sm:self-center w-full sm:w-auto"
                       >
                         {isBlocked ? "Blocked" : alreadyAttended ? "Attended" : "Mark Attended"}
                       </button>

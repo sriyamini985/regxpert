@@ -195,7 +195,7 @@ const CheckInStation = () => {
           {/* QR SCAN INPUT (works with barcode scanner or typing) */}
           <div className="bg-white rounded-2xl shadow p-6 border border-slate-100">
             <h3 className="font-bold text-slate-700 mb-3">🔍 QR / Barcode Scan</h3>
-            <form onSubmit={handleQRScan} className="flex gap-3">
+            <form onSubmit={handleQRScan} className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
                 value={qrInput}
@@ -208,7 +208,7 @@ const CheckInStation = () => {
               <button
                 type="submit"
                 disabled={isProcessing || !qrInput.trim()}
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition"
+                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition w-full sm:w-auto"
               >
                 {isProcessing ? "..." : "Scan"}
               </button>
@@ -245,7 +245,7 @@ const CheckInStation = () => {
           {/* MANUAL SEARCH */}
           <div className="bg-white rounded-2xl shadow p-6 border border-slate-100">
             <h3 className="font-bold text-slate-700 mb-3">🔎 Manual Search</h3>
-            <div className="flex gap-3 mb-4">
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
               <input
                 type="text"
                 value={searchQuery}
@@ -258,7 +258,7 @@ const CheckInStation = () => {
               <button
                 onClick={handleSearch}
                 disabled={isLoading || !searchQuery.trim()}
-                className="px-6 py-3 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 transition"
+                className="px-6 py-3 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 transition w-full sm:w-auto"
               >
                 Search
               </button>

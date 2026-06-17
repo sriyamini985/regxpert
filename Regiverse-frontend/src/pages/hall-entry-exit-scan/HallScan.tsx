@@ -241,7 +241,7 @@ const HallScan = () => {
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <h3 className="font-bold text-slate-700 mb-3">🔍 QR / Barcode Scan</h3>
             
-            <form onSubmit={handleQRScanSubmit} className="flex gap-3 mb-4">
+            <form onSubmit={handleQRScanSubmit} className="flex flex-col sm:flex-row gap-3 mb-4">
               <input
                 type="text"
                 value={qrInput}
@@ -256,7 +256,7 @@ const HallScan = () => {
               <button
                 type="submit"
                 disabled={isProcessing || !qrInput.trim()}
-                className={`px-6 py-3 text-white rounded-xl font-bold transition disabled:opacity-50 ${
+                className={`px-6 py-3 text-white rounded-xl font-bold transition disabled:opacity-50 w-full sm:w-auto ${
                   mode === 'entry' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
                 }`}
               >
@@ -320,7 +320,7 @@ const HallScan = () => {
                   const exitCount = p.hallExits ? p.hallExits.length : 0;
 
                   return (
-                    <div key={p._id} className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-4 hover:border-slate-300 transition">
+                    <div key={p._id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-4 hover:border-slate-300 transition gap-4">
                       <div>
                         <p className="font-bold text-slate-800">{p.name}</p>
                         <p className="text-sm text-slate-500">{p.phone} · {p.category} · {p.regId || "No RegID"}</p>
@@ -335,7 +335,7 @@ const HallScan = () => {
                           callScanAPI(p.regId || p._id);
                         }}
                         disabled={isProcessing}
-                        className={`px-5 py-2 text-white rounded-xl font-bold transition text-sm ${
+                        className={`px-5 py-2 text-white rounded-xl font-bold transition text-sm whitespace-nowrap self-end sm:self-center w-full sm:w-auto ${
                           mode === 'entry' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
                         }`}
                       >
