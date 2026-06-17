@@ -13,6 +13,7 @@ interface ParticipantPayload {
   checkpoints?: string[];
   _id?: string;
   dynamicData?: Record<string, any>;
+  conferenceName?: string;
 }
 
 const QRPrint = () => {
@@ -21,6 +22,7 @@ const QRPrint = () => {
 
   const participant: (ParticipantPayload & { backUrl?: string }) | null = raw ? JSON.parse(decodeURIComponent(raw)) : null;
   const badgeBackUrl = participant?.backUrl || "";
+  const badgeConferenceName = participant?.conferenceName || "";
 
   useEffect(() => {
     if (!participant) return;
@@ -29,7 +31,7 @@ const QRPrint = () => {
       if (badgeBackUrl) {
         window.location.href = badgeBackUrl;
       }
-    }, 1000); // Increased to 1000ms to ensure full layout and QR load
+    }, 1000);
     return () => clearTimeout(timer);
   }, [participant, badgeBackUrl]);
 
@@ -61,7 +63,6 @@ const QRPrint = () => {
           .badge-container {
             width: 54mm;
             height: 86mm;
-            padding: 4mm;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -74,7 +75,7 @@ const QRPrint = () => {
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border-top: 6px solid #2563eb;
+            padding: 0;
           }
 
           @media print {
@@ -88,10 +89,11 @@ const QRPrint = () => {
             }
             @page { 
               size: 54mm 86mm; 
-              margin: 0; 
+              margin: 0 !important; 
             }
-            body { 
-              margin: 0; 
+            html, body { 
+              margin: 0 !important; 
+              padding: 0 !important;
               background: white;
             }
             .badge-container {
@@ -101,12 +103,11 @@ const QRPrint = () => {
               width: 54mm !important;
               height: 86mm !important;
               margin: 0 !important;
-              padding: 4mm !important;
+              padding: 0 !important;
               box-sizing: border-box !important;
               border: none !important;
               box-shadow: none !important;
               border-radius: 0 !important;
-              border-top: 6px solid #2563eb !important;
               page-break-inside: avoid !important;
               display: flex !important;
               flex-direction: column !important;
@@ -118,45 +119,79 @@ const QRPrint = () => {
       </style>
 
       {/* Screen only top panel */}
-      <div className="no-print bg-slate-900 text-white p-4 flex gap-6 items-center justify-center sticky top-0 z-50 shadow-md">
-        <span className="text-sm font-semibold">🖨️ CR80 Badge Print Preview</span>
-        <button 
-          onClick={() => {
-            if (badgeBackUrl) {
-              window.location.href = badgeBackUrl;
-            } else {
-              window.history.back();
-            }
-          }}
-          className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-1.5 rounded-lg font-bold text-sm transition-all"
-        >
-          ← Back
-        </button>
-        <button 
-          onClick={() => window.print()}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-bold text-sm transition-all"
-        >
-          Print Badge
-        </button>
+      <div className="no-print bg-slate-900 text-white p-4 flex flex-col gap-2 items-center justify-center sticky top-0 z-50 shadow-md">
+        <div className="flex gap-6 items-center">
+          <span className="text-sm font-semibold">🖨️ Premium ID Badge Print Preview</span>
+          <button 
+            onClick={() => {
+              if (badgeBackUrl) {
+                window.location.href = badgeBackUrl;
+              } else {
+                window.history.back();
+              }
+            }}
+            className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-1.5 rounded-lg font-bold text-sm transition-all"
+          >
+            ← Back
+          </button>
+          <button 
+            onClick={() => window.print()}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-bold text-sm transition-all"
+          >
+            Print Badge
+          </button>
+        </div>
+        <p className="text-xs text-slate-400 font-bold">
+          ⚠️ Tip: In the printer settings, uncheck "Headers and footers" and set "Margins" to "None" for a perfect print!
+        </p>
       </div>
 
-      {/* CR80 Portrait Badge Container (54mm x 86mm) */}
-      <div 
-        className="badge-container"
-        style={{
-          justifyContent: badgeCheckpoints.includes("QR Code") ? "space-between" : "center",
-          gap: badgeCheckpoints.includes("QR Code") ? "0" : "6mm"
-        }}
-      >
+      {/* Premium Event ID Card layout (54mm x 86mm) */}
+      <div className="badge-container">
         
-        {/* 1. Name */}
-        <div style={{ width: "100%", marginTop: "1mm" }}>
-          <h1 style={{ 
-            fontSize: "15px", 
-            fontWeight: 800, 
-            color: "#0f172a", 
-            margin: 0, 
+        {/* A. Conference Title Header */}
+        <div style={{
+          width: "100%",
+          padding: "4mm 4mm 1mm 4mm",
+          boxSizing: "border-box"
+        }}>
+          <p style={{
+            fontSize: "7.5px",
+            fontWeight: 800,
+            color: "#1e293b",
+            margin: 0,
+            textTransform: "uppercase",
             lineHeight: 1.25,
+            letterSpacing: "0.4px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical"
+          }}>
+            {badgeConferenceName || "EVENT ATTENDEE"}
+          </p>
+        </div>
+
+        {/* B. Center Attendee Details */}
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          flexGrow: 1,
+          width: "100%",
+          padding: "0 4mm",
+          boxSizing: "border-box"
+        }}>
+          {/* 1. Name */}
+          <h1 style={{ 
+            fontSize: "14px", 
+            fontWeight: 800, 
+            color: "#000000", 
+            margin: "0 0 3.5mm 0", 
+            lineHeight: 1.25,
+            textTransform: "uppercase",
             overflow: "hidden",
             textOverflow: "ellipsis",
             display: "-webkit-box",
@@ -165,59 +200,26 @@ const QRPrint = () => {
           }}>
             {badgeName}
           </h1>
-        </div>
 
-        {/* 2. Destination */}
-        <div style={{ width: "100%", marginTop: "0.5mm" }}>
+          {/* 2. QR Code */}
+          {badgeCheckpoints.includes("QR Code") && (
+            <div style={{ 
+              margin: "0 0 2.5mm 0", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              background: "#ffffff",
+              padding: "1.5mm",
+              borderRadius: "4px",
+              border: "1px solid #e2e8f0"
+            }}>
+              <QRCode value={badgeQrCode} size={110} />
+            </div>
+          )}
+
+          {/* 3. Registration ID */}
           <p style={{ 
-            fontSize: "11px", 
-            fontWeight: 700, 
-            color: "#475569", 
-            margin: 0, 
-            textTransform: "uppercase",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis"
-          }}>
-            {badgeDestination || "Delegate"}
-          </p>
-        </div>
-
-        {/* 3. City / State */}
-        <div style={{ width: "100%", marginTop: "0.5mm" }}>
-          <p style={{ 
-            fontSize: "9px", 
-            fontWeight: 600, 
-            color: "#94a3b8", 
-            margin: 0,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis"
-          }}>
-            {badgeState || "Event Attendee"}
-          </p>
-        </div>
-
-        {/* 4. QR Code */}
-        {badgeCheckpoints.includes("QR Code") && (
-          <div style={{ 
-            margin: "3mm 0", 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center",
-            background: "#fff",
-            padding: "1.5mm",
-            borderRadius: "8px",
-            border: "1px solid #f1f5f9"
-          }}>
-            <QRCode value={badgeQrCode} size={110} />
-          </div>
-        )}
-
-        {/* 5. Registration ID */}
-        <div style={{ width: "100%" }}>
-          <p style={{ 
-            fontSize: "9px", 
+            fontSize: "10px", 
             fontFamily: "monospace", 
             fontWeight: 700, 
             color: "#334155", 
@@ -228,41 +230,27 @@ const QRPrint = () => {
           </p>
         </div>
 
-        {/* 6. Assigned Checkpoints */}
-        <div style={{ width: "100%", marginBottom: "1mm", marginTop: "1mm" }}>
-          <div style={{ 
-            display: "flex", 
-            flexWrap: "wrap", 
-            gap: "2px", 
-            justifyContent: "center", 
-            maxHeight: "14mm", 
-            overflow: "hidden" 
+        {/* C. Solid Black Category Banner */}
+        <div style={{
+          width: "100%",
+          background: "#000000",
+          padding: "3mm 0",
+          textAlign: "center",
+          boxSizing: "border-box"
+        }}>
+          <p style={{
+            fontSize: "11px",
+            fontWeight: 900,
+            color: "#ffffff",
+            margin: 0,
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis"
           }}>
-            {badgeCheckpoints
-              .filter((cp) => cp !== "QR Code")
-              .map((cp) => (
-                <span 
-                  key={cp}
-                  style={{ 
-                    fontSize: "7px", 
-                    fontWeight: 900, 
-                    background: "#eff6ff", 
-                    color: "#1d4ed8", 
-                    border: "0.5px solid #bfdbfe", 
-                    borderRadius: "3px", 
-                    padding: "0.5px 3.5px", 
-                    textTransform: "uppercase" 
-                  }}
-                >
-                  {cp}
-                </span>
-            ))}
-            {badgeCheckpoints.filter((cp) => cp !== "QR Code").length === 0 && (
-              <span style={{ fontSize: "7px", fontWeight: 700, color: "#cbd5e1", fontStyle: "italic" }}>
-                No Checkpoints
-              </span>
-            )}
-          </div>
+            {badgeDestination || "DELEGATE"}
+          </p>
         </div>
 
       </div>

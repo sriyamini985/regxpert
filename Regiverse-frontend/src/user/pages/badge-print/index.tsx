@@ -212,7 +212,8 @@ const BadgePrint = () => {
         regId: selectedParticipant.regId || selectedParticipant._id,
         qrCode: selectedParticipant.qrCode || selectedParticipant.regId || selectedParticipant._id,
         checkpoints: selectedCheckpoints,
-        backUrl: `/u/${conferenceSlug}/badge-print`
+        backUrl: `/u/${conferenceSlug}/badge-print`,
+        conferenceName: selectedParticipant.conferenceName || ""
       };
 
       window.open(`/print-qr?data=${encodeURIComponent(JSON.stringify(payload))}`, "_self");
@@ -407,68 +408,46 @@ const BadgePrint = () => {
                 {/* COLUMN 2: LIVE PRINT PREVIEW */}
                 <div className="bg-white rounded-[2.5rem] shadow-sm p-6 border border-slate-200 flex flex-col items-center justify-between">
                   <h2 className="text-xl font-bold text-slate-900 w-full text-left mb-4">Badge Preview</h2>
-                  
-                  {/* PREVIEW CONTAINER: CR80 portrait aspect ratio (approx 5:8 scale) */}
+                           {/* PREVIEW CONTAINER: CR80 portrait aspect ratio (approx 5:8 scale) */}
                   <div 
-                    className="w-[240px] h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg p-5 flex flex-col items-center text-center relative overflow-hidden font-sans border-t-[8px] border-t-blue-600"
-                    style={{
-                      justifyContent: selectedCheckpoints.includes("QR Code") ? "space-between" : "center",
-                      gap: selectedCheckpoints.includes("QR Code") ? "0" : "16px"
-                    }}
+                    className="w-[240px] h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans p-0 justify-between"
                   >
                     
-                    {/* 1. Name */}
-                    <div className="w-full mt-2">
-                      <h3 className="text-lg font-extrabold text-slate-900 leading-tight truncate px-1">
+                    {/* A. Conference Title Header */}
+                    <div className="w-full pt-4 px-4 pb-1 box-border">
+                      <p className="text-[8px] font-extrabold text-slate-700 uppercase tracking-wider line-clamp-2 leading-tight">
+                        {selectedParticipant.conferenceName || "EVENT ATTENDEE"}
+                      </p>
+                    </div>
+
+                    {/* B. Center Attendee Details */}
+                    <div className="flex-grow flex flex-col items-center justify-center w-full px-4 box-border gap-2">
+                      {/* 1. Name */}
+                      <h3 className="text-sm font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1">
                         {editName || "PARTICIPANT NAME"}
                       </h3>
-                    </div>
 
-                    {/* 2. Destination */}
-                    <div className="w-full">
-                      <p className="text-[11px] font-black text-slate-500 tracking-wide uppercase truncate px-1">
-                        {editDestination || "DESTINATION / CATEGORY"}
-                      </p>
-                    </div>
+                      {/* 2. QR Code */}
+                      {selectedCheckpoints.includes("QR Code") && (
+                        <div className="bg-slate-50 p-2 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center">
+                          <QRCode
+                            value={selectedParticipant.regId || selectedParticipant._id}
+                            size={110}
+                          />
+                        </div>
+                      )}
 
-                    {/* 3. City / State */}
-                    <div className="w-full">
-                      <p className="text-[10px] font-bold text-slate-400 truncate px-1">
-                        {editState || "CITY, STATE"}
-                      </p>
-                    </div>
-
-                    {/* 4. QR Code */}
-                    {selectedCheckpoints.includes("QR Code") && (
-                      <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center">
-                        <QRCode
-                          value={selectedParticipant.regId || selectedParticipant._id}
-                          size={110}
-                        />
-                      </div>
-                    )}
-
-                    {/* 5. Registration ID */}
-                    <div className="w-full">
+                      {/* 3. Registration ID */}
                       <p className="text-[10px] font-mono font-bold text-slate-600 tracking-wider">
-                        {selectedParticipant.regId || "REG-ID-MOCK"}
+                        {selectedParticipant.regId || selectedParticipant._id}
                       </p>
                     </div>
 
-                    {/* 6. Assigned Checkpoints */}
-                    <div className="w-full mb-2">
-                      <div className="flex flex-wrap gap-1 justify-center max-h-[50px] overflow-hidden">
-                        {selectedCheckpoints
-                          .filter((cp) => cp !== "QR Code")
-                          .map((cp) => (
-                            <span key={cp} className="px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[8px] font-black uppercase">
-                              {cp}
-                            </span>
-                        ))}
-                        {selectedCheckpoints.filter((cp) => cp !== "QR Code").length === 0 && (
-                          <span className="text-[8px] text-slate-300 font-bold italic">No Checkpoints</span>
-                        )}
-                      </div>
+                    {/* C. Solid Black Category Banner */}
+                    <div className="w-full bg-black py-2.5 text-center box-border mt-auto">
+                      <p className="text-xs font-black text-white tracking-widest uppercase truncate px-2">
+                        {editDestination || "DELEGATE"}
+                      </p>
                     </div>
 
                   </div>
