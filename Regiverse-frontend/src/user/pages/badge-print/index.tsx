@@ -48,9 +48,27 @@ interface Participant {
   blockWorkshop5?: boolean;
   dynamicData?: Record<string, any>;
   workshopScans?: string[];
+  conferenceName?: string;
 }
 
 const ALL_CHECKPOINT_OPTIONS = ["Check-In", "Food Counter", "Kitbag", "Certificate", "Workshop", "QR Code"];
+
+const getCategoryColor = (category: string) => {
+  const cat = String(category).toLowerCase();
+  if (cat.includes("faculty") || cat.includes("speaker") || cat.includes("presenter") || cat.includes("guest")) {
+    return "bg-indigo-900 border-indigo-950"; // Premium Indigo color scheme
+  }
+  if (cat.includes("organizer") || cat.includes("staff") || cat.includes("admin")) {
+    return "bg-emerald-900 border-emerald-950";
+  }
+  if (cat.includes("exhibitor") || cat.includes("sponsor")) {
+    return "bg-amber-900 border-amber-950";
+  }
+  if (cat.includes("volunteer")) {
+    return "bg-rose-900 border-rose-950";
+  }
+  return "bg-blue-900 border-blue-950"; // Navy for delegates
+};
 
 const BadgePrint = () => {
   const navigate = useNavigate();
@@ -64,6 +82,7 @@ const BadgePrint = () => {
 
   // Selection state
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Editable badge fields
   const [editName, setEditName] = useState("");
@@ -83,6 +102,7 @@ const BadgePrint = () => {
       const res = await fetch(`${API}/api/participants/conference/${conferenceSlug}`);
       const data = await res.json();
       setParticipants(Array.isArray(data) ? data : []);
+      setSelectedIds([]);
     } catch (err) {
       console.error("Failed to load participants", err);
     } finally {
@@ -147,16 +167,38 @@ const BadgePrint = () => {
     }
   };
 
+  // Roster multi-select handlers
+  const handleToggleSelect = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(x => x !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === filtered.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filtered.map(p => p._id));
+    }
+  };
+
+  const handleSelectNotPrinted = () => {
+    const notPrinted = filtered.filter(p => !p.printed).map(p => p._id);
+    setSelectedIds(notPrinted);
+  };
+
   // Filter list
   const filtered = participants.filter((p) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.regId && p.regId.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // Individual Print Action
   const handlePrintBadge = async () => {
     if (!selectedParticipant) return;
 
-    // Check duplicate warning
     if (selectedParticipant.printed) {
       const confirmPrint = window.confirm(
         `⚠️ WARNING: A badge for ${selectedParticipant.name} has already been printed.\nAre you sure you want to print a duplicate badge?`
@@ -203,17 +245,22 @@ const BadgePrint = () => {
         printLogs: updatedLogs
       });
 
-      // Open Print window with encoded customized data in the exact order:
-      // Name, Destination, City/State, QR Code, Registration ID, Selected Checkpoints
+      // Format QR Code value:
+      // Name, Registration ID, Category, Event Name, Assigned Checkpoints, Attendance Status
+      const checkpointsStr = selectedCheckpoints.filter(cp => cp !== "QR Code").join(", ");
+      const qrContent = `Name: ${editName}\nReg ID: ${selectedParticipant.regId || selectedParticipant._id}\nCategory: ${editDestination || "Delegate"}\nEvent: ${selectedParticipant.conferenceName || "Event"}\nCheckpoints: ${checkpointsStr || "None"}\nStatus: ${selectedParticipant.isCheckedIn ? "Checked In" : "Registered"}`;
+
+      // Open Print window with encoded customized data
       const payload = {
         name: editName,
         destination: editDestination,
         state: editState,
         regId: selectedParticipant.regId || selectedParticipant._id,
-        qrCode: selectedParticipant.qrCode || selectedParticipant.regId || selectedParticipant._id,
+        qrCode: qrContent, // Formatted text block
         checkpoints: selectedCheckpoints,
         backUrl: `/u/${conferenceSlug}/badge-print`,
-        conferenceName: selectedParticipant.conferenceName || ""
+        conferenceName: selectedParticipant.conferenceName || "",
+        dynamicData: selectedParticipant.dynamicData || {}
       };
 
       window.open(`/print-qr?data=${encodeURIComponent(JSON.stringify(payload))}`, "_self");
@@ -221,6 +268,82 @@ const BadgePrint = () => {
     } catch (err) {
       console.error(err);
       alert("Failed to record print status in database.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Bulk Print Action
+  const handleBulkPrint = async () => {
+    if (selectedIds.length === 0) return alert("Please select at least one delegate to print.");
+    
+    const confirmPrint = window.confirm(`Are you sure you want to print ${selectedIds.length} badges in bulk?`);
+    if (!confirmPrint) return;
+
+    setUpdating(true);
+    try {
+      const staffEmail = user?.email || "Staff Operator";
+      const timestamp = new Date().toISOString();
+
+      // Prepare updates for database
+      const updatePromises = selectedIds.map(async (id) => {
+        const participant = participants.find(p => p._id === id);
+        if (!participant) return;
+
+        const existingLogs = participant.printLogs || [];
+        const newLog = { timestamp, staffMember: staffEmail };
+        const updatedLogs = [...existingLogs, newLog];
+
+        return fetch(`${API}/api/participants/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            printed: true,
+            printLogs: updatedLogs
+          }),
+        }).then(res => res.json());
+      });
+
+      await Promise.all(updatePromises);
+
+      // Reload local participants list
+      await loadParticipants();
+      
+      // Open Print window with encoded customized data for all selected badges
+      const selectedParticipants = participants.filter(p => selectedIds.includes(p._id));
+      const badgesPayload = selectedParticipants.map(p => {
+        const assignments = getAssignedCheckpoints(p);
+        const nameVal = p.name;
+        const destVal = p.dynamicData?.Destination || p.category || "";
+        const stateVal = p.state || p.dynamicData?.City || "";
+        const regIdVal = p.regId || p._id;
+        
+        // Format QR Code value: Name, Registration ID, Category, Event Name, Assigned Checkpoints, Attendance Status
+        const checkpointsStr = assignments.filter(cp => cp !== "QR Code").join(", ");
+        const qrContent = `Name: ${nameVal}\nReg ID: ${regIdVal}\nCategory: ${destVal || "Delegate"}\nEvent: ${p.conferenceName || "Event"}\nCheckpoints: ${checkpointsStr || "None"}\nStatus: ${p.isCheckedIn ? "Checked In" : "Registered"}`;
+
+        return {
+          name: nameVal,
+          destination: destVal,
+          state: stateVal,
+          regId: regIdVal,
+          qrCode: qrContent, // Send full formatted details text block
+          checkpoints: assignments,
+          conferenceName: p.conferenceName || "",
+          dynamicData: p.dynamicData || {}
+        };
+      });
+
+      const payload = {
+        badges: badgesPayload,
+        backUrl: `/u/${conferenceSlug}/badge-print`
+      };
+
+      window.open(`/print-qr?data=${encodeURIComponent(JSON.stringify(payload))}`, "_self");
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to run bulk printing updates.");
     } finally {
       setUpdating(false);
     }
@@ -265,6 +388,30 @@ const BadgePrint = () => {
               </span>
             </h2>
 
+            {/* Bulk Selection Actions bar */}
+            <div className="flex flex-wrap gap-2 mb-3 items-center">
+              <button 
+                onClick={handleSelectAll} 
+                className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold border border-slate-200"
+              >
+                {selectedIds.length === filtered.length ? "Deselect All" : "Select All"}
+              </button>
+              <button 
+                onClick={handleSelectNotPrinted} 
+                className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold border border-slate-200"
+              >
+                Select Not Printed
+              </button>
+              {selectedIds.length > 0 && (
+                <button 
+                  onClick={handleBulkPrint}
+                  className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm ml-auto animate-fade-in"
+                >
+                  🖨️ Bulk Print Selected ({selectedIds.length})
+                </button>
+              )}
+            </div>
+
             <input
               type="text"
               value={searchTerm}
@@ -276,11 +423,11 @@ const BadgePrint = () => {
             <div className="flex-grow overflow-y-auto pr-1 space-y-2.5 custom-scrollbar">
               {filtered.map((p) => {
                 const isSelected = selectedParticipant?._id === p._id;
+                const isChecked = selectedIds.includes(p._id);
                 return (
                   <div
                     key={p._id}
-                    onClick={() => setSelectedParticipant(p)}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex justify-between items-center select-none ${
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center select-none ${
                       p.printed 
                         ? isSelected 
                           ? "bg-emerald-50 border-emerald-400 shadow-sm"
@@ -290,14 +437,25 @@ const BadgePrint = () => {
                           : "bg-white border-slate-100 hover:bg-slate-50"
                     }`}
                   >
-                    <div className="min-w-0 flex-1">
+                    {/* Roster multi-select checkbox */}
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleToggleSelect(p._id);
+                      }}
+                      className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer mr-3"
+                    />
+
+                    <div className="min-w-0 flex-1" onClick={() => setSelectedParticipant(p)}>
                       <p className="font-bold text-slate-800 text-sm truncate">{p.name}</p>
                       <p className="text-xs font-medium text-slate-400 mt-0.5 truncate">
                         ID: {p.regId || "N/A"} • {p.category || "No Category"}
                       </p>
                     </div>
                     
-                    <div className="flex flex-col items-end gap-1.5 ml-4">
+                    <div className="flex flex-col items-end gap-1.5 ml-4" onClick={() => setSelectedParticipant(p)}>
                       {p.printed ? (
                         <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-black border border-emerald-200 tracking-wide uppercase">
                           Printed ({p.printLogs?.length || 1})
@@ -339,7 +497,7 @@ const BadgePrint = () => {
                       </div>
                       
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Destination / Title</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Category Ribbon</label>
                         <input
                           type="text"
                           value={editDestination}
@@ -408,44 +566,84 @@ const BadgePrint = () => {
                 {/* COLUMN 2: LIVE PRINT PREVIEW */}
                 <div className="bg-white rounded-[2.5rem] shadow-sm p-6 border border-slate-200 flex flex-col items-center justify-between">
                   <h2 className="text-xl font-bold text-slate-900 w-full text-left mb-4">Badge Preview</h2>
-                           {/* PREVIEW CONTAINER: CR80 portrait aspect ratio (approx 5:8 scale) */}
+                  
+                  {/* PREVIEW CONTAINER: CR80 portrait aspect ratio */}
                   <div 
                     className="w-[240px] h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans p-0 justify-between"
                   >
-                    
                     {/* A. Conference Title Header */}
-                    <div className="w-full pt-4 px-4 pb-1 box-border">
-                      <p className="text-[8px] font-extrabold text-slate-700 uppercase tracking-wider line-clamp-2 leading-tight">
-                        {selectedParticipant.conferenceName || "EVENT ATTENDEE"}
-                      </p>
+                    <div className="w-full pt-4 px-4 pb-1 box-border border-b border-slate-100/60 flex items-center gap-1.5 text-left">
+                      <div className="w-4 h-4 bg-blue-50 border border-blue-100 rounded flex items-center justify-center">
+                        <svg className="w-2.5 h-2.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[7.5px] font-black text-slate-800 uppercase tracking-wider truncate leading-none">
+                          {selectedParticipant.conferenceName || "EVENT PROFILE"}
+                        </p>
+                        <p className="text-[6px] text-slate-400 font-semibold truncate leading-none mt-0.5">
+                          {selectedParticipant.dynamicData?.Dates || "08th - 11th Jan 2026"}
+                        </p>
+                      </div>
                     </div>
 
                     {/* B. Center Attendee Details */}
-                    <div className="flex-grow flex flex-col items-center justify-center w-full px-4 box-border gap-2">
+                    <div className="flex-grow flex flex-col items-center justify-center w-full px-4 box-border gap-1.5">
+                      
+                      {/* Photo Placeholder */}
+                      <div className="w-[60px] h-[72px] bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-inner">
+                        {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.Avatar ? (
+                          <img 
+                            src={selectedParticipant.dynamicData.Photo || selectedParticipant.dynamicData.Avatar} 
+                            alt="Delegate" 
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : (
+                          <svg className="w-8 h-8 text-slate-300" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
+                          </svg>
+                        )}
+                      </div>
+
                       {/* 1. Name */}
                       <h3 className="text-sm font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1">
                         {editName || "PARTICIPANT NAME"}
                       </h3>
 
-                      {/* 2. QR Code */}
+                      {/* 2. Designation / Org Suffix */}
+                      {selectedParticipant.dynamicData?.Organization && (
+                        <p className="text-[8px] font-semibold text-slate-500 uppercase truncate max-w-full">
+                          {selectedParticipant.dynamicData.Organization}
+                        </p>
+                      )}
+
+                      {/* 3. City / State */}
+                      <p className="text-[8px] font-bold text-slate-400 uppercase truncate">
+                        {editState || "Hyderabad, India"}
+                      </p>
+                    </div>
+
+                    {/* C. QR Code Section */}
+                    <div className="flex flex-col items-center justify-center pb-2 box-border">
                       {selectedCheckpoints.includes("QR Code") && (
-                        <div className="bg-slate-50 p-2 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center">
+                        <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center mb-1">
                           <QRCode
                             value={selectedParticipant.regId || selectedParticipant._id}
-                            size={110}
+                            size={70}
                           />
                         </div>
                       )}
-
-                      {/* 3. Registration ID */}
-                      <p className="text-[10px] font-mono font-bold text-slate-600 tracking-wider">
+                      
+                      {/* Registration ID */}
+                      <p className="text-[9px] font-mono font-bold text-slate-600 tracking-wider leading-none">
                         {selectedParticipant.regId || selectedParticipant._id}
                       </p>
                     </div>
 
-                    {/* C. Solid Black Category Banner */}
-                    <div className="w-full bg-black py-2.5 text-center box-border mt-auto">
-                      <p className="text-xs font-black text-white tracking-widest uppercase truncate px-2">
+                    {/* D. Color-Coded Ribbon Category Banner */}
+                    <div className={`w-full py-2.5 text-center box-border mt-auto ${getCategoryColor(editDestination)}`}>
+                      <p className="text-[10px] font-black text-white tracking-widest uppercase truncate px-2">
                         {editDestination || "DELEGATE"}
                       </p>
                     </div>
@@ -459,11 +657,11 @@ const BadgePrint = () => {
 
               </div>
             ) : (
-              <div className="bg-white rounded-[2.5rem] shadow-sm p-12 border border-slate-200 flex flex-col items-center justify-center text-center h-[500px]">
+              <div className="bg-white rounded-[2.5rem] shadow-sm p-12 border border-slate-200 flex flex-col items-center justify-center text-center h-[700px]">
                 <span className="text-5xl mb-4">🖨️</span>
                 <h2 className="text-xl font-bold text-slate-900">Select a Delegate</h2>
                 <p className="text-slate-400 text-sm mt-1 max-w-sm">
-                  Search and select a participant on the left to configure checkpoints and preview their printed badge.
+                  Search and select a participant on the left, or use the multi-select checkboxes to print multiple badges in a single bulk process.
                 </p>
               </div>
             )}

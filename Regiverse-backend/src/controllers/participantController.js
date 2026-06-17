@@ -11,8 +11,21 @@ import xlsx from "xlsx";
 // Centralized helper function to find a participant by name, phone, email, qrCode, regId, or partial regId suffix (case-insensitive)
 const findParticipantByIdentifier = async (identifier) => {
   if (!identifier) return null;
-  const safeIdentifier = String(identifier).trim();
+  let safeIdentifier = String(identifier).trim();
   if (safeIdentifier === "") return null;
+
+  // Extract Registration ID if scanned string is a multi-line details block
+  if (safeIdentifier.includes("Reg ID:")) {
+    const match = safeIdentifier.match(/Reg ID:\s*([^\n\r]+)/i);
+    if (match && match[1]) {
+      safeIdentifier = match[1].trim();
+    }
+  } else if (safeIdentifier.includes("RegID:")) {
+    const match = safeIdentifier.match(/RegID:\s*([^\n\r]+)/i);
+    if (match && match[1]) {
+      safeIdentifier = match[1].trim();
+    }
+  }
 
   const conditions = [
     { phone: safeIdentifier },
