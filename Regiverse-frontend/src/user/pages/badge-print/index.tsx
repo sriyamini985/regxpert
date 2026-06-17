@@ -299,7 +299,7 @@ const BadgePrint = () => {
                     <div className="flex flex-col items-end gap-1.5 ml-4">
                       {p.printed ? (
                         <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-black border border-emerald-200 tracking-wide uppercase">
-                          Printed
+                          Printed ({p.printLogs?.length || 1})
                         </span>
                       ) : (
                         <span className="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black border border-slate-200 tracking-wide uppercase">
@@ -379,7 +379,9 @@ const BadgePrint = () => {
 
                   {/* PRINT LOG AUDIT */}
                   <div className="border-t border-slate-100 pt-4 mt-6">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Print Activity Logs</h3>
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      Print Activity Logs ({selectedParticipant.printLogs?.length || 0})
+                    </h3>
                     <div className="max-h-[100px] overflow-y-auto space-y-1.5 text-[10px] text-slate-500 font-medium pr-1">
                       {selectedParticipant.printLogs && selectedParticipant.printLogs.length > 0 ? (
                         selectedParticipant.printLogs.map((log, index) => (

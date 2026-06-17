@@ -75,6 +75,13 @@ const QRPrint = () => {
 
           @media print {
             .no-print { display: none !important; }
+            body * {
+              visibility: hidden;
+            }
+            .badge-container,
+            .badge-container * {
+              visibility: visible !important;
+            }
             @page { 
               size: 54mm 86mm; 
               margin: 0; 
@@ -90,6 +97,7 @@ const QRPrint = () => {
               border-radius: 0;
               border-top: 6px solid #2563eb;
               page-break-inside: avoid;
+              display: flex !important;
             }
           }
         `}

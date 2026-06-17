@@ -12,6 +12,7 @@ interface Participant {
   medicalCouncilNumber?: string;
   isCheckedIn?: boolean;
   printed?: boolean;
+  printLogs?: { timestamp: string; staffMember: string }[];
   kitbagCollected?: boolean;
   certificateGiven?: boolean;
   foodLogs?: Record<string, boolean>;
@@ -85,7 +86,7 @@ const DelegateTable = ({ data }: Props) => {
                         ? "bg-indigo-600 text-white border-indigo-700 shadow-sm shadow-indigo-600/10" 
                         : "bg-slate-100 text-slate-400 border-slate-200/50"
                     }`}>
-                      Badge
+                      Badge {p.printed ? `(${p.printLogs?.length || 1})` : ""}
                     </span>
 
                     {/* Kit bag */}
