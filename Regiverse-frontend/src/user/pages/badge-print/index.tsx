@@ -53,6 +53,88 @@ interface Participant {
 
 const ALL_CHECKPOINT_OPTIONS = ["Check-In", "Food Counter", "Kitbag", "Certificate", "Workshop", "QR Code"];
 
+interface BadgeDimensions {
+  widthMm: number;
+  heightMm: number;
+  photoWidthMm: number;
+  photoHeightMm: number;
+  previewWidthPx: number;
+  previewPhotoWidthPx: number;
+  previewPhotoHeightPx: number;
+  fontSizeName: string;
+  fontSizeOrg: string;
+  fontSizeRegId: string;
+  gap: string;
+}
+
+const BADGE_SIZES: Record<string, BadgeDimensions> = {
+  standard: {
+    widthMm: 54,
+    heightMm: 86,
+    photoWidthMm: 20,
+    photoHeightMm: 24,
+    previewWidthPx: 240,
+    previewPhotoWidthPx: 70,
+    previewPhotoHeightPx: 84,
+    fontSizeName: "text-sm",
+    fontSizeOrg: "text-[8px]",
+    fontSizeRegId: "text-[8px]",
+    gap: "gap-1.5"
+  },
+  A6: {
+    widthMm: 105,
+    heightMm: 148,
+    photoWidthMm: 40,
+    photoHeightMm: 48,
+    previewWidthPx: 269,
+    previewPhotoWidthPx: 90,
+    previewPhotoHeightPx: 108,
+    fontSizeName: "text-base",
+    fontSizeOrg: "text-[10px]",
+    fontSizeRegId: "text-[10px]",
+    gap: "gap-2.5"
+  },
+  A5: {
+    widthMm: 148,
+    heightMm: 210,
+    photoWidthMm: 58,
+    photoHeightMm: 70,
+    previewWidthPx: 268,
+    previewPhotoWidthPx: 116,
+    previewPhotoHeightPx: 139,
+    fontSizeName: "text-lg",
+    fontSizeOrg: "text-[11px]",
+    fontSizeRegId: "text-[12px]",
+    gap: "gap-3"
+  },
+  "3x4": {
+    widthMm: 76,
+    heightMm: 102,
+    photoWidthMm: 30,
+    photoHeightMm: 36,
+    previewWidthPx: 283,
+    previewPhotoWidthPx: 80,
+    previewPhotoHeightPx: 96,
+    fontSizeName: "text-sm",
+    fontSizeOrg: "text-[9px]",
+    fontSizeRegId: "text-[9px]",
+    gap: "gap-2"
+  },
+  "4x6": {
+    widthMm: 102,
+    heightMm: 152,
+    photoWidthMm: 40,
+    photoHeightMm: 48,
+    previewWidthPx: 255,
+    previewPhotoWidthPx: 90,
+    previewPhotoHeightPx: 108,
+    fontSizeName: "text-base",
+    fontSizeOrg: "text-[10px]",
+    fontSizeRegId: "text-[10px]",
+    gap: "gap-2.5"
+  }
+};
+
 const getCategoryColor = (category: string) => {
   const cat = String(category).toLowerCase();
   if (cat.includes("faculty") || cat.includes("speaker") || cat.includes("presenter") || cat.includes("guest")) {
@@ -94,6 +176,8 @@ const BadgePrint = () => {
   const [printName, setPrintName] = useState<boolean>(true);
   const [printQR, setPrintQR] = useState<boolean>(true);
   const [printRegId, setPrintRegId] = useState<boolean>(true);
+  const [printCity, setPrintCity] = useState<boolean>(true);
+  const [topSpacing, setTopSpacing] = useState<number>(20);
 
   // Load all participants for conference on mount
   useEffect(() => {
@@ -267,10 +351,12 @@ const BadgePrint = () => {
         conferenceName: selectedParticipant.conferenceName || "",
         dynamicData: selectedParticipant.dynamicData || {},
         badgeSize: badgeSize,
+        topSpacing: topSpacing,
         printPhoto: printPhoto,
         printName: printName,
         printQR: printQR,
-        printRegId: printRegId
+        printRegId: printRegId,
+        printCity: printCity
       };
 
       sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
@@ -345,14 +431,16 @@ const BadgePrint = () => {
           printPhoto: printPhoto,
           printName: printName,
           printQR: printQR,
-          printRegId: printRegId
+          printRegId: printRegId,
+          printCity: printCity
         };
       });
 
       const payload = {
         badges: badgesPayload,
         backUrl: `/u/${conferenceSlug}/badge-print`,
-        badgeSize: badgeSize
+        badgeSize: badgeSize,
+        topSpacing: topSpacing
       };
 
       sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
@@ -532,9 +620,26 @@ const BadgePrint = () => {
                           onChange={(e) => setBadgeSize(e.target.value)}
                           className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800"
                         >
-                          <option value="standard">Standard Card (CR80)</option>
-                          <option value="A5">A5 Size Badge</option>
+                          <option value="standard">Standard Card (CR80) (86x54mm)</option>
+                          <option value="A6">A6 Size Badge (148x105mm)</option>
+                          <option value="A5">A5 Size Badge (210x148mm)</option>
+                          <option value="3x4">3" x 4" Badge (102x76mm)</option>
+                          <option value="4x6">4" x 6" Badge (152x102mm)</option>
                         </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                          Top Spacing: <span className="text-blue-600 font-black">{topSpacing} mm</span>
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={topSpacing}
+                          onChange={(e) => setTopSpacing(Number(e.target.value))}
+                          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                        />
                       </div>
 
                       {/* BADGE FIELDS TO PRINT */}
@@ -579,6 +684,16 @@ const BadgePrint = () => {
                               className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
                             />
                             <span className="font-bold text-slate-700">Registration ID</span>
+                          </label>
+
+                          <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 hover:bg-slate-100 rounded-lg cursor-pointer transition select-none text-xs">
+                            <input
+                              type="checkbox"
+                              checked={printCity}
+                              onChange={(e) => setPrintCity(e.target.checked)}
+                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className="font-bold text-slate-700">City / Location</span>
                           </label>
                         </div>
                       </div>
@@ -631,123 +746,149 @@ const BadgePrint = () => {
                 </div>
 
                 {/* COLUMN 2: LIVE PRINT PREVIEW */}
-                <div className="bg-white rounded-[2.5rem] shadow-sm p-6 border border-slate-200 flex flex-col items-center justify-between">
-                  <h2 className="text-xl font-bold text-slate-900 w-full text-left mb-4">Badge Preview</h2>
-                  
-                  {/* PREVIEW CONTAINER: CR80 portrait aspect ratio vs A5 aspect ratio */}
-                  {(() => {
-                    const themeColor = getCategoryColor(editDestination);
-                    return (
-                      <div 
-                        className={`h-[380px] bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans transition-all duration-300 justify-center ${
-                          badgeSize === "A5" ? "w-[268px] gap-3" : "w-[240px] gap-1.5"
-                        }`}
-                      >
+                {(() => {
+                  const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
+                  return (
+                    <div className="bg-white rounded-[2.5rem] shadow-sm p-6 border border-slate-200 flex flex-col items-center justify-between">
+                      <h2 className="text-xl font-bold text-slate-900 w-full text-left mb-4">Badge Preview</h2>
+                      
+                      {(() => {
+                        const themeColor = getCategoryColor(editDestination);
+                        return (
+                          <div 
+                            className={`bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans transition-all duration-300 justify-start ${
+                              dim.gap
+                            }`}
+                            style={{
+                              height: "380px",
+                              width: `${dim.previewWidthPx}px`,
+                              paddingTop: `${(topSpacing * 380) / dim.heightMm}px`,
+                              paddingLeft: "0px",
+                              paddingRight: "0px",
+                              paddingBottom: "0px"
+                            }}
+                          >
 
 
-                        {/* B. Center Attendee Details */}
-                        <div className="flex-none flex flex-col items-center justify-center w-full px-4 box-border gap-1 relative z-10">
-                          
-                          {/* Photo Placeholder */}
-                          {printPhoto && (
-                            <div className={`bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-md transition-all duration-300 relative ${
-                              badgeSize === "A5" ? "w-[116px] h-[139px]" : "w-[70px] h-[84px]"
-                            }`} style={{ padding: "1.5px" }}>
-                              {/* Viewfinder Corner Accents */}
-                              <div className="absolute top-0 left-0 border-t-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                              <div className="absolute top-0 right-0 border-t-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                              <div className="absolute bottom-0 left-0 border-b-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                              <div className="absolute bottom-0 right-0 border-b-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                            {/* B. Center Attendee Details */}
+                            <div className="flex-none flex flex-col items-center justify-center w-full px-4 box-border gap-1 relative z-10">
                               
-                              {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.Avatar ? (
-                                <img 
-                                  src={selectedParticipant.dynamicData.Photo || selectedParticipant.dynamicData.Avatar} 
-                                  alt="Delegate" 
-                                  className="w-full h-full object-cover rounded-[3px]" 
-                                />
-                              ) : (
-                                <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
-                                </svg>
+                              {/* Photo Placeholder */}
+                              {printPhoto && (
+                                <div className="bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden mb-1 shadow-md transition-all duration-300 relative" 
+                                  style={{ 
+                                    padding: "1.5px",
+                                    width: `${dim.previewPhotoWidthPx}px`,
+                                    height: `${dim.previewPhotoHeightPx}px`
+                                  }}
+                                >
+                                  {/* Viewfinder Corner Accents */}
+                                  <div className="absolute top-0 left-0 border-t-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                                  <div className="absolute top-0 right-0 border-t-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                                  <div className="absolute bottom-0 left-0 border-b-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                                  <div className="absolute bottom-0 right-0 border-b-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                                  
+                                  {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.Avatar ? (
+                                    <img 
+                                      src={selectedParticipant.dynamicData.Photo || selectedParticipant.dynamicData.Avatar} 
+                                      alt="Delegate" 
+                                      className="w-full h-full object-cover rounded-[3px]" 
+                                    />
+                                  ) : (
+                                    <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
+                                    </svg>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* 1. Name */}
+                              {printName && (
+                                <h3 className={`font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1 transition-all duration-300 ${
+                                  dim.fontSizeName
+                                }`}>
+                                  {editName || "PARTICIPANT NAME"}
+                                </h3>
+                              )}
+
+
+
+                              {/* 2. Designation / Org Suffix */}
+                              {selectedParticipant.dynamicData?.Organization && (
+                                <p className={`font-semibold text-slate-500 uppercase truncate max-w-full transition-all duration-300 ${
+                                  dim.fontSizeOrg
+                                }`} style={{ marginTop: "2px" }}>
+                                  {selectedParticipant.dynamicData.Organization}
+                                </p>
+                              )}
+
+                              {/* 3. City / Location */}
+                              {printCity && editState && (
+                                <p className={`font-semibold text-slate-400 uppercase truncate max-w-full transition-all duration-300 ${
+                                  dim.fontSizeOrg
+                                }`} style={{ marginTop: "1px" }}>
+                                  {editState}
+                                </p>
                               )}
                             </div>
-                          )}
 
-                          {/* 1. Name */}
-                          {printName && (
-                            <h3 className={`font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1 transition-all duration-300 ${
-                              badgeSize === "A5" ? "text-lg" : "text-sm"
-                            }`}>
-                              {editName || "PARTICIPANT NAME"}
-                            </h3>
-                          )}
+                            {/* Decorative Divider */}
+                            <div 
+                              className="transition-all duration-300 relative z-10"
+                              style={{
+                                width: "80%",
+                                height: "1px",
+                                background: "linear-gradient(to right, transparent, #e2e8f0, transparent)",
+                                marginTop: "2px",
+                                marginBottom: "2px"
+                              }}
+                            />
 
-
-
-                          {/* 2. Designation / Org Suffix */}
-                          {selectedParticipant.dynamicData?.Organization && (
-                            <p className={`font-semibold text-slate-500 uppercase truncate max-w-full transition-all duration-300 ${
-                              badgeSize === "A5" ? "text-[11px]" : "text-[8px]"
-                            }`} style={{ marginTop: badgeSize === "A5" ? "4px" : "2px" }}>
-                              {selectedParticipant.dynamicData.Organization}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Decorative Divider */}
-                        <div 
-                          className="transition-all duration-300 relative z-10"
-                          style={{
-                            width: badgeSize === "A5" ? "210px" : "160px",
-                            height: "1px",
-                            background: "linear-gradient(to right, transparent, #e2e8f0, transparent)",
-                            marginTop: badgeSize === "A5" ? "6px" : "2px",
-                            marginBottom: badgeSize === "A5" ? "6px" : "2px"
-                          }}
-                        />
-
-                        {/* C. QR Code Section */}
-                        {(printQR || printRegId) && (
-                          <div className="flex flex-col items-center justify-center pb-2 box-border relative z-10">
-                            {printQR && selectedCheckpoints.includes("QR Code") && (
-                              <div 
-                                className="bg-white p-2 rounded-xl shadow-md flex items-center justify-center mb-1 transition-all duration-300"
-                                style={{
-                                  border: `1.5px solid ${themeColor}25`,
-                                  boxShadow: "0 4px 12px rgba(0,0,0,0.03)"
-                                }}
-                              >
-                                <QRCode
-                                  value={selectedParticipant.regId || selectedParticipant._id}
-                                  size={badgeSize === "A5" ? 72 : 60}
-                                />
+                            {/* C. QR Code Section */}
+                            {(printQR || printRegId) && (
+                              <div className="flex flex-col items-center justify-center pb-2 box-border relative z-10">
+                                {printQR && selectedCheckpoints.includes("QR Code") && (
+                                  <div 
+                                    className="bg-white p-2 rounded-xl shadow-md flex items-center justify-center mb-1 transition-all duration-300"
+                                    style={{
+                                      border: `1.5px solid ${themeColor}25`,
+                                      boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+                                      width: `${dim.previewPhotoWidthPx}px`,
+                                      height: `${dim.previewPhotoWidthPx}px`,
+                                      boxSizing: "border-box"
+                                    }}
+                                  >
+                                    <QRCode
+                                      value={selectedParticipant.regId || selectedParticipant._id}
+                                      size={256}
+                                      style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                    />
+                                  </div>
+                                )}
+                                
+                                {/* Registration ID */}
+                                {printRegId && (
+                                  <div 
+                                    className="flex items-center gap-1 mt-0.5 justify-center transition-all duration-300"
+                                  >
+                                    <p className={`font-sans text-slate-500 font-bold tracking-wider leading-none ${dim.fontSizeRegId}`}>
+                                      Reg ID: <span className="text-slate-800 font-extrabold">{selectedParticipant.regId || selectedParticipant._id}</span>
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                             )}
-                            
-                            {/* Registration ID */}
-                            {printRegId && (
-                              <div 
-                                className="flex items-center gap-1 mt-0.5 justify-center transition-all duration-300"
-                              >
-                                <p className="font-sans text-slate-500 font-bold tracking-wider leading-none"
-                                   style={{
-                                     fontSize: badgeSize === "A5" ? "12px" : "8px"
-                                   }}>
-                                  Reg ID: <span className="text-slate-800 font-extrabold">{selectedParticipant.regId || selectedParticipant._id}</span>
-                                </p>
-                              </div>
-                            )}
+
                           </div>
-                        )}
+                        );
+                      })()}
 
-                      </div>
-                    );
-                  })()}
-
-                  <p className="text-xs text-slate-400 font-medium text-center mt-4 px-4">
-                    Rendered in {badgeSize === "A5" ? "A5 Portrait format (148mm x 210mm)" : "CR80 Portrait format (3.375\" x 2.125\")"}.
-                  </p>
-                </div>
+                      <p className="text-xs text-slate-400 font-medium text-center mt-4 px-4">
+                        Rendered in {badgeSize.toUpperCase()} Portrait format ({dim.widthMm}mm x {dim.heightMm}mm).
+                      </p>
+                    </div>
+                  );
+                })()}
 
               </div>
             ) : (
