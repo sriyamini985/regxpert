@@ -339,6 +339,38 @@ const BadgePrint = () => {
       const checkpointsStr = selectedCheckpoints.filter(cp => cp !== "QR Code").join(", ");
       const qrContent = `Name: ${editName}\nReg ID: ${selectedParticipant.regId || selectedParticipant._id}\nCategory: ${editDestination || "Delegate"}\nEvent: ${selectedParticipant.conferenceName || "Event"}\nCheckpoints: ${checkpointsStr || "None"}\nStatus: ${selectedParticipant.isCheckedIn ? "Checked In" : "Registered"}`;
 
+      // Build Next Badge Payload if available in filtered roster
+      const currentIndex = filtered.findIndex(p => p._id === selectedParticipant._id);
+      const nextParticipant = currentIndex !== -1 && currentIndex + 1 < filtered.length ? filtered[currentIndex + 1] : null;
+      let nextBadgePayload = null;
+      if (nextParticipant) {
+        const nextAssignments = getAssignedCheckpoints(nextParticipant);
+        const nextName = nextParticipant.name;
+        const nextDest = nextParticipant.dynamicData?.Destination || nextParticipant.category || "";
+        const nextState = nextParticipant.state || nextParticipant.dynamicData?.City || "";
+        const nextRegId = nextParticipant.regId || nextParticipant._id;
+        const nextCheckpointsStr = nextAssignments.filter(cp => cp !== "QR Code").join(", ");
+        const nextQrContent = `Name: ${nextName}\nReg ID: ${nextRegId}\nCategory: ${nextDest || "Delegate"}\nEvent: ${nextParticipant.conferenceName || "Event"}\nCheckpoints: ${nextCheckpointsStr || "None"}\nStatus: ${nextParticipant.isCheckedIn ? "Checked In" : "Registered"}`;
+        
+        nextBadgePayload = {
+          name: nextName,
+          destination: nextDest,
+          state: nextState,
+          regId: nextRegId,
+          qrCode: nextQrContent,
+          checkpoints: nextAssignments,
+          conferenceName: nextParticipant.conferenceName || "",
+          dynamicData: nextParticipant.dynamicData || {},
+          printPhoto: printPhoto,
+          printName: printName,
+          printQR: printQR,
+          printRegId: printRegId,
+          printCity: printCity,
+          participantId: nextParticipant._id,
+          operatorEmail: staffEmail
+        };
+      }
+
       // Open Print window with encoded customized data
       const payload = {
         name: editName,
@@ -356,7 +388,10 @@ const BadgePrint = () => {
         printName: printName,
         printQR: printQR,
         printRegId: printRegId,
-        printCity: printCity
+        printCity: printCity,
+        participantId: selectedParticipant._id,
+        operatorEmail: staffEmail,
+        nextBadgePayload: nextBadgePayload
       };
 
       sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
@@ -419,7 +454,7 @@ const BadgePrint = () => {
         const checkpointsStr = assignments.filter(cp => cp !== "QR Code").join(", ");
         const qrContent = `Name: ${nameVal}\nReg ID: ${regIdVal}\nCategory: ${destVal || "Delegate"}\nEvent: ${p.conferenceName || "Event"}\nCheckpoints: ${checkpointsStr || "None"}\nStatus: ${p.isCheckedIn ? "Checked In" : "Registered"}`;
 
-        return {
+         return {
           name: nameVal,
           destination: destVal,
           state: stateVal,
@@ -432,7 +467,9 @@ const BadgePrint = () => {
           printName: printName,
           printQR: printQR,
           printRegId: printRegId,
-          printCity: printCity
+          printCity: printCity,
+          participantId: p._id,
+          operatorEmail: staffEmail
         };
       });
 
@@ -876,6 +913,18 @@ const BadgePrint = () => {
                                     </p>
                                   </div>
                                 )}
+                              </div>
+                            )}
+
+                            {/* Category Ribbon */}
+                            {editDestination && (
+                              <div 
+                                className="absolute bottom-0 left-0 w-full text-white font-black uppercase text-center tracking-widest py-2 z-20 text-[10px] shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
+                                style={{
+                                  backgroundColor: themeColor,
+                                }}
+                              >
+                                {editDestination}
                               </div>
                             )}
 
