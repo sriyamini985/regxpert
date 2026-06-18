@@ -88,9 +88,27 @@ export const importExcel = async (req, res) => {
 
       const dynamicData = {};
       Object.keys(row).forEach((originalKey) => {
+        const value = String(row[originalKey] || "").trim();
         const normalizedKey = originalKey.toLowerCase().replace(/[^a-z0-9]/g, "");
         if (!targetedKeys.includes(normalizedKey)) {
           dynamicData[originalKey] = row[originalKey];
+        }
+
+        // Auto-detect photo column or image URL value
+        const isPhotoColumn = [
+          "photo", "profilephoto", "participantphoto", "avatar", "image", 
+          "picture", "pic", "photourl", "imagelink", "photolink"
+        ].includes(normalizedKey);
+
+        const isImageUrlValue = value.startsWith("http") && (
+          value.toLowerCase().endsWith(".jpg") || value.toLowerCase().endsWith(".jpeg") || 
+          value.toLowerCase().endsWith(".png") || value.toLowerCase().endsWith(".webp") || 
+          value.toLowerCase().endsWith(".gif") || value.includes("/profile_photo/") ||
+          value.includes("/uploads/")
+        );
+
+        if (isPhotoColumn || isImageUrlValue) {
+          dynamicData["Photo"] = row[originalKey];
         }
       });
 

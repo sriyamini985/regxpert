@@ -177,16 +177,62 @@ const QRPrint = () => {
     };
   }, []);
 
-  // 2. Auto-trigger print dialog after 1s
+  // 2. Auto-trigger print dialog after images load
   useEffect(() => {
     if (badges.length === 0) return;
-    const timer = setTimeout(() => {
+
+    const triggerPrint = () => {
       window.print();
       if (badgeBackUrl) {
         window.location.href = badgeBackUrl;
       }
-    }, 1200);
-    return () => clearTimeout(timer);
+    };
+
+    // Find all images within the badge container
+    const images = Array.from(document.querySelectorAll(".badge-container img"));
+    
+    if (images.length === 0) {
+      const timer = setTimeout(triggerPrint, 1200);
+      return () => clearTimeout(timer);
+    }
+
+    let loadedCount = 0;
+    let resolved = false;
+
+    // Set a maximum fallback timeout of 4 seconds so it will still print even if an image fails to load
+    const fallbackTimer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        triggerPrint();
+      }
+    }, 4000);
+
+    const checkAllLoaded = () => {
+      if (loadedCount === images.length && !resolved) {
+        resolved = true;
+        clearTimeout(fallbackTimer);
+        // Small delay to ensure rendering completes
+        setTimeout(triggerPrint, 500);
+      }
+    };
+
+    images.forEach((img: any) => {
+      if (img.complete) {
+        loadedCount++;
+        checkAllLoaded();
+      } else {
+        img.addEventListener("load", () => {
+          loadedCount++;
+          checkAllLoaded();
+        });
+        img.addEventListener("error", () => {
+          loadedCount++;
+          checkAllLoaded();
+        });
+      }
+    });
+
+    return () => clearTimeout(fallbackTimer);
   }, [payload, badgeBackUrl]);
 
   const handleDownloadPDF = () => {
