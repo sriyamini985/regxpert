@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
 import { useAuth } from "../../../contexts/AuthContext";
 import LoadingBar from "../../../components/ui/LoadingBar";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check, Search } from "lucide-react";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -634,28 +634,32 @@ const BadgePrint = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#F4F7FB] p-6 md:p-12 font-sans text-slate-800">
+    <div className="min-h-[calc(100vh-5rem)] bg-slate-50 relative overflow-hidden p-6 md:p-8 font-sans text-slate-800">
+      {/* Background Decorative Blur Orbs */}
+      <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none" />
+      
       <LoadingBar isLoading={fetching || updating} />
       
-      <div className="max-w-7xl mx-auto flex flex-col gap-6">
+      <div className="max-w-7xl mx-auto flex flex-col gap-6 relative z-10">
         
         {/* HEADER BAR */}
-        <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => navigate(`/u/${conferenceSlug}`)}
-              className="p-2.5 hover:bg-slate-100 rounded-xl transition text-slate-600 flex items-center justify-center border border-slate-200/60 shadow-sm"
+              className="p-3 bg-white hover:bg-slate-50 active:scale-95 text-slate-650 rounded-2xl transition border border-slate-200 shadow-sm flex items-center justify-center"
               title="Back to Dashboard"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Badge Printing Station</h1>
-              <p className="text-slate-500 font-medium text-sm mt-1">Configure layout, verify print logs, and print event ID cards.</p>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">Badge Printing Station</h1>
+              <p className="text-slate-500 font-medium text-xs md:text-sm mt-0.5">Configure layout, verify print logs, and print event ID cards.</p>
             </div>
           </div>
-          <div className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-100 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+          <div className="px-4 py-2 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-2xl text-xs font-bold shadow-sm flex items-center gap-2 tracking-wider uppercase">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             Operator Connected
           </div>
         </div>
@@ -664,45 +668,49 @@ const BadgePrint = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* LEFT PANEL: SEARCH & ROSTER (Col span 5) */}
-          <div className="lg:col-span-5 bg-white rounded-[2.5rem] shadow-sm p-6 border border-slate-200 flex flex-col h-[700px]">
+          <div className="lg:col-span-5 bg-white/80 backdrop-blur-md rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col h-[750px] transition-all hover:shadow-md">
             <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center justify-between">
               <span>Roster List</span>
-              <span className="px-3 py-1 bg-slate-50 text-slate-600 rounded-xl text-xs font-bold border border-slate-100">
+              <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-extrabold border border-indigo-100/60 shadow-sm">
                 {filtered.length} Delegates
               </span>
             </h2>
 
             {/* Bulk Selection Actions bar */}
-            <div className="flex flex-wrap gap-2 mb-3 items-center">
+            <div className="flex flex-wrap gap-2 mb-3.5 items-center">
               <button 
                 onClick={handleSelectAll} 
-                className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold border border-slate-200"
+                className="text-xs bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-700 px-3 py-2 rounded-xl font-bold border border-slate-200 transition-all"
               >
                 {selectedIds.length === filtered.length ? "Deselect All" : "Select All"}
               </button>
               <button 
                 onClick={handleSelectNotPrinted} 
-                className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold border border-slate-200"
+                className="text-xs bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-700 px-3 py-2 rounded-xl font-bold border border-slate-200 transition-all"
               >
                 Select Not Printed
               </button>
               {selectedIds.length > 0 && (
                 <button 
                   onClick={handleBulkPrint}
-                  className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm ml-auto animate-fade-in"
+                  className="text-xs bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white px-4 py-2 rounded-xl font-bold shadow-md hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-200 ml-auto animate-fade-in"
                 >
-                  🖨️ Bulk Print Selected ({selectedIds.length})
+                  🖨️ Bulk Print ({selectedIds.length})
                 </button>
               )}
             </div>
 
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name or registration ID..."
-              className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl mb-4 outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all text-sm"
-            />
+            {/* Premium search bar with left search icon */}
+            <div className="relative mb-4">
+              <Search className="absolute left-4 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name or registration ID..."
+                className="w-full bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200/80 pl-11 pr-4 py-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-550 font-medium transition-all text-sm"
+              />
+            </div>
 
             <div className="flex-grow overflow-y-auto pr-1 space-y-2.5 custom-scrollbar">
               {filtered.map((p) => {
@@ -711,41 +719,48 @@ const BadgePrint = () => {
                 return (
                   <div
                     key={p._id}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center select-none ${
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 flex items-center select-none group ${
                       p.printed 
                         ? isSelected 
-                          ? "bg-emerald-50 border-emerald-400 shadow-sm"
-                          : "bg-emerald-50/40 border-emerald-100 hover:bg-emerald-50/80"
+                          ? "bg-emerald-50/60 border-emerald-400 shadow-md shadow-emerald-500/5"
+                          : "bg-emerald-50/20 border-emerald-100/70 hover:bg-emerald-50/40 hover:border-emerald-200"
                         : isSelected
-                          ? "bg-blue-50/50 border-blue-400 shadow-sm"
-                          : "bg-white border-slate-100 hover:bg-slate-50"
+                          ? "bg-indigo-50/45 border-indigo-400 shadow-md shadow-indigo-500/5"
+                          : "bg-white border-slate-150/70 hover:bg-slate-50/50 hover:border-slate-300"
                     }`}
                   >
                     {/* Roster multi-select checkbox */}
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        handleToggleSelect(p._id);
-                      }}
-                      className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer mr-3"
-                    />
+                    <div className="relative flex items-center mr-3" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleToggleSelect(p._id)}
+                        className="sr-only"
+                      />
+                      <div 
+                        onClick={() => handleToggleSelect(p._id)}
+                        className={`w-5 h-5 rounded flex items-center justify-center border transition-all cursor-pointer ${
+                          isChecked ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300 bg-white hover:border-slate-400"
+                        }`}
+                      >
+                        {isChecked && <Check className="w-3.5 h-3.5 stroke-[3.5px]" />}
+                      </div>
+                    </div>
 
                     <div className="min-w-0 flex-1" onClick={() => setSelectedParticipant(p)}>
-                      <p className="font-bold text-slate-800 text-sm truncate">{p.name}</p>
-                      <p className="text-xs font-medium text-slate-400 mt-0.5 truncate">
+                      <p className="font-bold text-slate-800 text-sm truncate group-hover:text-indigo-950 transition-colors">{p.name}</p>
+                      <p className="text-xs font-semibold text-slate-400 mt-0.5 truncate">
                         ID: {p.regId || "N/A"} • {p.category || "No Category"}
                       </p>
                     </div>
                     
                     <div className="flex flex-col items-end gap-1.5 ml-4" onClick={() => setSelectedParticipant(p)}>
                       {p.printed ? (
-                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-black border border-emerald-200 tracking-wide uppercase">
+                        <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 rounded-lg text-[10px] font-extrabold border border-emerald-500/20 tracking-wide uppercase">
                           Printed ({p.printLogs?.length || 1})
                         </span>
                       ) : (
-                        <span className="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black border border-slate-200 tracking-wide uppercase">
+                        <span className="px-2.5 py-1 bg-slate-500/10 text-slate-500 rounded-lg text-[10px] font-extrabold border border-slate-500/20 tracking-wide uppercase">
                           Not Printed
                         </span>
                       )}
@@ -760,44 +775,43 @@ const BadgePrint = () => {
           </div>
 
           {/* RIGHT PANEL: EDITOR & LIVE PREVIEW (Col span 7) */}
-          <div className="lg:col-span-7 flex flex-col gap-6">
+          <div className="lg:col-span-7 flex flex-col h-[750px]">
             {selectedParticipant ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full min-h-0">
                 
                 {/* COLUMN 1: CONFIGURATION & LOGS */}
-                <div className="bg-white rounded-[2.5rem] shadow-sm p-6 border border-slate-200 flex flex-col justify-between min-h-[500px]">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900 mb-5">Badge Options</h2>
-                    
+                <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col h-full min-h-0">
+                  <h2 className="text-xl font-bold text-slate-900 mb-4 flex-none">Badge Options</h2>
+                  
+                  {/* Scrollable configuration fields container */}
+                  <div className="flex-1 overflow-y-auto pr-1 space-y-5 custom-scrollbar mb-4">
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Full Name</label>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Full Name</label>
                         <input
                           type="text"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800"
+                          className="w-full bg-slate-55/65 hover:bg-slate-50 focus:bg-white border border-slate-200/80 p-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-550 font-bold text-sm text-slate-800 transition-all"
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Category Ribbon</label>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Category Ribbon</label>
                         <input
                           type="text"
                           value={editDestination}
                           onChange={(e) => setEditDestination(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800"
+                          className="w-full bg-slate-55/65 hover:bg-slate-50 focus:bg-white border border-slate-200/80 p-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-550 font-bold text-sm text-slate-800 transition-all"
                         />
                       </div>
 
-
-
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Badge Print Size</label>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Badge Print Size</label>
                         <select
                           value={badgeSize}
                           onChange={(e) => setBadgeSize(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800"
+                          className="w-full bg-slate-55/65 hover:bg-slate-50 focus:bg-white border border-slate-200/80 p-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-555 font-bold text-sm text-slate-850 cursor-pointer transition-all"
                         >
                           <option value="standard">Standard Card (CR80) (86x54mm)</option>
                           <option value="A6">A6 Size Badge (148x105mm)</option>
@@ -808,11 +822,11 @@ const BadgePrint = () => {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Photo Fitting Option</label>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Photo Fitting Option</label>
                         <select
                           value={photoFit}
                           onChange={(e) => setPhotoFit(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800"
+                          className="w-full bg-slate-55/65 hover:bg-slate-50 focus:bg-white border border-slate-200/80 p-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-555 font-bold text-sm text-slate-855 cursor-pointer transition-all"
                         >
                           <option value="cover">Crop & Fill (Top-aligned)</option>
                           <option value="contain">Fit Entire Image (No Crop)</option>
@@ -820,104 +834,163 @@ const BadgePrint = () => {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                          Top Spacing: <span className="text-blue-600 font-black">{topSpacing} mm</span>
-                        </label>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Top Spacing Margin</label>
+                          <span className="text-xs font-black text-indigo-650">{topSpacing} mm</span>
+                        </div>
                         <input
                           type="range"
                           min="0"
                           max="100"
                           value={topSpacing}
                           onChange={(e) => setTopSpacing(Number(e.target.value))}
-                          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                         />
                       </div>
 
                       {/* BADGE FIELDS TO PRINT */}
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Badge Fields to Print</label>
+                        <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Badge Fields to Print</label>
                         <div className="grid grid-cols-2 gap-2 mt-1">
-                          <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 hover:bg-slate-100 rounded-lg cursor-pointer transition select-none text-xs">
+                          
+                          <label className={`flex items-center gap-2.5 p-3 border rounded-xl cursor-pointer transition-all select-none text-xs font-bold ${
+                            printPhoto 
+                              ? "bg-indigo-50/45 border-indigo-200 text-indigo-700 shadow-sm" 
+                              : "bg-slate-50/60 border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-700"
+                          }`}>
                             <input
                               type="checkbox"
                               checked={printPhoto}
                               onChange={(e) => setPrintPhoto(e.target.checked)}
-                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              className="sr-only"
                             />
-                            <span className="font-bold text-slate-700">Photo / Image</span>
+                            <div className={`w-4.5 h-4.5 rounded flex items-center justify-center border transition-all ${
+                              printPhoto ? "bg-indigo-600 border-indigo-600 text-white animate-scale-up" : "border-slate-300 bg-white"
+                            }`}>
+                              {printPhoto && <Check className="w-3 h-3 stroke-[3.5px]" />}
+                            </div>
+                            <span>Photo / Image</span>
                           </label>
 
-                          <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 hover:bg-slate-100 rounded-lg cursor-pointer transition select-none text-xs">
+                          <label className={`flex items-center gap-2.5 p-3 border rounded-xl cursor-pointer transition-all select-none text-xs font-bold ${
+                            printName 
+                              ? "bg-indigo-50/45 border-indigo-200 text-indigo-700 shadow-sm" 
+                              : "bg-slate-50/60 border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-700"
+                          }`}>
                             <input
                               type="checkbox"
                               checked={printName}
                               onChange={(e) => setPrintName(e.target.checked)}
-                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              className="sr-only"
                             />
-                            <span className="font-bold text-slate-700">Full Name</span>
+                            <div className={`w-4.5 h-4.5 rounded flex items-center justify-center border transition-all ${
+                              printName ? "bg-indigo-600 border-indigo-600 text-white animate-scale-up" : "border-slate-300 bg-white"
+                            }`}>
+                              {printName && <Check className="w-3 h-3 stroke-[3.5px]" />}
+                            </div>
+                            <span>Full Name</span>
                           </label>
 
-                          <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 hover:bg-slate-100 rounded-lg cursor-pointer transition select-none text-xs">
+                          <label className={`flex items-center gap-2.5 p-3 border rounded-xl cursor-pointer transition-all select-none text-xs font-bold ${
+                            printQR 
+                              ? "bg-indigo-50/45 border-indigo-200 text-indigo-700 shadow-sm" 
+                              : "bg-slate-50/60 border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-700"
+                          }`}>
                             <input
                               type="checkbox"
                               checked={printQR}
                               onChange={(e) => setPrintQR(e.target.checked)}
-                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              className="sr-only"
                             />
-                            <span className="font-bold text-slate-700">QR Code</span>
+                            <div className={`w-4.5 h-4.5 rounded flex items-center justify-center border transition-all ${
+                              printQR ? "bg-indigo-600 border-indigo-600 text-white animate-scale-up" : "border-slate-300 bg-white"
+                            }`}>
+                              {printQR && <Check className="w-3 h-3 stroke-[3.5px]" />}
+                            </div>
+                            <span>QR Code</span>
                           </label>
 
-                          <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 hover:bg-slate-100 rounded-lg cursor-pointer transition select-none text-xs">
+                          <label className={`flex items-center gap-2.5 p-3 border rounded-xl cursor-pointer transition-all select-none text-xs font-bold ${
+                            printRegId 
+                              ? "bg-indigo-50/45 border-indigo-200 text-indigo-700 shadow-sm" 
+                              : "bg-slate-50/60 border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-700"
+                          }`}>
                             <input
                               type="checkbox"
                               checked={printRegId}
                               onChange={(e) => setPrintRegId(e.target.checked)}
-                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              className="sr-only"
                             />
-                            <span className="font-bold text-slate-700">Registration ID</span>
+                            <div className={`w-4.5 h-4.5 rounded flex items-center justify-center border transition-all ${
+                              printRegId ? "bg-indigo-600 border-indigo-600 text-white animate-scale-up" : "border-slate-300 bg-white"
+                            }`}>
+                              {printRegId && <Check className="w-3 h-3 stroke-[3.5px]" />}
+                            </div>
+                            <span>Registration ID</span>
                           </label>
 
-                          <label className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 hover:bg-slate-100 rounded-lg cursor-pointer transition select-none text-xs">
+                          <label className={`flex items-center gap-2.5 p-3 border rounded-xl cursor-pointer transition-all select-none text-xs font-bold ${
+                            printCity 
+                              ? "bg-indigo-50/45 border-indigo-200 text-indigo-700 shadow-sm" 
+                              : "bg-slate-50/60 border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-700"
+                          }`}>
                             <input
                               type="checkbox"
                               checked={printCity}
                               onChange={(e) => setPrintCity(e.target.checked)}
-                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              className="sr-only"
                             />
-                            <span className="font-bold text-slate-700">City / Location</span>
+                            <div className={`w-4.5 h-4.5 rounded flex items-center justify-center border transition-all ${
+                              printCity ? "bg-indigo-600 border-indigo-600 text-white animate-scale-up" : "border-slate-300 bg-white"
+                            }`}>
+                              {printCity && <Check className="w-3 h-3 stroke-[3.5px]" />}
+                            </div>
+                            <span>City / Location</span>
                           </label>
                         </div>
                       </div>
 
                       {/* CHECKPOINTS */}
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Print Checkpoints</label>
+                        <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Print Checkpoints</label>
                         <div className="grid grid-cols-2 gap-2 mt-1">
-                          {ALL_CHECKPOINT_OPTIONS.map((cp) => (
-                            <label key={cp} className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-100 hover:bg-slate-100 rounded-lg cursor-pointer transition select-none text-xs">
-                              <input
-                                type="checkbox"
-                                checked={selectedCheckpoints.includes(cp)}
-                                onChange={() => toggleCheckpoint(cp)}
-                                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              />
-                              <span className="font-bold text-slate-700">{cp}</span>
-                            </label>
-                          ))}
+                          {ALL_CHECKPOINT_OPTIONS.map((cp) => {
+                            const isChecked = selectedCheckpoints.includes(cp);
+                            return (
+                              <label key={cp} className={`flex items-center gap-2.5 p-3 border rounded-xl cursor-pointer transition-all select-none text-xs font-bold ${
+                                isChecked 
+                                  ? "bg-indigo-50/45 border-indigo-200 text-indigo-700 shadow-sm" 
+                                  : "bg-slate-50/60 border-slate-200/60 hover:bg-slate-50 text-slate-600 hover:text-slate-700"
+                              }`}>
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => toggleCheckpoint(cp)}
+                                  className="sr-only"
+                                />
+                                <div className={`w-4.5 h-4.5 rounded flex items-center justify-center border transition-all ${
+                                  isChecked ? "bg-indigo-600 border-indigo-600 text-white animate-scale-up" : "border-slate-300 bg-white"
+                                }`}>
+                                  {isChecked && <Check className="w-3 h-3 stroke-[3.5px]" />}
+                                </div>
+                                <span>{cp}</span>
+                              </label>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* PRINT LOG AUDIT */}
-                  <div className="border-t border-slate-100 pt-4 mt-6">
+                  <div className="border-t border-slate-100 pt-4 mt-2 mb-2 flex-none">
                     <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                       Print Activity Logs ({selectedParticipant.printLogs?.length || 0})
                     </h3>
-                    <div className="max-h-[100px] overflow-y-auto space-y-1.5 text-[10px] text-slate-500 font-medium pr-1">
+                    <div className="max-h-[100px] overflow-y-auto space-y-1.5 text-[10px] text-slate-500 font-medium pr-1 custom-scrollbar">
                       {selectedParticipant.printLogs && selectedParticipant.printLogs.length > 0 ? (
                         selectedParticipant.printLogs.map((log, index) => (
-                          <div key={index} className="flex justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
+                          <div key={index} className="flex justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                             <span>By: {log.staffMember}</span>
                             <span>{new Date(log.timestamp).toLocaleString()}</span>
                           </div>
@@ -930,7 +1003,7 @@ const BadgePrint = () => {
 
                   <button
                     onClick={handlePrintBadge}
-                    className="w-full mt-6 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition shadow-lg shadow-blue-500/10 active:scale-[0.98]"
+                    className="w-full mt-2 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] text-white font-bold rounded-2xl transition shadow-lg shadow-indigo-600/10 hover:shadow-indigo-650/20 flex items-center justify-center gap-2 flex-none"
                   >
                     🖨️ Generate &amp; Print Badge
                   </button>
@@ -940,10 +1013,10 @@ const BadgePrint = () => {
                 {(() => {
                   const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
                   return (
-                    <div className="bg-white rounded-[2.5rem] shadow-sm p-6 border border-slate-200 flex flex-col items-center justify-start min-h-[500px]">
-                      <h2 className="text-xl font-bold text-slate-900 w-full text-left mb-4">Badge Preview</h2>
+                    <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col items-center justify-start h-full min-h-0">
+                      <h2 className="text-xl font-bold text-slate-900 w-full text-left mb-4 flex-none">Badge Preview</h2>
                       
-                      <div className="flex-grow flex flex-col items-center justify-center w-full my-auto py-6">
+                      <div className="flex-grow flex flex-col items-center justify-center w-full min-h-0 py-4 my-auto relative">
                         {(() => {
                           const themeColor = getCategoryColor(editDestination);
                           const photoUrl = getParticipantPhoto(selectedParticipant);
@@ -1114,10 +1187,15 @@ const BadgePrint = () => {
 
               </div>
             ) : (
-              <div className="bg-white rounded-[2.5rem] shadow-sm p-12 border border-slate-200 flex flex-col items-center justify-center text-center h-[700px]">
-                <span className="text-5xl mb-4">🖨️</span>
+              <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-sm p-12 border border-slate-200/80 flex flex-col items-center justify-center text-center h-[750px] relative z-10">
+                <div 
+                  className="w-20 h-20 rounded-full bg-slate-50 border border-slate-200/50 flex items-center justify-center text-4xl shadow-sm mb-6 animate-bounce"
+                  style={{ animationDuration: "2s" }}
+                >
+                  🖨️
+                </div>
                 <h2 className="text-xl font-bold text-slate-900">Select a Delegate</h2>
-                <p className="text-slate-400 text-sm mt-1 max-w-sm">
+                <p className="text-slate-500 text-sm mt-2 max-w-sm leading-relaxed">
                   Search and select a participant on the left, or use the multi-select checkboxes to print multiple badges in a single bulk process.
                 </p>
               </div>
