@@ -136,12 +136,17 @@ const getParticipantPhoto = (p: any): string => {
   
   let rawPhoto = "";
   
-  if (p.dynamicData) {
-    // 1. Direct checks
+  // 1. Check root level properties first
+  if (p.avatar) rawPhoto = p.avatar;
+  else if (p.avatarUrl) rawPhoto = p.avatarUrl;
+  else if (p.photo) rawPhoto = p.photo;
+  else if (p.dynamicData) {
+    // 2. Direct dynamicData checks
     if (p.dynamicData.Photo) rawPhoto = p.dynamicData.Photo;
     else if (p.dynamicData.Avatar) rawPhoto = p.dynamicData.Avatar;
+    else if (p.dynamicData.avatarUrl) rawPhoto = p.dynamicData.avatarUrl;
     else {
-      // 2. Scan keys for variations
+      // 3. Scan keys for variations in dynamicData
       const keys = Object.keys(p.dynamicData);
       const photoKeys = [
         "photo", "profilephoto", "participantphoto", "avatar", "image", 
@@ -155,7 +160,7 @@ const getParticipantPhoto = (p: any): string => {
         }
       }
       
-      // 3. Scan values for image patterns if not found yet
+      // 4. Scan values for image patterns in dynamicData
       if (!rawPhoto) {
         for (const key of keys) {
           const val = String(p.dynamicData[key] || "").trim();
@@ -236,6 +241,12 @@ const QRPrint = () => {
         : 20;
   });
 
+  const [photoFit, setPhotoFit] = useState<string>(() => {
+    const localVal = localStorage.getItem("regxpert_badge_photo_fit");
+    if (localVal) return localVal;
+    return activePayload?.photoFit || (activePayload?.badges && (activePayload.badges as any)[0]?.photoFit) || "cover";
+  });
+
   useEffect(() => {
     localStorage.setItem("regxpert_badge_size", badgeSize);
   }, [badgeSize]);
@@ -243,6 +254,10 @@ const QRPrint = () => {
   useEffect(() => {
     localStorage.setItem("regxpert_badge_top_spacing", String(topSpacing));
   }, [topSpacing]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_badge_photo_fit", photoFit);
+  }, [photoFit]);
 
   const [isPrinted, setIsPrinted] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -573,6 +588,18 @@ const QRPrint = () => {
               </div>
 
               <div>
+                <label className="text-[9px] text-slate-400 font-bold uppercase block mb-1.5 tracking-wider">Photo Fitting Option</label>
+                <select
+                  value={photoFit}
+                  onChange={(e) => setPhotoFit(e.target.value)}
+                  className="w-full bg-slate-950 text-white border border-slate-850 px-3.5 py-2.5 rounded-xl text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                >
+                  <option value="cover">Crop & Fill (Top-aligned)</option>
+                  <option value="contain">Fit Entire Image (No Crop)</option>
+                </select>
+              </div>
+
+              <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <label className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Top Spacing Margin</label>
                   <span className="text-xs font-bold text-blue-400 font-mono">{topSpacing}mm</span>
@@ -712,7 +739,8 @@ const QRPrint = () => {
                     justifyContent: "center",
                     width: "100%",
                     padding: "0 3.5mm",
-                    boxSizing: "border-box"
+                    boxSizing: "border-box",
+                    gap: `calc(${dim.gap} * 0.6)`
                   }}>
                     {/* 1. Portrait Photo Frame with viewfinder corners */}
                     {showPhoto && (
@@ -727,7 +755,6 @@ const QRPrint = () => {
                         alignItems: "center",
                         justifyContent: "center",
                         overflow: "hidden",
-                        marginBottom: "1mm",
                         boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
                         padding: "1.5px"
                       }}>
@@ -738,7 +765,18 @@ const QRPrint = () => {
                         <div style={{ position: "absolute", bottom: 0, right: 0, width: "5px", height: "5px", borderBottom: `1.5px solid ${badgeColor}`, borderRight: `1.5px solid ${badgeColor}` }} />
 
                         {photoUrl ? (
-                          <img src={photoUrl} alt="Participant" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "2px" }} />
+                          <img 
+                            src={photoUrl} 
+                            alt="Participant" 
+                            style={{ 
+                              width: "100%", 
+                              height: "100%", 
+                              objectFit: photoFit === "contain" ? "contain" : "cover", 
+                              objectPosition: photoFit === "contain" ? "center" : "top", 
+                              borderRadius: "2px",
+                              backgroundColor: photoFit === "contain" ? "#f8fafc" : "transparent"
+                            }} 
+                          />
                         ) : (
                           <svg style={{ width: "9mm", height: "9mm", color: "#cbd5e1" }} fill="currentColor" viewBox="0 0 24 24">
                             <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
@@ -774,7 +812,7 @@ const QRPrint = () => {
                         fontSize: dim.fontSizeOrg,
                         fontWeight: 600,
                         color: "#475569",
-                        margin: "0.5mm 0 0 0",
+                        margin: 0,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -791,7 +829,7 @@ const QRPrint = () => {
                         fontSize: dim.fontSizeOrg,
                         fontWeight: 600,
                         color: "#64748b",
-                        margin: "0.2mm 0 0 0",
+                        margin: 0,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -823,11 +861,11 @@ const QRPrint = () => {
                       alignItems: "center",
                       justifyContent: "center",
                       padding: "0 3.5mm 8mm 3.5mm", // Expanded bottom padding to clear solid ribbon
-                      boxSizing: "border-box"
+                      boxSizing: "border-box",
+                      gap: `calc(${dim.gap} * 0.6)`
                     }}>
                       {showQR && badgeCheckpoints.includes("QR Code") && (
                         <div style={{ 
-                          margin: "0 0 0.5mm 0", 
                           display: "flex", 
                           alignItems: "center", 
                           justifyContent: "center",
@@ -851,8 +889,7 @@ const QRPrint = () => {
                         <div style={{
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          marginTop: "1mm"
+                          justifyContent: "center"
                         }}>
                           <p style={{ 
                             fontSize: dim.fontSizeRegId, 
