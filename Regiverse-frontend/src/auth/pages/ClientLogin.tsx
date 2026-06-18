@@ -129,9 +129,11 @@ export default function ClientLogin() {
       <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl shadow-2xl p-8 relative z-10 transition-all duration-300">
         {/* Brand Logo & Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-600 to-teal-500 shadow-lg shadow-cyan-500/20 mb-4">
-            <span className="text-white font-extrabold text-3xl">C</span>
-          </div>
+          <img
+            src="/assets/images/regiverse-logo-new.png"
+            alt="RegXperts Logo"
+            className="w-16 h-16 object-contain mx-auto mb-4"
+          />
           <h2 className="text-3xl font-black bg-gradient-to-r from-white via-cyan-100 to-teal-200 bg-clip-text text-transparent tracking-tight">
             RegXperts
           </h2>

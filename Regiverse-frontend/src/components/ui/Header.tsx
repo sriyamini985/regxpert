@@ -42,7 +42,7 @@ const Header = ({ onMenuToggle, userName = 'User', userRole = 'Administrator', o
 
           <Link to="/admin-dashboard" className="flex items-center gap-2 group">
             <img
-              src="/assets/images/regiverse-symbol.png"
+              src="/assets/images/regiverse-logo-new.png"
               alt="RegXperts"
               className="h-10 md:h-14 w-auto transition-transform duration-200 group-hover:scale-105 object-contain"
             />

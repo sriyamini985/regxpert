@@ -10,9 +10,11 @@ export default function AdminLayout() {
       {/* Desktop + Tablet Navbar */}
       <header className="hidden lg:flex h-20 bg-white border-b border-slate-200 items-center justify-between px-10 shadow-sm sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-inner">
-            R
-          </div>
+          <img
+            src="/assets/images/regiverse-logo-new.png"
+            alt="RegXperts"
+            className="w-10 h-10 object-contain"
+          />
           <h1 className="font-extrabold text-2xl tracking-tight text-slate-900">
             REGXPERTS
           </h1>

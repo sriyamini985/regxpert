@@ -90,9 +90,11 @@ export default function UserLayout() {
           {/* Brand Header */}
           <div className="p-5 border-b border-slate-900 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-tr from-blue-600 to-cyan-500 w-10 h-10 rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-blue-500/20">
-                X
-              </div>
+              <img
+                src="/assets/images/regiverse-logo-new.png"
+                alt="RegXperts"
+                className="w-10 h-10 object-contain"
+              />
               <div>
                 <h1 className="font-black text-md leading-tight tracking-tight">RegXperts</h1>
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Staff Terminal</p>

@@ -10,9 +10,11 @@ const LoginHeader = () => {
     >
       {/* Unified Logo */}
       <div className="flex flex-col items-center justify-center mb-6">
-        <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-2xl shadow-blue-500/30 mb-4">
-          <span className="text-white font-bold text-6xl">R</span>
-        </div>
+        <img
+          src="/assets/images/regiverse-logo-new.png"
+          alt="RegXperts Logo"
+          className="w-24 h-24 object-contain mb-4"
+        />
         <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-cyan-200 tracking-tight">RegXperts</h1>
       </div>
 
