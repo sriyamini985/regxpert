@@ -152,6 +152,70 @@ const getCategoryColor = (category: string) => {
   return "#1e3a8a"; // Navy for delegates
 };
 
+const getParticipantPhoto = (p: any): string => {
+  if (!p) return "";
+  
+  let rawPhoto = "";
+  
+  if (p.dynamicData) {
+    // 1. Direct checks
+    if (p.dynamicData.Photo) rawPhoto = p.dynamicData.Photo;
+    else if (p.dynamicData.Avatar) rawPhoto = p.dynamicData.Avatar;
+    else {
+      // 2. Scan keys for variations
+      const keys = Object.keys(p.dynamicData);
+      const photoKeys = [
+        "photo", "profilephoto", "participantphoto", "avatar", "image", 
+        "picture", "pic", "photourl", "imagelink", "photolink"
+      ];
+      for (const key of keys) {
+        const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (photoKeys.includes(normalizedKey)) {
+          rawPhoto = p.dynamicData[key];
+          break;
+        }
+      }
+      
+      // 3. Scan values for image patterns if not found yet
+      if (!rawPhoto) {
+        for (const key of keys) {
+          const val = String(p.dynamicData[key] || "").trim();
+          if (val.startsWith("http") && (
+            val.toLowerCase().endsWith(".jpg") || val.toLowerCase().endsWith(".jpeg") || 
+            val.toLowerCase().endsWith(".png") || val.toLowerCase().endsWith(".webp") || 
+            val.toLowerCase().endsWith(".gif") || val.includes("/profile_photo/") ||
+            val.includes("/uploads/")
+          )) {
+            rawPhoto = p.dynamicData[key];
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  if (!rawPhoto) return "";
+
+  // Convert to string and trim
+  let srcUrl = String(rawPhoto).trim();
+  if (!srcUrl) return "";
+
+  // If it's already a full URL, return it
+  if (srcUrl.startsWith("http://") || srcUrl.startsWith("https://") || srcUrl.startsWith("data:image")) {
+    return srcUrl;
+  }
+
+  // If it's a relative URL, prefix it with VITE_API_URL
+  const apiBase = import.meta.env.VITE_API_URL || "";
+  // Check if it looks like a path or just a filename
+  if (srcUrl.startsWith("/") || srcUrl.includes("uploads") || srcUrl.includes("profile_photo")) {
+    return `${apiBase}/${srcUrl.startsWith("/") ? srcUrl.slice(1) : srcUrl}`;
+  } else {
+    // Treat as raw filename in uploads
+    return `${apiBase}/uploads/${srcUrl}`;
+  }
+};
+
 const BadgePrint = () => {
   const navigate = useNavigate();
   const { conferenceSlug } = useParams<{ conferenceSlug: string }>();
@@ -839,6 +903,7 @@ const BadgePrint = () => {
                       
                       {(() => {
                         const themeColor = getCategoryColor(editDestination);
+                        const photoUrl = getParticipantPhoto(selectedParticipant);
                         return (
                           <div 
                             className={`bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans transition-all duration-300 justify-start ${
@@ -853,6 +918,13 @@ const BadgePrint = () => {
                               paddingBottom: "0px"
                             }}
                           >
+                            {/* Glassmorphic Shine Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none z-30" />
+                            
+                            {/* Lanyard Slot Simulator */}
+                            <div className="w-8 h-2 rounded-full bg-slate-200 border border-slate-300/65 mt-2.5 mb-1.5 flex items-center justify-center relative z-20 shadow-inner flex-none">
+                              <div className="w-5 h-0.5 rounded-full bg-slate-300/40" />
+                            </div>
 
 
                             {/* B. Center Attendee Details */}
@@ -873,9 +945,9 @@ const BadgePrint = () => {
                                   <div className="absolute bottom-0 left-0 border-b-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
                                   <div className="absolute bottom-0 right-0 border-b-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
                                   
-                                  {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.["Participant Photo"] || selectedParticipant.dynamicData?.Avatar ? (
+                                  {photoUrl ? (
                                     <img 
-                                      src={selectedParticipant.dynamicData.Photo || selectedParticipant.dynamicData["Participant Photo"] || selectedParticipant.dynamicData.Avatar} 
+                                      src={photoUrl} 
                                       alt="Delegate" 
                                       className="w-full h-full object-cover rounded-[3px]" 
                                     />

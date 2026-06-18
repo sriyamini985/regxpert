@@ -131,6 +131,70 @@ const BADGE_SIZES: Record<string, BadgeDimensions> = {
   }
 };
 
+const getParticipantPhoto = (p: any): string => {
+  if (!p) return "";
+  
+  let rawPhoto = "";
+  
+  if (p.dynamicData) {
+    // 1. Direct checks
+    if (p.dynamicData.Photo) rawPhoto = p.dynamicData.Photo;
+    else if (p.dynamicData.Avatar) rawPhoto = p.dynamicData.Avatar;
+    else {
+      // 2. Scan keys for variations
+      const keys = Object.keys(p.dynamicData);
+      const photoKeys = [
+        "photo", "profilephoto", "participantphoto", "avatar", "image", 
+        "picture", "pic", "photourl", "imagelink", "photolink"
+      ];
+      for (const key of keys) {
+        const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (photoKeys.includes(normalizedKey)) {
+          rawPhoto = p.dynamicData[key];
+          break;
+        }
+      }
+      
+      // 3. Scan values for image patterns if not found yet
+      if (!rawPhoto) {
+        for (const key of keys) {
+          const val = String(p.dynamicData[key] || "").trim();
+          if (val.startsWith("http") && (
+            val.toLowerCase().endsWith(".jpg") || val.toLowerCase().endsWith(".jpeg") || 
+            val.toLowerCase().endsWith(".png") || val.toLowerCase().endsWith(".webp") || 
+            val.toLowerCase().endsWith(".gif") || val.includes("/profile_photo/") ||
+            val.includes("/uploads/")
+          )) {
+            rawPhoto = p.dynamicData[key];
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  if (!rawPhoto) return "";
+
+  // Convert to string and trim
+  let srcUrl = String(rawPhoto).trim();
+  if (!srcUrl) return "";
+
+  // If it's already a full URL, return it
+  if (srcUrl.startsWith("http://") || srcUrl.startsWith("https://") || srcUrl.startsWith("data:image")) {
+    return srcUrl;
+  }
+
+  // If it's a relative URL, prefix it with VITE_API_URL
+  const apiBase = import.meta.env.VITE_API_URL || "";
+  // Check if it looks like a path or just a filename
+  if (srcUrl.startsWith("/") || srcUrl.includes("uploads") || srcUrl.includes("profile_photo")) {
+    return `${apiBase}/${srcUrl.startsWith("/") ? srcUrl.slice(1) : srcUrl}`;
+  } else {
+    // Treat as raw filename in uploads
+    return `${apiBase}/uploads/${srcUrl}`;
+  }
+};
+
 const QRPrint = () => {
   const [searchParams] = useSearchParams();
   const raw = searchParams.get("data");
@@ -623,7 +687,7 @@ const QRPrint = () => {
               const badgeCheckpoints = badge.checkpoints || [];
 
               // Parse spreadsheet photo url links
-              const photoUrl = badge.dynamicData?.Photo || badge.dynamicData?.["Participant Photo"] || badge.dynamicData?.Avatar || "";
+              const photoUrl = getParticipantPhoto(badge);
               const orgStr = badge.dynamicData?.Organization || badge.dynamicData?.Institution || badge.dynamicData?.Company || "";
 
               const showPhoto = badge.printPhoto ?? true;
