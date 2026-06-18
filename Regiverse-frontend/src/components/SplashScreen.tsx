@@ -10,14 +10,10 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ children }) => {
         if (window.location.pathname === "/print-qr") return false;
         return sessionStorage.getItem("splashShown") !== "true";
     });
-    const [showBrand, setShowBrand] = useState(false);
     const [isFadingOut, setIsFadingOut] = useState(false);
 
     useEffect(() => {
         if (!showSplash) return;
-
-        // After 0.8s, reveal brand name
-        const brandTimer = setTimeout(() => setShowBrand(true), 800);
 
         // After 3.5s, start fade-out
         const fadeTimer = setTimeout(() => setIsFadingOut(true), 3500);
@@ -29,7 +25,6 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ children }) => {
         }, 4200);
 
         return () => {
-            clearTimeout(brandTimer);
             clearTimeout(fadeTimer);
             clearTimeout(removeTimer);
         };
@@ -93,45 +88,6 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ children }) => {
                             style={{ filter: 'drop-shadow(0 8px 30px rgba(59,130,246,0.25))' }}
                         />
                     </motion.div>
-                </motion.div>
-
-                {/* Brand Name Details */}
-                <motion.div
-                    className="relative z-10 mt-8 flex flex-col items-center"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={showBrand ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                >
-                    <h1
-                        className="text-4xl font-black tracking-tight"
-                        style={{
-                            background: 'linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 50%, #94A3B8 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            fontFamily: "'Outfit', 'Inter', sans-serif",
-                            letterSpacing: "-0.02em"
-                        }}
-                    >
-                        RegXpert
-                    </h1>
-                    
-                    <motion.p
-                        className="text-[10px] mt-2 font-black tracking-widest text-sky-400 uppercase font-sans"
-                        initial={{ opacity: 0, letterSpacing: "0.1em" }}
-                        animate={showBrand ? { opacity: 1, letterSpacing: "0.25em" } : { opacity: 0, letterSpacing: "0.1em" }}
-                        transition={{ duration: 1.2, ease: "easeOut", delay: 0.3 }}
-                    >
-                        Conference Management Software
-                    </motion.p>
-                    
-                    <motion.p
-                        className="text-[9px] mt-1.5 font-bold tracking-wider text-slate-500 uppercase font-sans"
-                        initial={{ opacity: 0 }}
-                        animate={showBrand ? { opacity: 0.6 } : { opacity: 0 }}
-                        transition={{ duration: 0.8, delay: 0.6 }}
-                    >
-                        Powered by CMC
-                    </motion.p>
                 </motion.div>
 
                 {/* Premium Progress Loading Bar */}
