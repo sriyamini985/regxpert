@@ -315,8 +315,28 @@ const QRPrint = () => {
       margin:       0,
       filename:     badges.length === 1 ? `badge-${badges[0].regId || "pass"}.pdf` : `badges-bulk-${badges.length}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: formatVal, orientation: 'portrait' }
+      html2canvas:  { 
+        scale: 2, 
+        useCORS: true,
+        onclone: (clonedDoc: any) => {
+          const badgeContainers = clonedDoc.querySelectorAll(".badge-container");
+          badgeContainers.forEach((container: any, idx: number) => {
+            // Remove margins and rounding for a clean edge-to-edge PDF render
+            container.style.margin = "0";
+            container.style.borderRadius = "0";
+            container.style.border = "none";
+            container.style.boxShadow = "none";
+            
+            // Apply page breaks between badge pages (but avoid trailing empty page)
+            if (idx < badgeContainers.length - 1) {
+              container.style.pageBreakAfter = "always";
+              container.style.breakAfter = "page";
+            }
+          });
+        }
+      },
+      jsPDF:        { unit: 'mm', format: formatVal, orientation: 'portrait' },
+      pagebreak:    { mode: ['css'] }
     };
 
     (window as any).html2pdf().from(element).set(opt).save();
