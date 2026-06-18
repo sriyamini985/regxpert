@@ -157,16 +157,28 @@ const QRPrint = () => {
 
   const [activePayload, setActivePayload] = useState<RootPayload | null>(initialPayload);
   const [badgeSize, setBadgeSize] = useState<string>(() => {
+    const localVal = localStorage.getItem("regxpert_badge_size");
+    if (localVal) return localVal;
     return activePayload?.badgeSize || (activePayload?.badges && activePayload.badges[0]?.badgeSize) || "standard";
   });
 
   const [topSpacing, setTopSpacing] = useState<number>(() => {
+    const localVal = localStorage.getItem("regxpert_badge_top_spacing");
+    if (localVal !== null) return Number(localVal);
     return activePayload?.topSpacing !== undefined 
       ? activePayload.topSpacing 
       : (activePayload?.badges && (activePayload.badges as any)[0]?.topSpacing !== undefined) 
         ? (activePayload.badges as any)[0].topSpacing 
         : 20;
   });
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_badge_size", badgeSize);
+  }, [badgeSize]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_badge_top_spacing", String(topSpacing));
+  }, [topSpacing]);
 
   const [isPrinted, setIsPrinted] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);

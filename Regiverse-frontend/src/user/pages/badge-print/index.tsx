@@ -171,13 +171,61 @@ const BadgePrint = () => {
   const [editDestination, setEditDestination] = useState("");
   const [editState, setEditState] = useState("");
   const [selectedCheckpoints, setSelectedCheckpoints] = useState<string[]>([]);
-  const [badgeSize, setBadgeSize] = useState<string>("standard");
-  const [printPhoto, setPrintPhoto] = useState<boolean>(true);
-  const [printName, setPrintName] = useState<boolean>(true);
-  const [printQR, setPrintQR] = useState<boolean>(true);
-  const [printRegId, setPrintRegId] = useState<boolean>(true);
-  const [printCity, setPrintCity] = useState<boolean>(true);
-  const [topSpacing, setTopSpacing] = useState<number>(20);
+  const [badgeSize, setBadgeSize] = useState<string>(() => {
+    return localStorage.getItem("regxpert_badge_size") || "standard";
+  });
+  const [printPhoto, setPrintPhoto] = useState<boolean>(() => {
+    const saved = localStorage.getItem("regxpert_print_photo");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [printName, setPrintName] = useState<boolean>(() => {
+    const saved = localStorage.getItem("regxpert_print_name");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [printQR, setPrintQR] = useState<boolean>(() => {
+    const saved = localStorage.getItem("regxpert_print_qr");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [printRegId, setPrintRegId] = useState<boolean>(() => {
+    const saved = localStorage.getItem("regxpert_print_regid");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [printCity, setPrintCity] = useState<boolean>(() => {
+    const saved = localStorage.getItem("regxpert_print_city");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [topSpacing, setTopSpacing] = useState<number>(() => {
+    const saved = localStorage.getItem("regxpert_badge_top_spacing");
+    return saved ? Number(saved) : 20;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_badge_size", badgeSize);
+  }, [badgeSize]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_badge_top_spacing", String(topSpacing));
+  }, [topSpacing]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_print_photo", JSON.stringify(printPhoto));
+  }, [printPhoto]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_print_name", JSON.stringify(printName));
+  }, [printName]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_print_qr", JSON.stringify(printQR));
+  }, [printQR]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_print_regid", JSON.stringify(printRegId));
+  }, [printRegId]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_print_city", JSON.stringify(printCity));
+  }, [printCity]);
 
   // Load all participants for conference on mount
   useEffect(() => {
@@ -825,9 +873,9 @@ const BadgePrint = () => {
                                   <div className="absolute bottom-0 left-0 border-b-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
                                   <div className="absolute bottom-0 right-0 border-b-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
                                   
-                                  {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.Avatar ? (
+                                  {selectedParticipant.dynamicData?.Photo || selectedParticipant.dynamicData?.["Participant Photo"] || selectedParticipant.dynamicData?.Avatar ? (
                                     <img 
-                                      src={selectedParticipant.dynamicData.Photo || selectedParticipant.dynamicData.Avatar} 
+                                      src={selectedParticipant.dynamicData.Photo || selectedParticipant.dynamicData["Participant Photo"] || selectedParticipant.dynamicData.Avatar} 
                                       alt="Delegate" 
                                       className="w-full h-full object-cover rounded-[3px]" 
                                     />
