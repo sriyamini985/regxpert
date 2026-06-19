@@ -270,6 +270,7 @@ const QRPrint = () => {
   const [isPrinted, setIsPrinted] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [converting, setConverting] = useState(true);
   const [base64Photos, setBase64Photos] = useState<{[url: string]: string}>({});
 
   const badgeBackUrl = activePayload?.backUrl || "";
@@ -341,19 +342,30 @@ const QRPrint = () => {
     };
 
     const convertAllPhotos = async () => {
-      const newMap: {[url: string]: string} = {};
-      for (const badge of badges) {
+      setConverting(true);
+      const promises = badges.map(async (badge) => {
         const url = getParticipantPhoto(badge);
-        if (url && !url.startsWith("data:image") && !newMap[url] && !base64Photos[url]) {
+        if (url && !url.startsWith("data:image") && !base64Photos[url]) {
           const base64 = await fetchAndConvertImage(url);
           if (base64) {
-            newMap[url] = base64;
+            return { url, base64 };
           }
         }
-      }
+        return null;
+      });
+
+      const results = await Promise.all(promises);
+      const newMap: {[url: string]: string} = {};
+      results.forEach(res => {
+        if (res) {
+          newMap[res.url] = res.base64;
+        }
+      });
+
       if (Object.keys(newMap).length > 0) {
         setBase64Photos(prev => ({ ...prev, ...newMap }));
       }
+      setConverting(false);
     };
 
     convertAllPhotos();
@@ -373,6 +385,7 @@ const QRPrint = () => {
   // 2. Auto-trigger print dialog once images are loaded (but DO NOT redirect)
   useEffect(() => {
     if (badges.length === 0) return;
+    if (converting) return; // Wait for base64 conversion!
     if (imagesLoaded) return;
 
     const triggerPrint = () => {
@@ -712,15 +725,17 @@ const QRPrint = () => {
             <div className="space-y-3">
               <button 
                 onClick={() => window.print()}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                disabled={converting}
+                className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900 disabled:text-slate-400 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
-                <span>🖨️ Print Badge</span>
+                <span>{converting ? "⏳ Loading..." : "🖨️ Print Badge"}</span>
               </button>
               <button 
                 onClick={handleDownloadPDF}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/10 hover:shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                disabled={converting}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:text-slate-400 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/10 hover:shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
-                <span>📥 Download PDF</span>
+                <span>{converting ? "⏳ Processing Photos..." : "📥 Download PDF"}</span>
               </button>
             </div>
 
