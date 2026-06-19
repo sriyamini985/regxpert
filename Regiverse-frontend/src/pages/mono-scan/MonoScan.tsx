@@ -350,8 +350,8 @@ const MonoScan = () => {
           {scanResult.user && (
             <div className="mt-3 text-slate-700 text-sm space-y-1">
               <p><span className="font-semibold">Name:</span> {scanResult.user.name}</p>
-              <p><span className="font-semibold">Reg ID:</span> {scanResult.user.regId}</p>
               <p><span className="font-semibold">Category:</span> {scanResult.user.category}</p>
+              <p><span className="font-semibold">Reg ID:</span> {(scanResult.user.regId || scanResult.user._id || "").replace(/^(reg\s*id|regid)\s*[-\s:]*/i, "")}</p>
             </div>
           )}
           <button onClick={() => setScanResult(null)} className="mt-4 text-sm text-slate-500 underline">
