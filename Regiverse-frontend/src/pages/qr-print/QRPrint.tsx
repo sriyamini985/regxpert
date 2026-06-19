@@ -260,6 +260,13 @@ const QRPrint = () => {
     return activePayload?.badgeSize || (activePayload?.badges && activePayload.badges[0]?.badgeSize) || "standard";
   });
 
+  const [nameFontSize, setNameFontSize] = useState<number>(() => {
+    const saved = localStorage.getItem(`regxpert_name_font_size_${badgeSize}`);
+    if (saved) return Number(saved);
+    const defaultFS = parseInt(BADGE_SIZES[badgeSize]?.fontSizeName || "12");
+    return defaultFS;
+  });
+
   const [topSpacing, setTopSpacing] = useState<number>(() => {
     const localVal = localStorage.getItem("regxpert_badge_top_spacing");
     if (localVal !== null) return Number(localVal);
@@ -332,6 +339,18 @@ const QRPrint = () => {
   useEffect(() => {
     localStorage.setItem("regxpert_print_city", JSON.stringify(printCity));
   }, [printCity]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`regxpert_name_font_size_${badgeSize}`);
+    const defaultFS = parseInt(BADGE_SIZES[badgeSize]?.fontSizeName || "12");
+    setNameFontSize(saved ? Number(saved) : defaultFS);
+  }, [badgeSize]);
+
+  useEffect(() => {
+    if (nameFontSize > 0) {
+      localStorage.setItem(`regxpert_name_font_size_${badgeSize}`, String(nameFontSize));
+    }
+  }, [nameFontSize, badgeSize]);
 
   const [isPrinted, setIsPrinted] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -994,6 +1013,21 @@ const QRPrint = () => {
                   className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
                 />
               </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Name Font Size</label>
+                  <span className="text-xs font-bold text-blue-400 font-mono">{nameFontSize}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="8"
+                  max="60"
+                  value={nameFontSize}
+                  onChange={(e) => setNameFontSize(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
             </div>
 
             {/* Standard Trigger Action Buttons */}
@@ -1172,7 +1206,7 @@ const QRPrint = () => {
                     {/* 2. Full Name */}
                     {showName && (
                       <h1 style={{ 
-                        fontSize: dim.fontSizeName, 
+                        fontSize: `${nameFontSize}px`, 
                         fontWeight: 800, 
                         color: "#0f172a", 
                         margin: 0, 
