@@ -4,8 +4,9 @@ import QRCode from "react-qr-code";
 import { useAuth } from "../../../contexts/AuthContext";
 import LoadingBar from "../../../components/ui/LoadingBar";
 import { ArrowLeft, Check, Search } from "lucide-react";
+import { API_URL } from "../../../config/api";
 
-const API = import.meta.env.VITE_API_URL;
+const API = API_URL;
 
 interface PrintLog {
   timestamp: string;
@@ -216,8 +217,8 @@ const getParticipantPhoto = (p: any): string => {
     return srcUrl;
   }
 
-  // If it's a relative URL, prefix it with VITE_API_URL
-  const apiBase = import.meta.env.VITE_API_URL || "";
+  // If it's a relative URL, prefix it with API_URL
+  const apiBase = API_URL;
   // Check if it looks like a path or just a filename
   if (srcUrl.startsWith("/") || srcUrl.includes("uploads") || srcUrl.includes("profile_photo")) {
     return `${apiBase}/${srcUrl.startsWith("/") ? srcUrl.slice(1) : srcUrl}`;

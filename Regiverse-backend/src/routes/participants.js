@@ -19,6 +19,39 @@ import {
 
 const router = express.Router();
 
+// 0. Image CORS Proxy Route
+router.get("/proxy-image", async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) {
+      return res.status(400).send("URL parameter is required");
+    }
+
+    const decodedUrl = decodeURIComponent(url);
+
+    // Fetch the image from the remote URL
+    const response = await fetch(decodedUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      }
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    return res.send(buffer);
+  } catch (err) {
+    console.error("Proxy image error:", err);
+    return res.status(500).send(err.message);
+  }
+});
+
 // 1. Verify and Scan Route (Kitbag / Certificate)
 router.post("/verify-and-scan", verifyAndScan);
 

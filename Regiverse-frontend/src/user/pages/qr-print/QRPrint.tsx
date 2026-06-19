@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import QRCode from "react-qr-code";
+import { API_URL } from "../../../config/api";
 
 interface BadgePayload {
   name: string;
@@ -189,8 +190,8 @@ const getParticipantPhoto = (p: any): string => {
     return srcUrl;
   }
 
-  // If it's a relative URL, prefix it with VITE_API_URL
-  const apiBase = import.meta.env.VITE_API_URL || "";
+  // If it's a relative URL, prefix it with API_URL
+  const apiBase = API_URL;
   // Check if it looks like a path or just a filename
   if (srcUrl.startsWith("/") || srcUrl.includes("uploads") || srcUrl.includes("profile_photo")) {
     return `${apiBase}/${srcUrl.startsWith("/") ? srcUrl.slice(1) : srcUrl}`;
@@ -198,6 +199,13 @@ const getParticipantPhoto = (p: any): string => {
     // Treat as raw filename in uploads
     return `${apiBase}/uploads/${srcUrl}`;
   }
+};
+
+const shouldApplyCors = (url: string) => {
+  if (!url) return false;
+  if (url.startsWith("data:")) return false;
+  if (url.startsWith(API_URL) || url.startsWith("/")) return true;
+  return false;
 };
 
 const QRPrint = () => {
@@ -262,9 +270,75 @@ const QRPrint = () => {
   const [isPrinted, setIsPrinted] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [base64Photos, setBase64Photos] = useState<{[url: string]: string}>({});
 
   const badgeBackUrl = activePayload?.backUrl || "";
   const badges: BadgePayload[] = activePayload?.badges || (activePayload ? [activePayload as BadgePayload] : []);
+
+  // 0. On-the-fly base64 image converter to prevent CORS errors during PDF generation
+  useEffect(() => {
+    if (!badges || badges.length === 0) return;
+
+    const fetchAndConvertImage = async (url: string) => {
+      if (!url) return null;
+      if (url.startsWith("data:image")) return url;
+
+      // 1. Try direct fetch first
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          const blob = await response.blob();
+          return await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        }
+      } catch (e) {
+        console.log("Direct image fetch failed, trying proxy:", url);
+      }
+
+      // 2. Try proxying via our backend API proxy
+      try {
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+          return null; // Don't proxy relative paths
+        }
+        const proxyUrl = `${API_URL}/api/participants/proxy-image?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error("CORS Proxy fetch failed");
+
+        const blob = await response.blob();
+        return await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch (err) {
+        console.warn("Base64 photo conversion failed for url:", url, err);
+        return null;
+      }
+    };
+
+    const convertAllPhotos = async () => {
+      const newMap: {[url: string]: string} = {};
+      for (const badge of badges) {
+        const url = getParticipantPhoto(badge);
+        if (url && !url.startsWith("data:image") && !newMap[url] && !base64Photos[url]) {
+          const base64 = await fetchAndConvertImage(url);
+          if (base64) {
+            newMap[url] = base64;
+          }
+        }
+      }
+      if (Object.keys(newMap).length > 0) {
+        setBase64Photos(prev => ({ ...prev, ...newMap }));
+      }
+    };
+
+    convertAllPhotos();
+  }, [badges]);
 
   // 1. Dynamic html2pdf script loader
   useEffect(() => {
@@ -352,7 +426,7 @@ const QRPrint = () => {
     try {
       const staffEmail = activePayload?.operatorEmail || "Staff Operator";
       const timestamp = new Date().toISOString();
-      const apiURL = import.meta.env.VITE_API_URL || "";
+      const apiURL = API_URL;
       
       await fetch(`${apiURL}/api/participants/${participantId}`, {
         method: "PUT",
@@ -766,8 +840,9 @@ const QRPrint = () => {
 
                         {photoUrl ? (
                           <img 
-                            src={photoUrl} 
+                            src={base64Photos[photoUrl] || photoUrl} 
                             alt="Participant" 
+                            crossOrigin={shouldApplyCors(base64Photos[photoUrl] || photoUrl) ? "anonymous" : undefined}
                             style={{ 
                               width: "100%", 
                               height: "100%", 
