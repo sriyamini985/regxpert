@@ -504,6 +504,13 @@ const QRPrint = () => {
     };
   }, []);
 
+  // 1b. Blank the page title so browser print headers/footers show nothing
+  useEffect(() => {
+    const originalTitle = document.title;
+    document.title = " ";
+    return () => { document.title = originalTitle; };
+  }, []);
+
   // 2. Auto-trigger print dialog once images are loaded (but DO NOT redirect)
   useEffect(() => {
     if (badges.length === 0) return;
@@ -750,6 +757,7 @@ const QRPrint = () => {
 
           @media print {
             .no-print { display: none !important; }
+            
             body * {
               visibility: hidden;
             }
@@ -757,15 +765,39 @@ const QRPrint = () => {
             #badges-container-wrapper * {
               visibility: visible !important;
             }
+            
+            /* Reset parent hierarchy for printing to avoid extra blank pages */
+            html, body, #root, #root > div { 
+              margin: 0 !important; 
+              padding: 0 !important;
+              min-height: 0 !important;
+              height: auto !important;
+              width: auto !important;
+              background: white !important;
+              display: block !important;
+              position: static !important;
+              overflow: visible !important;
+              box-shadow: none !important;
+              border: none !important;
+            }
+
+            /* Clean up right panel container to be simple block with no extra dimensions */
+            div.flex-1.print\:p-0 {
+              display: block !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              height: auto !important;
+              min-height: 0 !important;
+              width: 100% !important;
+              position: static !important;
+              overflow: visible !important;
+            }
+
             @page { 
               size: ${BADGE_SIZES[badgeSize]?.widthMm || 54}mm ${BADGE_SIZES[badgeSize]?.heightMm || 86}mm; 
               margin: 0 !important; 
             }
-            html, body { 
-              margin: 0 !important; 
-              padding: 0 !important;
-              background: white;
-            }
+
             .badge-container {
               position: relative !important;
               width: ${BADGE_SIZES[badgeSize]?.widthMm || 54}mm !important;
