@@ -372,14 +372,21 @@ const QRPrint = () => {
     convertAllPhotos();
   }, [badges]);
 
-  // 1. Dynamic html2pdf script loader
+  // 1. Dynamic html2canvas and jspdf script loaders
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-    script.async = true;
-    document.body.appendChild(script);
+    const scriptCanvas = document.createElement("script");
+    scriptCanvas.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+    scriptCanvas.async = true;
+    document.body.appendChild(scriptCanvas);
+
+    const scriptPDF = document.createElement("script");
+    scriptPDF.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    scriptPDF.async = true;
+    document.body.appendChild(scriptPDF);
+
     return () => {
-      document.body.removeChild(script);
+      document.body.removeChild(scriptCanvas);
+      document.body.removeChild(scriptPDF);
     };
   }, []);
 
@@ -498,19 +505,16 @@ const QRPrint = () => {
   };
 
   const handleDownloadPDF = async () => {
-    if (!(window as any).html2pdf) {
-      alert("PDF library is still loading. Please try again in a second.");
+    const jsPDFClass = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
+    const html2canvasFn = (window as any).html2canvas;
+
+    if (!jsPDFClass || !html2canvasFn) {
+      alert("PDF libraries are still loading. Please try again in a second.");
       return;
     }
 
     const badgeContainers = document.querySelectorAll(".badge-container");
     if (badgeContainers.length === 0) return;
-
-    const jsPDFClass = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
-    if (!jsPDFClass) {
-      alert("PDF generator class not found. Please reload and try again.");
-      return;
-    }
 
     const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
     const formatVal = badgeSize === "A5" ? "a5" : badgeSize === "A6" ? "a6" : [dim.widthMm, dim.heightMm];
