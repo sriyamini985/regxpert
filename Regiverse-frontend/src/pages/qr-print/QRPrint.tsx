@@ -285,11 +285,15 @@ const QRPrint = () => {
       if (!url) return null;
       if (url.startsWith("data:image")) return url;
 
+      // Add a cache-buster parameter to prevent browser CORS cache issues in normal mode
+      const cacheBuster = `cb=${Date.now()}`;
+      const bustedUrl = url.includes("?") ? `${url}&${cacheBuster}` : `${url}?${cacheBuster}`;
+
       // 1. Try direct fetch first (with 2-second timeout)
       const directController = new AbortController();
       const directTimeoutId = setTimeout(() => directController.abort(), 2000);
       try {
-        const response = await fetch(url, { signal: directController.signal });
+        const response = await fetch(bustedUrl, { signal: directController.signal });
         clearTimeout(directTimeoutId);
         if (response.ok) {
           const blob = await response.blob();
@@ -310,7 +314,7 @@ const QRPrint = () => {
       const proxyTimeoutId = setTimeout(() => proxyController.abort(), 3500);
       try {
         if (url.startsWith("http://") || url.startsWith("https://")) {
-          const proxyUrl = `${API_URL}/api/participants/proxy-image?url=${encodeURIComponent(url)}`;
+          const proxyUrl = `${API_URL}/api/participants/proxy-image?url=${encodeURIComponent(bustedUrl)}`;
           const response = await fetch(proxyUrl, { signal: proxyController.signal });
           clearTimeout(proxyTimeoutId);
           if (response.ok) {
@@ -333,7 +337,7 @@ const QRPrint = () => {
       const publicTimeoutId = setTimeout(() => publicController.abort(), 3500);
       try {
         if (url.startsWith("http://") || url.startsWith("https://")) {
-          const publicProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+          const publicProxyUrl = `https://corsproxy.io/?${encodeURIComponent(bustedUrl)}`;
           const response = await fetch(publicProxyUrl, { signal: publicController.signal });
           clearTimeout(publicTimeoutId);
           if (response.ok) {
