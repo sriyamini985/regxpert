@@ -305,7 +305,8 @@ const QRPrint = () => {
 
   // 0. On-the-fly base64 image converter to prevent CORS errors during PDF generation
   useEffect(() => {
-    if (!badges || badges.length === 0) return;
+    const currentBadges = activePayload?.badges || (activePayload ? [activePayload as BadgePayload] : []);
+    if (!currentBadges || currentBadges.length === 0) return;
 
     const fetchAndConvertImage = async (url: string) => {
       if (!url) return null;
@@ -425,15 +426,15 @@ const QRPrint = () => {
       const failedUrls: string[] = [];
 
       // Calculate total photos to fetch
-      badges.forEach(badge => {
+      currentBadges.forEach(badge => {
         const url = getParticipantPhoto(badge);
         if (url && !url.startsWith("data:image")) {
           totalPhotos++;
         }
       });
       
-      for (let i = 0; i < badges.length; i += batchSize) {
-        const batch = badges.slice(i, i + batchSize);
+      for (let i = 0; i < currentBadges.length; i += batchSize) {
+        const batch = currentBadges.slice(i, i + batchSize);
         const results = await Promise.all(
           batch.map(async (badge) => {
             const url = getParticipantPhoto(badge);
@@ -482,7 +483,8 @@ const QRPrint = () => {
     };
 
     convertAllPhotos();
-  }, [badges]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePayload]);
 
   // 1. Dynamic html2canvas and jspdf script loaders
   useEffect(() => {
@@ -557,7 +559,7 @@ const QRPrint = () => {
     });
 
     return () => clearTimeout(fallbackTimer);
-  }, [activePayload, imagesLoaded]);
+  }, [activePayload, imagesLoaded, converting]);
 
   // 3. Listen to print finish events to trigger success overlay options
   useEffect(() => {
