@@ -47,6 +47,7 @@ type Participant = {
   blockWorkshop4: boolean;
   blockWorkshop5: boolean;
   dynamicData?: Record<string, any>;
+  conferenceId?: string;
 };
 
 type LocationState = {
@@ -317,7 +318,7 @@ const ParticipantPage = () => {
             <select
               value={selectedConference}
               onChange={(e) => setSelectedConference(e.target.value)}
-              className="w-full px-4 py-3 border rounded-xl bg-white font-medium text-gray-700"
+              className="w-full h-12 px-4 border rounded-xl bg-white font-medium text-gray-700 text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
               disabled={!!editingPerson}
             >
               <option value="">Select Conference / Event *</option>
@@ -341,7 +342,7 @@ const ParticipantPage = () => {
                 <button
                   type="button"
                   onClick={handleRemoveImage}
-                  className="px-4 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-xs font-semibold hover:bg-rose-100 transition"
+                  className="h-12 px-6 bg-rose-50 text-rose-600 rounded-xl text-sm font-semibold hover:bg-rose-100 transition flex items-center justify-center"
                 >
                   Remove Photo
                 </button>
@@ -353,8 +354,8 @@ const ParticipantPage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <div className="text-center">
-                  <label className="cursor-pointer text-sm font-semibold text-blue-600 hover:text-blue-700">
+                <div className="text-center flex flex-col items-center gap-2">
+                  <label className="cursor-pointer h-12 px-6 bg-blue-50 text-blue-600 rounded-xl text-sm font-semibold hover:bg-blue-100 transition flex items-center justify-center border border-blue-200">
                     Upload Photo
                     <input 
                       type="file" 
@@ -373,35 +374,39 @@ const ParticipantPage = () => {
             placeholder="Full Name *"
             value={form.name}
             onChange={(e) => handleChange("name", e.target.value)}
-            className="w-full px-4 py-3 border rounded-xl"
+            className="w-full h-12 px-4 border rounded-xl text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
 
           <input
             placeholder="Mobile Number *"
             value={form.phone}
             onChange={(e) => handleChange("phone", e.target.value)}
-            className="w-full px-4 py-3 border rounded-xl"
+            className="w-full h-12 px-4 border rounded-xl text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            inputMode="numeric"
+            pattern="[0-9]*"
           />
 
           <input
             placeholder="Email Address *"
             value={form.email}
             onChange={(e) => handleChange("email", e.target.value)}
-            className="w-full px-4 py-3 border rounded-xl"
+            className="w-full h-12 px-4 border rounded-xl text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
 
           <input
             placeholder="State / City *"
             value={form.state}
             onChange={(e) => handleChange("state", e.target.value)}
-            className="w-full px-4 py-3 border rounded-xl"
+            className="w-full h-12 px-4 border rounded-xl text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
 
           <input
             placeholder="Medical Council Number *"
             value={form.medicalCouncilNumber}
             onChange={(e) => handleChange("medicalCouncilNumber", e.target.value)}
-            className="w-full px-4 py-3 border rounded-xl md:col-span-2"
+            className="w-full h-12 px-4 border rounded-xl md:col-span-2 text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            inputMode="numeric"
+            pattern="[0-9]*"
           />
 
           <div className="md:col-span-2">
@@ -418,7 +423,7 @@ const ParticipantPage = () => {
                 }
                 handleChange("category", e.target.value);
               }}
-              className="w-full px-4 py-3 border rounded-xl"
+              className="w-full h-12 px-4 border rounded-xl text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
             >
               <option value="">Select Category *</option>
               {categories.map((cat, index) => (
@@ -434,7 +439,7 @@ const ParticipantPage = () => {
             placeholder="Reference *"
             value={form.reference}
             onChange={(e) => handleChange("reference", e.target.value)}
-            className="w-full px-4 py-3 border rounded-xl md:col-span-2"
+            className="w-full h-12 px-4 border rounded-xl md:col-span-2 text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
 
           {/* RESTRICTIONS */}

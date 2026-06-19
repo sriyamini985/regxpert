@@ -23,5 +23,6 @@
     "baseUrl": "./src"
   },
   "include": ["src"],
+  "exclude": ["src/user/pages/qr-code-generator"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

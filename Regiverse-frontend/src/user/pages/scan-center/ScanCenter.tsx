@@ -13,7 +13,7 @@ import {
 import { motion } from "framer-motion";
 
 export default function ScanCenter() {
-  const { conferenceSlug } = useParams<{ conferenceSlug: string }>();
+  const { conferenceSlug } = useParams<"conferenceSlug">();
 
   // Config for the 6 scan modules
   const modules = [
@@ -121,7 +121,7 @@ export default function ScanCenter() {
               key={index}
               variants={cardVariants}
               whileHover={{ y: -6, transition: { duration: 0.2 } }}
-              className={`bg-white border border-slate-200/80 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 ${mod.shadowColor}`}
+              className={`bg-white border border-slate-200/80 rounded-3xl p-6 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 ${mod.shadowColor}`}
             >
               <div>
                 {/* Header: Icon + Badge */}
@@ -144,7 +144,7 @@ export default function ScanCenter() {
               {/* Launcher CTA Button */}
               <Link
                 to={mod.path}
-                className="w-full bg-slate-950 hover:bg-blue-600 text-white rounded-xl py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 group"
+                className="w-full bg-slate-950 hover:bg-blue-600 text-white rounded-2xl py-4 sm:py-3 px-4 text-base sm:text-sm font-bold flex items-center justify-center gap-2.5 transition-all duration-200 group active:scale-[0.98] shadow-md shadow-slate-900/5 hover:shadow-blue-500/10"
               >
                 <span>Launch Scanner</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

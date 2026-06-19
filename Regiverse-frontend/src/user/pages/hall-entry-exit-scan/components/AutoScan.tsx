@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { Participant } from '../../Hall Entry & Exit Scan/HallScan';
+import { Participant } from '../HallScan';
 
 interface Props {
   participants: Participant[];

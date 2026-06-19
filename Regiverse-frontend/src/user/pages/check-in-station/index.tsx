@@ -201,14 +201,16 @@ const CheckInStation = () => {
                 value={qrInput}
                 onChange={(e) => setQrInput(e.target.value)}
                 placeholder="Scan QR code or type Reg ID here..."
-                className="flex-1 px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="flex-1 h-12 px-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-base md:text-sm"
                 autoFocus
                 disabled={isProcessing}
+                inputMode="numeric"
+                pattern="[0-9]*"
               />
               <button
                 type="submit"
                 disabled={isProcessing || !qrInput.trim()}
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition w-full sm:w-auto"
+                className="h-12 px-6 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition w-full sm:w-auto flex items-center justify-center"
               >
                 {isProcessing ? "..." : "Scan"}
               </button>
@@ -252,13 +254,13 @@ const CheckInStation = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 placeholder="Search by name, phone, or Reg ID..."
-                className="flex-1 px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="flex-1 h-12 px-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-base md:text-sm"
                 disabled={isLoading}
               />
               <button
                 onClick={handleSearch}
                 disabled={isLoading || !searchQuery.trim()}
-                className="px-6 py-3 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 transition w-full sm:w-auto"
+                className="h-12 px-6 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 transition w-full sm:w-auto flex items-center justify-center"
               >
                 Search
               </button>

@@ -50,6 +50,9 @@ interface Participant {
   dynamicData?: Record<string, any>;
   workshopScans?: string[];
   conferenceName?: string;
+  avatar?: string;
+  avatarUrl?: string;
+  photo?: string;
 }
 
 const ALL_CHECKPOINT_OPTIONS = ["Check-In", "Food Counter", "Kitbag", "Certificate", "Workshop", "QR Code"];
@@ -230,13 +233,35 @@ const getParticipantPhoto = (p: any): string => {
 
 const BadgePrint = () => {
   const navigate = useNavigate();
-  const { conferenceSlug } = useParams<{ conferenceSlug: string }>();
+  const { conferenceSlug } = useParams<"conferenceSlug">();
   const { user } = useAuth();
 
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [fetching, setFetching] = useState(true);
   const [updating, setUpdating] = useState(false);
+
+  // Mobile Tabs and Zoom support states
+  const [activeTab, setActiveTab] = useState<"roster" | "options" | "preview">("roster");
+  const [zoomPercent, setZoomPercent] = useState<number>(100);
+
+  // Script loaders for html2canvas and jspdf on component mount
+  useEffect(() => {
+    const scriptCanvas = document.createElement("script");
+    scriptCanvas.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+    scriptCanvas.async = true;
+    document.body.appendChild(scriptCanvas);
+
+    const scriptPDF = document.createElement("script");
+    scriptPDF.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    scriptPDF.async = true;
+    document.body.appendChild(scriptPDF);
+
+    return () => {
+      document.body.removeChild(scriptCanvas);
+      document.body.removeChild(scriptPDF);
+    };
+  }, []);
 
   // Selection state
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
@@ -634,6 +659,167 @@ const BadgePrint = () => {
     }
   };
 
+  const handleDownloadSinglePDF = async () => {
+    if (!selectedParticipant) return;
+    const jsPDFClass = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
+    const html2canvasFn = (window as any).html2canvas;
+
+    if (!jsPDFClass || !html2canvasFn) {
+      alert("PDF libraries are still loading. Please try again in a second.");
+      return;
+    }
+
+    const element = document.getElementById("badge-preview-card");
+    if (!element) {
+      alert("Preview card not found.");
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
+      const formatVal = badgeSize === "A5" ? "a5" : badgeSize === "A6" ? "a6" : [dim.widthMm, dim.heightMm];
+
+      // Clone card for clean render
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.style.borderRadius = "0";
+      clone.style.border = "none";
+      clone.style.boxShadow = "none";
+      clone.style.position = "absolute";
+      clone.style.top = "0";
+      clone.style.left = "0";
+      clone.style.zIndex = "-9999";
+      clone.style.opacity = "0.01";
+      clone.style.pointerEvents = "none";
+      clone.style.width = `${dim.widthMm}mm`;
+      clone.style.height = `${dim.heightMm}mm`;
+      clone.style.transform = "none"; // Clear zoom transform!
+      clone.style.paddingTop = `${topSpacing}mm`;
+      clone.style.paddingLeft = "0";
+      clone.style.paddingRight = "0";
+      clone.style.paddingBottom = "0";
+      document.body.appendChild(clone);
+
+      const canvas = await html2canvasFn(clone, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: "#ffffff",
+        imageTimeout: 100
+      });
+
+      document.body.removeChild(clone);
+
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDFClass({
+        unit: "mm",
+        format: formatVal,
+        orientation: "portrait"
+      });
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        0,
+        0,
+        badgeSize === "A5" ? 148 : badgeSize === "A6" ? 105 : dim.widthMm,
+        badgeSize === "A5" ? 210 : badgeSize === "A6" ? 148 : dim.heightMm
+      );
+
+      pdf.save(`badge-${selectedParticipant.regId || selectedParticipant._id || "pass"}.pdf`);
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred during PDF generation.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleShareSinglePDF = async () => {
+    if (!selectedParticipant) return;
+    const jsPDFClass = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
+    const html2canvasFn = (window as any).html2canvas;
+
+    if (!jsPDFClass || !html2canvasFn) {
+      alert("PDF libraries are still loading. Please try again in a second.");
+      return;
+    }
+
+    const element = document.getElementById("badge-preview-card");
+    if (!element) {
+      alert("Preview card not found.");
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
+      const formatVal = badgeSize === "A5" ? "a5" : badgeSize === "A6" ? "a6" : [dim.widthMm, dim.heightMm];
+
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.style.borderRadius = "0";
+      clone.style.border = "none";
+      clone.style.boxShadow = "none";
+      clone.style.position = "fixed";
+      clone.style.top = "-9999px";
+      clone.style.left = "-9999px";
+      clone.style.width = `${dim.widthMm}mm`;
+      clone.style.height = `${dim.heightMm}mm`;
+      clone.style.transform = "none";
+      clone.style.paddingTop = `${topSpacing}mm`;
+      clone.style.paddingLeft = "0";
+      clone.style.paddingRight = "0";
+      clone.style.paddingBottom = "0";
+      document.body.appendChild(clone);
+
+      const canvas = await html2canvasFn(clone, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null,
+        imageTimeout: 100
+      });
+
+      document.body.removeChild(clone);
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+      const pdf = new jsPDFClass({
+        unit: "mm",
+        format: formatVal,
+        orientation: "portrait"
+      });
+
+      pdf.addImage(
+        imgData,
+        "JPEG",
+        0,
+        0,
+        badgeSize === "A5" ? 148 : badgeSize === "A6" ? 105 : dim.widthMm,
+        badgeSize === "A5" ? 210 : badgeSize === "A6" ? 148 : dim.heightMm
+      );
+
+      const pdfBlob = pdf.output("blob");
+      const file = new File([pdfBlob], `badge-${selectedParticipant.regId || selectedParticipant._id || "pass"}.pdf`, { type: "application/pdf" });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "RegXpert Badge Pass",
+          text: `Here is the badge pass for ${editName}`
+        });
+      } else {
+        alert("Natively sharing files is not supported on this browser/device. Please download the PDF instead.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to share PDF.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-slate-50 relative overflow-hidden p-6 md:p-8 font-sans text-slate-800">
       {/* Background Decorative Blur Orbs */}
@@ -665,11 +851,35 @@ const BadgePrint = () => {
           </div>
         </div>
 
+        {/* Mobile Tabs Header */}
+        <div className="flex lg:hidden bg-slate-900/5 backdrop-blur-md rounded-2xl border border-slate-200/80 p-1.5 shadow-inner gap-1">
+          {[
+            { id: "roster", label: "Roster" },
+            { id: "options", label: "Options" },
+            { id: "preview", label: "Preview" }
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex-1 py-3 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 ${
+                  isActive 
+                    ? "bg-slate-950 text-white shadow-md" 
+                    : "text-slate-500 hover:text-slate-850 hover:bg-slate-100/50"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
         {/* MAIN SPLIT GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* LEFT PANEL: SEARCH & ROSTER (Col span 5) */}
-          <div className="lg:col-span-5 bg-white/80 backdrop-blur-md rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col h-[750px] transition-all hover:shadow-md">
+          <div className={`lg:col-span-5 bg-white/80 backdrop-blur-md rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col h-[750px] transition-all hover:shadow-md ${activeTab === "roster" ? "flex" : "hidden lg:flex"}`}>
             <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center justify-between">
               <span>Roster List</span>
               <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-extrabold border border-indigo-100/60 shadow-sm">
@@ -748,14 +958,14 @@ const BadgePrint = () => {
                       </div>
                     </div>
 
-                    <div className="min-w-0 flex-1" onClick={() => setSelectedParticipant(p)}>
+                    <div className="min-w-0 flex-1" onClick={() => { setSelectedParticipant(p); setActiveTab("preview"); }}>
                       <p className="font-bold text-slate-800 text-sm truncate group-hover:text-indigo-950 transition-colors">{p.name}</p>
                       <p className="text-xs font-semibold text-slate-400 mt-0.5 truncate">
                         ID: {p.regId || "N/A"} • {p.category || "No Category"}
                       </p>
                     </div>
                     
-                    <div className="flex flex-col items-end gap-1.5 ml-4" onClick={() => setSelectedParticipant(p)}>
+                    <div className="flex flex-col items-end gap-1.5 ml-4" onClick={() => { setSelectedParticipant(p); setActiveTab("preview"); }}>
                       {p.printed ? (
                         <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 rounded-lg text-[10px] font-extrabold border border-emerald-500/20 tracking-wide uppercase">
                           Printed ({p.printLogs?.length || 1})
@@ -776,12 +986,12 @@ const BadgePrint = () => {
           </div>
 
           {/* RIGHT PANEL: EDITOR & LIVE PREVIEW (Col span 7) */}
-          <div className="lg:col-span-7 flex flex-col h-[750px]">
+          <div className={`lg:col-span-7 flex flex-col h-[750px] ${activeTab !== "roster" ? "flex" : "hidden lg:flex"}`}>
             {selectedParticipant ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full min-h-0">
                 
                 {/* COLUMN 1: CONFIGURATION & LOGS */}
-                <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col h-full min-h-0">
+                <div className={`bg-white/80 backdrop-blur-md rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col h-full min-h-0 ${activeTab === "options" ? "flex" : "hidden md:flex"}`}>
                   <h2 className="text-xl font-bold text-slate-900 mb-4 flex-none">Badge Options</h2>
                   
                   {/* Scrollable configuration fields container */}
@@ -1014,169 +1224,212 @@ const BadgePrint = () => {
                 {(() => {
                   const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
                   return (
-                    <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col items-center justify-start h-full min-h-0">
+                    <div className={`bg-white/80 backdrop-blur-md rounded-3xl shadow-sm p-6 border border-slate-200/80 flex flex-col items-center justify-start h-full min-h-0 ${activeTab === "preview" ? "flex" : "hidden md:flex"}`}>
                       <h2 className="text-xl font-bold text-slate-900 w-full text-left mb-4 flex-none">Badge Preview</h2>
+
+                      {/* Zoom Slider (Screen only) */}
+                      <div className="no-print w-full flex items-center gap-3 bg-slate-50 border border-slate-200 p-3 rounded-2xl mb-4 flex-none">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide flex-none">Card Zoom</span>
+                        <input 
+                          type="range" 
+                          min="50" 
+                          max="150" 
+                          value={zoomPercent} 
+                          onChange={(e) => setZoomPercent(Number(e.target.value))}
+                          className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-650"
+                        />
+                        <span className="text-xs font-mono font-bold text-slate-600 w-10 text-right">{zoomPercent}%</span>
+                      </div>
                       
-                      <div className="flex-grow flex flex-col items-center justify-center w-full min-h-0 py-4 my-auto relative">
-                        {(() => {
-                          const themeColor = getCategoryColor(editDestination);
-                          const photoUrl = getParticipantPhoto(selectedParticipant);
-                          return (
-                            <div 
-                              className={`bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans transition-all duration-300 ${
-                                dim.gap
-                              }`}
-                              style={{
-                                height: "380px",
-                                width: `${dim.previewWidthPx}px`,
-                                paddingTop: `${(topSpacing * 380) / dim.heightMm}px`,
-                                paddingLeft: "12px",
-                                paddingRight: "12px",
-                                paddingBottom: editDestination ? "35px" : "12px",
-                                boxSizing: "border-box",
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "start",
-                                alignItems: "center"
-                              }}
-                            >
-                              {/* Glassmorphic Shine Effect */}
-                              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none z-30" />
-                              
-                              {/* Lanyard Slot Simulator */}
-                              <div className="w-8 h-2 rounded-full bg-slate-200 border border-slate-300/65 mt-2.5 mb-1.5 flex items-center justify-center relative z-20 shadow-inner flex-none">
-                                <div className="w-5 h-0.5 rounded-full bg-slate-300/40" />
-                              </div>
-
-
-                              {/* B. Center Attendee Details */}
+                      <div className="flex-grow flex flex-col items-center justify-center w-full min-h-0 py-4 my-auto relative overflow-auto max-w-full custom-scrollbar">
+                        <div style={{
+                          transform: `scale(${zoomPercent / 100})`,
+                          transformOrigin: "center center",
+                          transition: "transform 0.1s ease-out"
+                        }} className="flex-none flex items-center justify-center">
+                          {(() => {
+                            const themeColor = getCategoryColor(editDestination);
+                            const photoUrl = getParticipantPhoto(selectedParticipant);
+                            return (
                               <div 
-                                className="flex-none flex flex-col items-center justify-center w-full px-1 box-border relative z-10 animate-fade-in"
-                                style={{ gap: `${dim.innerGapPx}px` }}
+                                id="badge-preview-card"
+                                className={`bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans transition-all duration-300 ${
+                                  dim.gap
+                                }`}
+                                style={{
+                                  height: "380px",
+                                  width: `${dim.previewWidthPx}px`,
+                                  paddingTop: `${(topSpacing * 380) / dim.heightMm}px`,
+                                  paddingLeft: "12px",
+                                  paddingRight: "12px",
+                                  paddingBottom: editDestination ? "35px" : "12px",
+                                  boxSizing: "border-box",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "start",
+                                  alignItems: "center"
+                                }}
                               >
+                                {/* Glassmorphic Shine Effect */}
+                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none z-30" />
                                 
-                                {/* Photo Placeholder */}
-                                {printPhoto && (
-                                  <div className="bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden shadow-md transition-all duration-300 relative" 
-                                    style={{ 
-                                      padding: "1.5px",
-                                      width: `${dim.previewPhotoWidthPx}px`,
-                                      height: `${dim.previewPhotoHeightPx}px`
-                                    }}
+                                {/* Lanyard Slot Simulator */}
+                                <div className="w-8 h-2 rounded-full bg-slate-200 border border-slate-300/65 mt-2.5 mb-1.5 flex items-center justify-center relative z-20 shadow-inner flex-none">
+                                  <div className="w-5 h-0.5 rounded-full bg-slate-300/40" />
+                                </div>
+
+
+                                {/* B. Center Attendee Details */}
+                                <div 
+                                  className="flex-none flex flex-col items-center justify-center w-full px-1 box-border relative z-10 animate-fade-in"
+                                  style={{ gap: `${dim.innerGapPx}px` }}
+                                >
+                                  
+                                  {/* Photo Placeholder */}
+                                  {printPhoto && (
+                                    <div className="bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden shadow-md transition-all duration-300 relative" 
+                                      style={{ 
+                                        padding: "1.5px",
+                                        width: `${dim.previewPhotoWidthPx}px`,
+                                        height: `${dim.previewPhotoHeightPx}px`
+                                      }}
+                                    >
+                                      {/* Viewfinder Corner Accents */}
+                                      <div className="absolute top-0 left-0 border-t-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                                      <div className="absolute top-0 right-0 border-t-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                                      <div className="absolute bottom-0 left-0 border-b-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                                      <div className="absolute bottom-0 right-0 border-b-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                                      
+                                      {photoUrl ? (
+                                        <img 
+                                          src={photoUrl} 
+                                          alt="Delegate" 
+                                          className={`w-full h-full rounded-[3px] ${photoFit === "contain" ? "object-contain bg-slate-100" : "object-cover object-top"}`} 
+                                        />
+                                      ) : (
+                                        <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
+                                          <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* 1. Name */}
+                                  {printName && (
+                                    <h3 className={`font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1 transition-all duration-300 ${
+                                      dim.fontSizeName
+                                    }`}>
+                                      {editName || "PARTICIPANT NAME"}
+                                    </h3>
+                                  )}
+
+                                  {/* 2. Designation / Org Suffix */}
+                                  {selectedParticipant.dynamicData?.Organization && (
+                                    <p className={`font-semibold text-slate-500 uppercase truncate max-w-full transition-all duration-300 ${
+                                      dim.fontSizeOrg
+                                    }`}>
+                                      {selectedParticipant.dynamicData.Organization}
+                                    </p>
+                                  )}
+
+                                  {/* 3. City / Location */}
+                                  {printCity && editState && (
+                                    <p className={`font-semibold text-slate-400 uppercase truncate max-w-full transition-all duration-300 ${
+                                      dim.fontSizeOrg
+                                    }`}>
+                                      {editState}
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* Decorative Divider */}
+                                <div 
+                                  className="transition-all duration-300 relative z-10"
+                                  style={{
+                                    width: "80%",
+                                    height: "1px",
+                                    background: "linear-gradient(to right, transparent, #e2e8f0, transparent)",
+                                    marginTop: "2px",
+                                    marginBottom: "2px"
+                                  }}
+                                />
+
+                                {/* C. QR Code Section */}
+                                {(printQR || printRegId) && (
+                                  <div 
+                                    className="flex flex-col items-center justify-center pb-2 box-border relative z-10"
+                                    style={{ gap: `${dim.innerGapPx}px` }}
                                   >
-                                    {/* Viewfinder Corner Accents */}
-                                    <div className="absolute top-0 left-0 border-t-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                                    <div className="absolute top-0 right-0 border-t-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                                    <div className="absolute bottom-0 left-0 border-b-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                                    <div className="absolute bottom-0 right-0 border-b-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
+                                    {printQR && selectedCheckpoints.includes("QR Code") && (
+                                      <div 
+                                        className="bg-white p-2 rounded-xl shadow-md flex items-center justify-center transition-all duration-300"
+                                        style={{
+                                          border: `1.5px solid ${themeColor}25`,
+                                          boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+                                          width: `${dim.previewPhotoWidthPx}px`,
+                                          height: `${dim.previewPhotoWidthPx}px`,
+                                          boxSizing: "border-box"
+                                        }}
+                                      >
+                                        <QRCode
+                                          value={selectedParticipant.regId || selectedParticipant._id}
+                                          size={256}
+                                          style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                        />
+                                      </div>
+                                    )}
                                     
-                                    {photoUrl ? (
-                                      <img 
-                                        src={photoUrl} 
-                                        alt="Delegate" 
-                                        className={`w-full h-full rounded-[3px] ${photoFit === "contain" ? "object-contain bg-slate-100" : "object-cover object-top"}`} 
-                                      />
-                                    ) : (
-                                      <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
-                                      </svg>
+                                    {/* Registration ID */}
+                                    {printRegId && (
+                                      <div 
+                                        className="flex items-center justify-center transition-all duration-300"
+                                      >
+                                        <p className={`font-sans text-slate-500 font-bold tracking-wider leading-none ${dim.fontSizeRegId}`}>
+                                          <span className="text-slate-800 font-extrabold">{selectedParticipant.regId || selectedParticipant._id}</span>
+                                        </p>
+                                      </div>
                                     )}
                                   </div>
                                 )}
 
-                                {/* 1. Name */}
-                                {printName && (
-                                  <h3 className={`font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1 transition-all duration-300 ${
-                                    dim.fontSizeName
-                                  }`}>
-                                    {editName || "PARTICIPANT NAME"}
-                                  </h3>
+                                {/* Category Ribbon */}
+                                {editDestination && (
+                                  <div 
+                                    className="absolute bottom-0 left-0 w-full text-white font-black uppercase text-center tracking-widest py-2 z-20 text-[10px] shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
+                                    style={{
+                                      backgroundColor: themeColor,
+                                    }}
+                                  >
+                                    {editDestination}
+                                  </div>
                                 )}
 
-                                {/* 2. Designation / Org Suffix */}
-                                {selectedParticipant.dynamicData?.Organization && (
-                                  <p className={`font-semibold text-slate-500 uppercase truncate max-w-full transition-all duration-300 ${
-                                    dim.fontSizeOrg
-                                  }`}>
-                                    {selectedParticipant.dynamicData.Organization}
-                                  </p>
-                                )}
-
-                                {/* 3. City / Location */}
-                                {printCity && editState && (
-                                  <p className={`font-semibold text-slate-400 uppercase truncate max-w-full transition-all duration-300 ${
-                                    dim.fontSizeOrg
-                                  }`}>
-                                    {editState}
-                                  </p>
-                                )}
                               </div>
+                            );
+                          })()}
+                        </div>
+                      </div>
 
-                              {/* Decorative Divider */}
-                              <div 
-                                className="transition-all duration-300 relative z-10"
-                                style={{
-                                  width: "80%",
-                                  height: "1px",
-                                  background: "linear-gradient(to right, transparent, #e2e8f0, transparent)",
-                                  marginTop: "2px",
-                                  marginBottom: "2px"
-                                }}
-                              />
-
-                              {/* C. QR Code Section */}
-                              {(printQR || printRegId) && (
-                                <div 
-                                  className="flex flex-col items-center justify-center pb-2 box-border relative z-10"
-                                  style={{ gap: `${dim.innerGapPx}px` }}
-                                >
-                                  {printQR && selectedCheckpoints.includes("QR Code") && (
-                                    <div 
-                                      className="bg-white p-2 rounded-xl shadow-md flex items-center justify-center transition-all duration-300"
-                                      style={{
-                                        border: `1.5px solid ${themeColor}25`,
-                                        boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
-                                        width: `${dim.previewPhotoWidthPx}px`,
-                                        height: `${dim.previewPhotoWidthPx}px`,
-                                        boxSizing: "border-box"
-                                      }}
-                                    >
-                                      <QRCode
-                                        value={selectedParticipant.regId || selectedParticipant._id}
-                                        size={256}
-                                        style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                                      />
-                                    </div>
-                                  )}
-                                  
-                                  {/* Registration ID */}
-                                  {printRegId && (
-                                    <div 
-                                      className="flex items-center justify-center transition-all duration-300"
-                                    >
-                                      <p className={`font-sans text-slate-500 font-bold tracking-wider leading-none ${dim.fontSizeRegId}`}>
-                                        Reg ID: <span className="text-slate-800 font-extrabold">{selectedParticipant.regId || selectedParticipant._id}</span>
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Category Ribbon */}
-                              {editDestination && (
-                                <div 
-                                  className="absolute bottom-0 left-0 w-full text-white font-black uppercase text-center tracking-widest py-2 z-20 text-[10px] shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
-                                  style={{
-                                    backgroundColor: themeColor,
-                                  }}
-                                >
-                                  {editDestination}
-                                </div>
-                              )}
-
-                            </div>
-                          );
-                        })()}
+                      {/* Mobile PDF & Print Actions */}
+                      <div className="w-full grid grid-cols-3 gap-2 mt-4 no-print flex-none">
+                        <button
+                          onClick={handleDownloadSinglePDF}
+                          className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-3.5 px-2 rounded-xl active:scale-95 transition-all shadow flex items-center justify-center gap-1.5"
+                        >
+                          📥 Download
+                        </button>
+                        <button
+                          onClick={handlePrintBadge}
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs py-3.5 px-2 rounded-xl active:scale-95 transition-all shadow flex items-center justify-center gap-1.5"
+                        >
+                          🖨️ Print
+                        </button>
+                        <button
+                          onClick={handleShareSinglePDF}
+                          className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs py-3.5 px-2 rounded-xl border border-slate-200 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                        >
+                          🔗 Share
+                        </button>
                       </div>
 
                       <p className="text-xs text-slate-400 font-medium text-center mt-4 px-4 flex-none">

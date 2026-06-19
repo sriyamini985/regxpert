@@ -23,7 +23,7 @@ import {
 import { motion } from "framer-motion";
 
 export default function UserLayout() {
-  const { conferenceSlug } = useParams<{ conferenceSlug: string }>();
+  const { conferenceSlug } = useParams<"conferenceSlug">();
   const { logout, user } = useAuth();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -183,7 +183,7 @@ export default function UserLayout() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 md:p-8 bg-slate-50">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto p-4 pb-20 sm:p-6 md:p-8 bg-slate-50 lg:pb-8">
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 12 }}
@@ -195,6 +195,32 @@ export default function UserLayout() {
           </motion.div>
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-950/95 backdrop-blur-md border-t border-slate-900/60 z-50 flex justify-around items-center px-2 shadow-2xl">
+        {[
+          { name: "Dashboard", path: `/u/${conferenceSlug}`, icon: LayoutDashboard },
+          { name: "Scan Hub", path: `/u/${conferenceSlug}/scan-center`, icon: Camera },
+          { name: "Participants", path: `/u/${conferenceSlug}/RegisteredList`, icon: Users },
+          { name: "Reports", path: `/u/${conferenceSlug}/admin-dashboard`, icon: BarChart3 },
+          { name: "Settings", path: `/u/${conferenceSlug}/settings`, icon: SettingsIcon },
+        ].map((item) => {
+          const isActive = location.pathname === item.path;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex flex-col items-center justify-center gap-1 flex-1 h-full px-1 py-1.5 transition-all duration-150 ${
+                isActive ? "text-blue-500 font-extrabold" : "text-slate-450 hover:text-slate-200"
+              }`}
+            >
+              <Icon className={`w-5 h-5 ${isActive ? "text-blue-550" : "text-slate-400"}`} />
+              <span className="text-[9px] tracking-tight">{item.name}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

@@ -49,6 +49,7 @@ interface RootPayload {
   participantId?: string;
   operatorEmail?: string;
   nextBadgePayload?: any;
+  photoFit?: string;
 }
 
 const getCategoryColor = (category: string) => {
@@ -661,9 +662,12 @@ const QRPrint = () => {
         clone.style.borderRadius = "0";
         clone.style.border = "none";
         clone.style.boxShadow = "none";
-        clone.style.position = "fixed";
-        clone.style.top = "-9999px";
-        clone.style.left = "-9999px";
+        clone.style.position = "absolute";
+        clone.style.top = "0";
+        clone.style.left = "0";
+        clone.style.zIndex = "-9999";
+        clone.style.opacity = "0.01";
+        clone.style.pointerEvents = "none";
         clone.style.width = `${dim.widthMm}mm`;
         clone.style.height = `${dim.heightMm}mm`;
         document.body.appendChild(clone);
@@ -673,7 +677,7 @@ const QRPrint = () => {
           scale: 2,
           useCORS: true,
           allowTaint: false,
-          backgroundColor: null,
+          backgroundColor: "#ffffff",
           logging: false,
           imageTimeout: 100
         });
@@ -681,7 +685,7 @@ const QRPrint = () => {
         // Remove the clone from DOM
         document.body.removeChild(clone);
 
-        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+        const imgData = canvas.toDataURL("image/png");
 
         // Add image to PDF page
         if (i > 0) {
@@ -691,7 +695,7 @@ const QRPrint = () => {
         // Add image starting at top-left corner (0,0) fitting the exact dimensions
         pdf.addImage(
           imgData,
-          "JPEG",
+          "PNG",
           0,
           0,
           badgeSize === "A5" ? 148 : badgeSize === "A6" ? 105 : dim.widthMm,
@@ -767,7 +771,7 @@ const QRPrint = () => {
             }
             
             /* Reset parent hierarchy for printing to avoid extra blank pages */
-            html, body, #root, #root > div { 
+            html, body, #root, #root > div, #root > div > div, #root > div > div > div, #badges-container-wrapper { 
               margin: 0 !important; 
               padding: 0 !important;
               min-height: 0 !important;
@@ -1238,7 +1242,7 @@ const QRPrint = () => {
                             letterSpacing: "0.2px",
                             fontFamily: "system-ui, -apple-system, sans-serif"
                           }}>
-                            Reg ID: <span style={{ color: "#0f172a", fontWeight: 800 }}>{badgeRegId}</span>
+                            <span style={{ color: "#0f172a", fontWeight: 800 }}>{badgeRegId}</span>
                           </p>
                         </div>
                       )}

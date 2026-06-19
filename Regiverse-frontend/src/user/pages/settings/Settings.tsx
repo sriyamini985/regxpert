@@ -16,7 +16,7 @@ import {
 import { motion } from "framer-motion";
 
 export default function Settings() {
-  const { conferenceSlug } = useParams<{ conferenceSlug: string }>();
+  const { conferenceSlug } = useParams<"conferenceSlug">();
   const { user } = useAuth();
 
   // Local Storage size simulation

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Participant } from '../../Hall Entry & Exit Scan/HallScan';
+import { Participant } from '../HallScan';
 import ResultsTable from './ResultsTable';
 interface Props {
   participants: Participant[];

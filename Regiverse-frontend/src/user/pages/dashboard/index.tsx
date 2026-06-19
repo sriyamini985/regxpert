@@ -21,10 +21,26 @@ import { motion } from "framer-motion";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
-  const { conferenceSlug } = useParams<{ conferenceSlug: string }>();
+  const { conferenceSlug } = useParams<"conferenceSlug">();
 
   // Fetch real-time stats from database using WebSocket synchronization hook
   const { loading, stats } = useConferenceData(conferenceSlug, { statsOnly: true });
+
+  // Sum up all meal counts across all days from stats?.food
+  const totalFoodScans = React.useMemo(() => {
+    if (!stats?.food) return 0;
+    let sum = 0;
+    Object.values(stats.food).forEach((dayObj: any) => {
+      if (dayObj && typeof dayObj === "object") {
+        Object.values(dayObj).forEach((val: any) => {
+          if (typeof val === "number") {
+            sum += val;
+          }
+        });
+      }
+    });
+    return sum;
+  }, [stats?.food]);
 
   // Grouped operational modules for clearer division of labor
   const scannerModules = [
@@ -151,12 +167,16 @@ export default function UserDashboard() {
       </div>
 
       {/* Dynamic Statistics Bar */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {[
           { label: "Total Registrations", val: stats?.total, color: "border-l-blue-500" },
           { label: "Checked In (Arrived)", val: stats?.checkedIn, color: "border-l-emerald-500" },
           { label: "Badges Printed", val: stats?.printed, color: "border-l-indigo-500" },
-          { label: "Kits Distributed", val: stats?.kitbagCollected, color: "border-l-purple-500" }
+          { label: "Kits Distributed", val: stats?.kitbagCollected, color: "border-l-violet-500" },
+          { label: "Food Scans", val: totalFoodScans, color: "border-l-amber-500" },
+          { label: "Hall Attendance", val: stats?.hallEntriesCount, color: "border-l-teal-500" },
+          { label: "Workshop Attendance", val: stats?.workshopScansCount, color: "border-l-purple-500" },
+          { label: "Certificates Issued", val: stats?.certificateGiven, color: "border-l-cyan-500" }
         ].map((stat, idx) => (
           <div key={idx} className={`bg-white border border-slate-200/80 border-l-[5px] ${stat.color} rounded-2xl p-5 shadow-sm hover:shadow transition-all duration-200`}>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
