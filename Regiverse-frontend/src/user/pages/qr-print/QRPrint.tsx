@@ -807,21 +807,13 @@ const QRPrint = () => {
           @media print {
             .no-print { display: none !important; }
             
-            body * {
-              visibility: hidden;
-            }
-            #badges-container-wrapper,
-            #badges-container-wrapper * {
-              visibility: visible !important;
-            }
-            
-            /* Reset parent hierarchy for printing to avoid extra blank pages */
-            html, body, #root, #root > div, #root > div > div, #root > div > div > div, #badges-container-wrapper { 
+            /* Clean parent elements styling to avoid rendering blanks */
+            html, body, #root, #print-page-root, #print-preview-canvas, #badges-container-wrapper { 
               margin: 0 !important; 
               padding: 0 !important;
               min-height: 0 !important;
               height: auto !important;
-              width: auto !important;
+              width: 100% !important;
               background: white !important;
               display: block !important;
               position: static !important;
@@ -830,16 +822,18 @@ const QRPrint = () => {
               border: none !important;
             }
 
-            /* Clean up right panel container to be simple block with no extra dimensions */
-            div.flex-1.print\:p-0 {
-              display: block !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              height: auto !important;
-              min-height: 0 !important;
-              width: 100% !important;
-              position: static !important;
-              overflow: visible !important;
+            /* Hide everything outside of the active layout hierarchy path */
+            body > *:not(#root) {
+              display: none !important;
+            }
+            #root > *:not(#print-page-root) {
+              display: none !important;
+            }
+            #print-page-root > *:not(#print-preview-canvas) {
+              display: none !important;
+            }
+            #print-preview-canvas > *:not(#badges-container-wrapper) {
+              display: none !important;
             }
 
             @page { 
@@ -877,7 +871,7 @@ const QRPrint = () => {
       </style>
 
       {/* Modern Split Page Layout for Printing Desk */}
-      <div className="min-h-screen bg-slate-100 flex flex-col lg:flex-row print:bg-white print:block">
+      <div id="print-page-root" className="min-h-screen bg-slate-100 flex flex-col lg:flex-row print:bg-white print:block">
         
         {/* LEFT CONTROL PANEL - SCREEN ONLY */}
         <div className="no-print w-full lg:w-[420px] bg-slate-900 text-white border-r border-slate-800 p-6 flex flex-col justify-between shadow-2xl lg:sticky lg:top-0 lg:h-screen overflow-y-auto font-sans">
@@ -1082,7 +1076,7 @@ const QRPrint = () => {
         </div>
 
         {/* RIGHT PREVIEW CANVAS */}
-        <div className="flex-1 p-6 md:p-12 flex flex-col items-center justify-center print:p-0 print:bg-white relative min-w-0">
+        <div id="print-preview-canvas" className="flex-1 p-6 md:p-12 flex flex-col items-center justify-center print:p-0 print:bg-white relative min-w-0">
           <div className="no-print absolute top-6 right-6 flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider select-none">
             <span>Badge Preview</span>
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
