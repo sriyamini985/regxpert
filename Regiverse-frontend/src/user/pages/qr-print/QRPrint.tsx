@@ -788,6 +788,9 @@ const QRPrint = () => {
               background: white !important;
               gap: ${BADGE_SIZES[badgeSize]?.gap || "1.5mm"} !important;
             }
+            .badge-container:last-child {
+              page-break-after: avoid !important;
+            }
           }
         `}
       </style>
