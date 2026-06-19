@@ -16,6 +16,7 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 
 dotenv.config({ path: path.resolve("./.env") });
 dns.setDefaultResultOrder("ipv4first");
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const app = express();
 connectDB();

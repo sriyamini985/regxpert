@@ -208,6 +208,26 @@ const shouldApplyCors = (url: string) => {
   return false;
 };
 
+const getBadgePhotoUrl = (url: string, base64Map: {[url: string]: string}) => {
+  if (!url) return "";
+  if (url.startsWith("data:image")) return url;
+  if (base64Map[url]) return base64Map[url];
+
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    if (url.startsWith(API_URL)) {
+      return url;
+    }
+    return `${API_URL}/api/participants/proxy-image?url=${encodeURIComponent(url)}`;
+  }
+
+  if (url.startsWith("/") || url.includes("uploads") || url.includes("profile_photo")) {
+    const filename = url.startsWith("/") ? url.slice(1) : url;
+    return `${API_URL}/${filename}`;
+  }
+
+  return `${API_URL}/uploads/${url}`;
+};
+
 const QRPrint = () => {
   const [searchParams] = useSearchParams();
   const raw = searchParams.get("data");
@@ -420,6 +440,13 @@ const QRPrint = () => {
             if (url && !url.startsWith("data:image") && !base64Photos[url] && !newMap[url]) {
               const base64 = await fetchAndConvertImage(url);
               if (base64) {
+                // strict pre-load decoding validation
+                await new Promise<void>((resolveImage) => {
+                  const img = new Image();
+                  img.onload = () => resolveImage();
+                  img.onerror = () => resolveImage();
+                  img.src = base64;
+                });
                 loadedCount++;
                 return { url, base64 };
               } else {
@@ -634,8 +661,10 @@ const QRPrint = () => {
 
         // Capture this single badge container to canvas
         const canvas = await (window as any).html2canvas(clone, {
-          scale: 1.5,
+          scale: 2,
           useCORS: true,
+          allowTaint: false,
+          backgroundColor: null,
           logging: false,
           imageTimeout: 100
         });
@@ -1035,9 +1064,9 @@ const QRPrint = () => {
 
                         {photoUrl ? (
                           <img 
-                            src={base64Photos[photoUrl] || photoUrl} 
+                            src={getBadgePhotoUrl(photoUrl, base64Photos)} 
                             alt="Participant" 
-                            crossOrigin={shouldApplyCors(base64Photos[photoUrl] || photoUrl) ? "anonymous" : undefined}
+                            crossOrigin={getBadgePhotoUrl(photoUrl, base64Photos).startsWith("data:") ? undefined : "anonymous"}
                             style={{ 
                               width: "100%", 
                               height: "100%", 
