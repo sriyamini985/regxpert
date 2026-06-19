@@ -289,9 +289,9 @@ const QRPrint = () => {
       const cacheBuster = `cb=${Date.now()}`;
       const bustedUrl = url.includes("?") ? `${url}&${cacheBuster}` : `${url}?${cacheBuster}`;
 
-      // 1. Try direct fetch first (with 2-second timeout)
+      // 1. Try direct fetch first (with 3-second timeout)
       const directController = new AbortController();
-      const directTimeoutId = setTimeout(() => directController.abort(), 2000);
+      const directTimeoutId = setTimeout(() => directController.abort(), 3000);
       try {
         const response = await fetch(bustedUrl, { signal: directController.signal });
         clearTimeout(directTimeoutId);
@@ -309,9 +309,9 @@ const QRPrint = () => {
         console.log("Direct image fetch failed, trying proxy:", url);
       }
 
-      // 2. Try proxying via our backend API proxy (with 3.5-second timeout)
+      // 2. Try proxying via our backend API proxy (with 15-second timeout to allow browser connection queue to clear)
       const proxyController = new AbortController();
-      const proxyTimeoutId = setTimeout(() => proxyController.abort(), 3500);
+      const proxyTimeoutId = setTimeout(() => proxyController.abort(), 15000);
       try {
         if (url.startsWith("http://") || url.startsWith("https://")) {
           const proxyUrl = `${API_URL}/api/participants/proxy-image?url=${encodeURIComponent(bustedUrl)}`;
@@ -332,9 +332,9 @@ const QRPrint = () => {
         console.warn("Backend CORS Proxy fetch failed, trying public proxy:", err);
       }
 
-      // 3. Try public CORS proxy as a final client-side fallback (with 3.5-second timeout)
+      // 3. Try public CORS proxy as a final client-side fallback (with 15-second timeout)
       const publicController = new AbortController();
-      const publicTimeoutId = setTimeout(() => publicController.abort(), 3500);
+      const publicTimeoutId = setTimeout(() => publicController.abort(), 15000);
       try {
         if (url.startsWith("http://") || url.startsWith("https://")) {
           const publicProxyUrl = `https://corsproxy.io/?${encodeURIComponent(bustedUrl)}`;
@@ -360,24 +360,31 @@ const QRPrint = () => {
 
     const convertAllPhotos = async () => {
       setConverting(true);
-      const promises = badges.map(async (badge) => {
-        const url = getParticipantPhoto(badge);
-        if (url && !url.startsWith("data:image") && !base64Photos[url]) {
-          const base64 = await fetchAndConvertImage(url);
-          if (base64) {
-            return { url, base64 };
-          }
-        }
-        return null;
-      });
-
-      const results = await Promise.all(promises);
+      
       const newMap: {[url: string]: string} = {};
-      results.forEach(res => {
-        if (res) {
-          newMap[res.url] = res.base64;
-        }
-      });
+      const batchSize = 8;
+      
+      for (let i = 0; i < badges.length; i += batchSize) {
+        const batch = badges.slice(i, i + batchSize);
+        const results = await Promise.all(
+          batch.map(async (badge) => {
+            const url = getParticipantPhoto(badge);
+            if (url && !url.startsWith("data:image") && !base64Photos[url] && !newMap[url]) {
+              const base64 = await fetchAndConvertImage(url);
+              if (base64) {
+                return { url, base64 };
+              }
+            }
+            return null;
+          })
+        );
+        
+        results.forEach(res => {
+          if (res) {
+            newMap[res.url] = res.base64;
+          }
+        });
+      }
 
       if (Object.keys(newMap).length > 0) {
         setBase64Photos(prev => ({ ...prev, ...newMap }));
