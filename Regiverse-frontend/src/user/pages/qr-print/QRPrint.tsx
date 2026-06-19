@@ -267,6 +267,13 @@ const QRPrint = () => {
     return defaultFS;
   });
 
+  const [qrCodeSize, setQrCodeSize] = useState<number>(() => {
+    const saved = localStorage.getItem(`regxpert_qr_code_size_${badgeSize}`);
+    if (saved) return Number(saved);
+    const defaultQR = BADGE_SIZES[badgeSize]?.photoWidthMm || 20;
+    return defaultQR;
+  });
+
   const [topSpacing, setTopSpacing] = useState<number>(() => {
     const localVal = localStorage.getItem("regxpert_badge_top_spacing");
     if (localVal !== null) return Number(localVal);
@@ -351,6 +358,18 @@ const QRPrint = () => {
       localStorage.setItem(`regxpert_name_font_size_${badgeSize}`, String(nameFontSize));
     }
   }, [nameFontSize, badgeSize]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`regxpert_qr_code_size_${badgeSize}`);
+    const defaultQR = BADGE_SIZES[badgeSize]?.photoWidthMm || 20;
+    setQrCodeSize(saved ? Number(saved) : defaultQR);
+  }, [badgeSize]);
+
+  useEffect(() => {
+    if (qrCodeSize > 0) {
+      localStorage.setItem(`regxpert_qr_code_size_${badgeSize}`, String(qrCodeSize));
+    }
+  }, [qrCodeSize, badgeSize]);
 
   const [isPrinted, setIsPrinted] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -1028,6 +1047,21 @@ const QRPrint = () => {
                   className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
                 />
               </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">QR Code Size</label>
+                  <span className="text-xs font-bold text-blue-400 font-mono">{qrCodeSize}mm</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="100"
+                  value={qrCodeSize}
+                  onChange={(e) => setQrCodeSize(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
             </div>
 
             {/* Standard Trigger Action Buttons */}
@@ -1295,8 +1329,8 @@ const QRPrint = () => {
                           borderRadius: "6px",
                           border: `1.5px solid ${badgeColor}25`,
                           boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
-                          width: `${dim.photoWidthMm}mm`,
-                          height: `${dim.photoWidthMm}mm`,
+                          width: `${qrCodeSize}mm`,
+                          height: `${qrCodeSize}mm`,
                           boxSizing: "border-box"
                         }}>
                           <QRCode 
