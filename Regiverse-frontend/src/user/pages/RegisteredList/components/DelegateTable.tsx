@@ -65,8 +65,7 @@ const UserDelegateTable = ({ data }: UserTableProps) => {
     const editDestination = p.category || "";
     const editState = p.state || "";
     
-    const checkpointsStr = selectedCheckpoints.filter(cp => cp !== "QR Code").join(", ");
-    const qrContent = `Name: ${editName}\nReg ID: ${p.regId || p._id}\nCategory: ${editDestination || "Delegate"}\nStatus: ${p.isCheckedIn ? "Checked In" : "Registered"}`;
+    const qrContent = p.regId || p._id;
 
     const payload = {
       name: editName,

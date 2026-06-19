@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -272,6 +272,7 @@ const BadgePrint = () => {
   const [editDestination, setEditDestination] = useState("");
   const [editState, setEditState] = useState("");
   const [selectedCheckpoints, setSelectedCheckpoints] = useState<string[]>([]);
+  const [participantCheckpoints, setParticipantCheckpoints] = useState<Record<string, string[]>>({});
   const [badgeSize, setBadgeSize] = useState<string>(() => {
     return localStorage.getItem("regxpert_badge_size") || "standard";
   });
@@ -395,7 +396,18 @@ const BadgePrint = () => {
         selectedParticipant.dynamicData?.City || 
         ""
       );
-      setSelectedCheckpoints(getAssignedCheckpoints(selectedParticipant));
+      
+      const pId = selectedParticipant._id;
+      if (participantCheckpoints[pId]) {
+        setSelectedCheckpoints(participantCheckpoints[pId]);
+      } else {
+        const defaults = getAssignedCheckpoints(selectedParticipant);
+        setSelectedCheckpoints(defaults);
+        setParticipantCheckpoints(prev => ({
+          ...prev,
+          [pId]: defaults
+        }));
+      }
     } else {
       setEditName("");
       setEditDestination("");
@@ -405,11 +417,16 @@ const BadgePrint = () => {
   }, [selectedParticipant]);
 
   const toggleCheckpoint = (cp: string) => {
-    if (selectedCheckpoints.includes(cp)) {
-      setSelectedCheckpoints(selectedCheckpoints.filter(item => item !== cp));
-    } else {
-      setSelectedCheckpoints([...selectedCheckpoints, cp]);
-    }
+    if (!selectedParticipant) return;
+    const pId = selectedParticipant._id;
+    setSelectedCheckpoints((prev) => {
+      const next = prev.includes(cp) ? prev.filter((item) => item !== cp) : [...prev, cp];
+      setParticipantCheckpoints((prevMap) => ({
+        ...prevMap,
+        [pId]: next
+      }));
+      return next;
+    });
   };
 
   // Roster multi-select handlers
@@ -434,11 +451,15 @@ const BadgePrint = () => {
     setSelectedIds(notPrinted);
   };
 
-  // Filter list
-  const filtered = participants.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.regId && p.regId.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter list (optimized with useMemo to prevent lag)
+  const filtered = useMemo(() => {
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return participants;
+    return participants.filter((p) =>
+      (p.name && p.name.toLowerCase().includes(term)) ||
+      (p.regId && p.regId.toLowerCase().includes(term))
+    );
+  }, [participants, searchTerm]);
 
   // Individual Print Action
   const handlePrintBadge = async () => {
@@ -490,23 +511,20 @@ const BadgePrint = () => {
         printLogs: updatedLogs
       });
 
-      // Format QR Code value:
-      // Name, Registration ID, Category, Event Name, Assigned Checkpoints, Attendance Status
-      const checkpointsStr = selectedCheckpoints.filter(cp => cp !== "QR Code").join(", ");
-      const qrContent = `Name: ${editName}\nReg ID: ${selectedParticipant.regId || selectedParticipant._id}\nCategory: ${editDestination || "Delegate"}\nEvent: ${selectedParticipant.conferenceName || "Event"}\nCheckpoints: ${checkpointsStr || "None"}\nStatus: ${selectedParticipant.isCheckedIn ? "Checked In" : "Registered"}`;
+      // Format QR Code value: Simplified to store only Registration ID / Participant ID
+      const qrContent = selectedParticipant.regId || selectedParticipant._id;
 
       // Build Next Badge Payload if available in filtered roster
       const currentIndex = filtered.findIndex(p => p._id === selectedParticipant._id);
       const nextParticipant = currentIndex !== -1 && currentIndex + 1 < filtered.length ? filtered[currentIndex + 1] : null;
       let nextBadgePayload = null;
       if (nextParticipant) {
-        const nextAssignments = getAssignedCheckpoints(nextParticipant);
+        const nextAssignments = participantCheckpoints[nextParticipant._id] || getAssignedCheckpoints(nextParticipant);
         const nextName = nextParticipant.name;
         const nextDest = nextParticipant.dynamicData?.Destination || nextParticipant.category || "";
         const nextState = nextParticipant.state || nextParticipant.dynamicData?.City || "";
         const nextRegId = nextParticipant.regId || nextParticipant._id;
-        const nextCheckpointsStr = nextAssignments.filter(cp => cp !== "QR Code").join(", ");
-        const nextQrContent = `Name: ${nextName}\nReg ID: ${nextRegId}\nCategory: ${nextDest || "Delegate"}\nEvent: ${nextParticipant.conferenceName || "Event"}\nCheckpoints: ${nextCheckpointsStr || "None"}\nStatus: ${nextParticipant.isCheckedIn ? "Checked In" : "Registered"}`;
+        const nextQrContent = nextRegId;
         
         nextBadgePayload = {
           name: nextName,
@@ -607,22 +625,21 @@ const BadgePrint = () => {
       // Open Print window with encoded customized data for all selected badges
       const selectedParticipants = participants.filter(p => selectedIds.includes(p._id));
       const badgesPayload = selectedParticipants.map(p => {
-        const assignments = getAssignedCheckpoints(p);
+        const assignments = participantCheckpoints[p._id] || getAssignedCheckpoints(p);
         const nameVal = p.name;
         const destVal = p.dynamicData?.Destination || p.category || "";
         const stateVal = p.state || p.dynamicData?.City || "";
         const regIdVal = p.regId || p._id;
         
-        // Format QR Code value: Name, Registration ID, Category, Event Name, Assigned Checkpoints, Attendance Status
-        const checkpointsStr = assignments.filter(cp => cp !== "QR Code").join(", ");
-        const qrContent = `Name: ${nameVal}\nReg ID: ${regIdVal}\nCategory: ${destVal || "Delegate"}\nEvent: ${p.conferenceName || "Event"}\nCheckpoints: ${checkpointsStr || "None"}\nStatus: ${p.isCheckedIn ? "Checked In" : "Registered"}`;
+        // Format QR Code value: Simplified to store only Registration ID / Participant ID
+        const qrContent = regIdVal;
 
         return {
           name: nameVal,
           destination: destVal,
           state: stateVal,
           regId: regIdVal,
-          qrCode: qrContent, // Send full formatted details text block
+          qrCode: qrContent, // Send simplified registration/participant ID only
           checkpoints: assignments,
           conferenceName: p.conferenceName || "",
           dynamicData: p.dynamicData || {},

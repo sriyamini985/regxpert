@@ -276,6 +276,31 @@ const QRPrint = () => {
     return activePayload?.photoFit || (activePayload?.badges && (activePayload.badges as any)[0]?.photoFit) || "cover";
   });
 
+  const [printPhoto, setPrintPhoto] = useState<boolean>(() => {
+    const saved = localStorage.getItem("regxpert_print_photo");
+    return saved !== null ? JSON.parse(saved) : (activePayload?.printPhoto ?? true);
+  });
+
+  const [printName, setPrintName] = useState<boolean>(() => {
+    const saved = localStorage.getItem("regxpert_print_name");
+    return saved !== null ? JSON.parse(saved) : (activePayload?.printName ?? true);
+  });
+
+  const [printQR, setPrintQR] = useState<boolean>(() => {
+    const saved = localStorage.getItem("regxpert_print_qr");
+    return saved !== null ? JSON.parse(saved) : (activePayload?.printQR ?? true);
+  });
+
+  const [printRegId, setPrintRegId] = useState<boolean>(() => {
+    const saved = localStorage.getItem("regxpert_print_regid");
+    return saved !== null ? JSON.parse(saved) : (activePayload?.printRegId ?? true);
+  });
+
+  const [printCity, setPrintCity] = useState<boolean>(() => {
+    const saved = localStorage.getItem("regxpert_print_city");
+    return saved !== null ? JSON.parse(saved) : (activePayload?.printCity ?? true);
+  });
+
   useEffect(() => {
     localStorage.setItem("regxpert_badge_size", badgeSize);
   }, [badgeSize]);
@@ -287,6 +312,26 @@ const QRPrint = () => {
   useEffect(() => {
     localStorage.setItem("regxpert_badge_photo_fit", photoFit);
   }, [photoFit]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_print_photo", JSON.stringify(printPhoto));
+  }, [printPhoto]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_print_name", JSON.stringify(printName));
+  }, [printName]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_print_qr", JSON.stringify(printQR));
+  }, [printQR]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_print_regid", JSON.stringify(printRegId));
+  }, [printRegId]);
+
+  useEffect(() => {
+    localStorage.setItem("regxpert_print_city", JSON.stringify(printCity));
+  }, [printCity]);
 
   const [isPrinted, setIsPrinted] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -1048,7 +1093,7 @@ const QRPrint = () => {
               const badgeName = badge.name;
               const badgeDestination = badge.destination || badge.category || badge.dynamicData?.Destination || "";
               const badgeState = badge.state || badge.city || badge.dynamicData?.City || "";
-              const badgeRegId = badge.regId || "";
+              const badgeRegId = badge.regId || badge.participantId || badge._id || "";
               const badgeQrCode = badge.qrCode || badgeRegId;
               const badgeCheckpoints = badge.checkpoints || [];
 
@@ -1056,11 +1101,11 @@ const QRPrint = () => {
               const photoUrl = getParticipantPhoto(badge);
               const orgStr = badge.dynamicData?.Organization || badge.dynamicData?.Institution || badge.dynamicData?.Company || "";
 
-              const showPhoto = badge.printPhoto ?? true;
-              const showName = badge.printName ?? true;
-              const showQR = badge.printQR ?? true;
-              const showRegId = badge.printRegId ?? true;
-              const showCity = badge.printCity ?? true;
+              const showPhoto = printPhoto;
+              const showName = printName;
+              const showQR = printQR;
+              const showRegId = printRegId;
+              const showCity = printCity;
 
               const badgeColor = getCategoryColor(badgeDestination);
               const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
