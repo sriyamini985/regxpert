@@ -1391,6 +1391,7 @@ const BadgePrint = () => {
                                         <QRCode
                                           value={selectedParticipant.regId || selectedParticipant._id}
                                           size={256}
+                                          level="L"
                                           style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                                         />
                                       </div>

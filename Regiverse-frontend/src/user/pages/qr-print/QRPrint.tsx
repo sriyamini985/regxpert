@@ -1263,6 +1263,7 @@ const QRPrint = () => {
                           <QRCode 
                             value={badgeQrCode} 
                             size={256} 
+                            level="L"
                             style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                           />
                         </div>
