@@ -301,24 +301,43 @@ const QRPrint = () => {
 
       // 2. Try proxying via our backend API proxy
       try {
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
-          return null; // Don't proxy relative paths
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+          const proxyUrl = `${API_URL}/api/participants/proxy-image?url=${encodeURIComponent(url)}`;
+          const response = await fetch(proxyUrl);
+          if (response.ok) {
+            const blob = await response.blob();
+            return await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+          }
         }
-        const proxyUrl = `${API_URL}/api/participants/proxy-image?url=${encodeURIComponent(url)}`;
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error("CORS Proxy fetch failed");
-
-        const blob = await response.blob();
-        return await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
       } catch (err) {
-        console.warn("Base64 photo conversion failed for url:", url, err);
-        return null;
+        console.warn("Backend CORS Proxy fetch failed, trying public proxy:", err);
       }
+
+      // 3. Try public CORS proxy as a final client-side fallback
+      try {
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+          const publicProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+          const response = await fetch(publicProxyUrl);
+          if (response.ok) {
+            const blob = await response.blob();
+            return await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Public CORS proxy fallback failed for url:", url, err);
+      }
+
+      return null;
     };
 
     const convertAllPhotos = async () => {
