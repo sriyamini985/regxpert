@@ -23,7 +23,6 @@ const connectDB = async (retries = 5) => {
         maxPoolSize: 10,
         minPoolSize: 2,
         socketTimeoutMS: 45000,
-        keepAlive: true,
       });
       console.log("🟢 MongoDB Connected");
       return;
