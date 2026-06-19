@@ -57,7 +57,9 @@ export const importExcel = async (req, res) => {
     const targetedKeys = [
       "name", "fullname", "email", "emailid", "phone", "mobilenumber", 
       "mobile", "contact", "mcinumber", "mci", "medicalcouncilnumber", 
-      "state", "category", "reference", "referredby", "registrationid", "regid", "id"
+      "state", "category", "reference", "referredby", 
+      "registrationid", "regid", "id", "registrationno", "registrationnumber",
+      "regno", "regnum", "slno", "serialno", "sno"
     ];
 
     const processedParticipants = [];
@@ -81,7 +83,13 @@ export const importExcel = async (req, res) => {
       const category = String(cleanRowMap["category"] || "").trim();
       const reference = String(cleanRowMap["reference"] || cleanRowMap["referredby"] || "").trim();
       
-      let regId = String(cleanRowMap["registrationid"] || cleanRowMap["regid"] || cleanRowMap["id"] || "").trim();
+      let regId = String(
+        cleanRowMap["registrationid"] || cleanRowMap["regid"] || 
+        cleanRowMap["registrationno"] || cleanRowMap["registrationnumber"] ||
+        cleanRowMap["regno"] || cleanRowMap["regnum"] ||
+        cleanRowMap["slno"] || cleanRowMap["serialno"] || cleanRowMap["sno"] ||
+        cleanRowMap["id"] || ""
+      ).trim();
       if (!regId) {
         regId = generateCustomRegId();
       }
