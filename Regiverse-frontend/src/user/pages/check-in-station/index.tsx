@@ -135,13 +135,38 @@ const CheckInStation = () => {
   };
 
   /* ===========================
-     MANUAL SEARCH (by name/phone/regId)
+     MANUAL SEARCH (with debounce & immediate overrides)
   =========================== */
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResult(null);
+      return;
+    }
+
+    const delay = setTimeout(async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`${API}/api/participants?identifier=${encodeURIComponent(searchQuery.trim())}&conferenceId=${conferenceSlug}`);
+        const data = await res.json();
+        const participants = Array.isArray(data) ? data : data?.data || [];
+
+        if (participants.length === 0) {
+          setSearchResult({ found: false });
+        } else {
+          setSearchResult({ found: true, participants });
+        }
+      } catch {
+        setSearchResult({ found: false, error: true });
+      }
+      setIsLoading(false);
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [searchQuery, conferenceSlug]);
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setIsLoading(true);
-    setSearchResult(null);
-
     try {
       const res = await fetch(`${API}/api/participants?identifier=${encodeURIComponent(searchQuery.trim())}&conferenceId=${conferenceSlug}`);
       const data = await res.json();
@@ -155,7 +180,6 @@ const CheckInStation = () => {
     } catch {
       setSearchResult({ found: false, error: true });
     }
-
     setIsLoading(false);
   };
 

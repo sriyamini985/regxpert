@@ -203,13 +203,32 @@ const FoodCounter = () => {
   };
 
   /* ===========================
-     MANUAL SEARCH
+     MANUAL SEARCH (with debounce & immediate overrides)
   =========================== */
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const delay = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`${API}/api/participants?identifier=${encodeURIComponent(searchQuery.trim())}&conferenceId=${conferenceSlug}`);
+        const data = await res.json();
+        setSearchResults(Array.isArray(data) ? data : data?.data || []);
+      } catch {
+        setSearchResults([]);
+      }
+      setIsSearching(false);
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [searchQuery, conferenceSlug]);
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
-    setSearchResults([]);
-
     try {
       const res = await fetch(`${API}/api/participants?identifier=${encodeURIComponent(searchQuery.trim())}&conferenceId=${conferenceSlug}`);
       const data = await res.json();
