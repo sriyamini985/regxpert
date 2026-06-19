@@ -59,7 +59,10 @@ export const importExcel = async (req, res) => {
       "mobile", "contact", "mcinumber", "mci", "medicalcouncilnumber", 
       "state", "category", "reference", "referredby", 
       "registrationid", "regid", "id", "registrationno", "registrationnumber",
-      "regno", "regnum", "slno", "serialno", "sno"
+      "regno", "regnum", "slno", "serialno", "sno",
+      "firstname", "lastname", "first", "last", "delegatename", "attendeename",
+      "participantname", "doctorname", "delegate", "attendee", "participant",
+      "emailaddress", "mail", "mobileno", "phonenumber", "contactno", "contactnumber"
     ];
 
     const processedParticipants = [];
@@ -72,10 +75,42 @@ export const importExcel = async (req, res) => {
         cleanRowMap[normalizedKey] = row[key];
       });
 
-      const name = String(cleanRowMap["name"] || cleanRowMap["fullname"] || "").trim();
-      const email = String(cleanRowMap["email"] || cleanRowMap["emailid"] || "").trim();
-      const phone = String(cleanRowMap["phone"] || cleanRowMap["mobilenumber"] || cleanRowMap["mobile"] || cleanRowMap["contact"] || "").trim();
-      
+      let name = String(
+        cleanRowMap["name"] || cleanRowMap["fullname"] || 
+        cleanRowMap["delegatename"] || cleanRowMap["attendeename"] || 
+        cleanRowMap["participantname"] || cleanRowMap["doctorname"] || 
+        cleanRowMap["delegate"] || cleanRowMap["attendee"] || 
+        cleanRowMap["participant"] || ""
+      ).trim();
+
+      if (!name) {
+        const firstName = String(cleanRowMap["firstname"] || cleanRowMap["first"] || "").trim();
+        const lastName = String(cleanRowMap["lastname"] || cleanRowMap["last"] || "").trim();
+        if (firstName || lastName) {
+          name = `${firstName} ${lastName}`.trim();
+        }
+      }
+
+      const email = String(
+        cleanRowMap["email"] || cleanRowMap["emailid"] || 
+        cleanRowMap["emailaddress"] || cleanRowMap["mail"] || ""
+      ).trim();
+
+      const phone = String(
+        cleanRowMap["phone"] || cleanRowMap["mobilenumber"] || 
+        cleanRowMap["mobile"] || cleanRowMap["contact"] || 
+        cleanRowMap["mobileno"] || cleanRowMap["phonenumber"] || 
+        cleanRowMap["contactno"] || cleanRowMap["contactnumber"] || ""
+      ).trim();
+
+      // If still all empty, use the first key of the row as a fallback name
+      if (!name && !email && !phone) {
+        const keys = Object.keys(row);
+        if (keys.length > 0) {
+          name = String(row[keys[0]] || "").trim();
+        }
+      }
+
       if (!name && !email && !phone) return; // Skip empty rows
 
       const medicalCouncilNumber = String(cleanRowMap["mcinumber"] || cleanRowMap["mci"] || cleanRowMap["medicalcouncilnumber"] || "").trim();
