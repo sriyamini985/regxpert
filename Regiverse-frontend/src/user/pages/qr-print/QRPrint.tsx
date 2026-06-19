@@ -807,6 +807,19 @@ const QRPrint = () => {
           @media print {
             .no-print { display: none !important; }
             
+            /* Hide all elements by default in print */
+            body * {
+              visibility: hidden;
+            }
+            
+            /* Make the active print container path visible */
+            #print-page-root,
+            #print-preview-canvas,
+            #badges-container-wrapper,
+            #badges-container-wrapper * {
+              visibility: visible !important;
+            }
+
             /* Clean parent elements styling to avoid rendering blanks */
             html, body, #root, #print-page-root, #print-preview-canvas, #badges-container-wrapper { 
               margin: 0 !important; 
@@ -822,17 +835,9 @@ const QRPrint = () => {
               border: none !important;
             }
 
-            /* Hide everything outside of the active layout hierarchy path */
-            body > *:not(#root) {
-              display: none !important;
-            }
-            #root > *:not(#print-page-root) {
-              display: none !important;
-            }
-            #print-page-root > *:not(#print-preview-canvas) {
-              display: none !important;
-            }
-            #print-preview-canvas > *:not(#badges-container-wrapper) {
+            /* Completely remove background elements and toast overlays from layout flow */
+            .pointer-events-none,
+            .toast-container {
               display: none !important;
             }
 
