@@ -285,9 +285,12 @@ const QRPrint = () => {
       if (!url) return null;
       if (url.startsWith("data:image")) return url;
 
-      // 1. Try direct fetch first
+      // 1. Try direct fetch first (with 2-second timeout)
+      const directController = new AbortController();
+      const directTimeoutId = setTimeout(() => directController.abort(), 2000);
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: directController.signal });
+        clearTimeout(directTimeoutId);
         if (response.ok) {
           const blob = await response.blob();
           return await new Promise<string>((resolve, reject) => {
@@ -298,14 +301,18 @@ const QRPrint = () => {
           });
         }
       } catch (e) {
+        clearTimeout(directTimeoutId);
         console.log("Direct image fetch failed, trying proxy:", url);
       }
 
-      // 2. Try proxying via our backend API proxy
+      // 2. Try proxying via our backend API proxy (with 3.5-second timeout)
+      const proxyController = new AbortController();
+      const proxyTimeoutId = setTimeout(() => proxyController.abort(), 3500);
       try {
         if (url.startsWith("http://") || url.startsWith("https://")) {
           const proxyUrl = `${API_URL}/api/participants/proxy-image?url=${encodeURIComponent(url)}`;
-          const response = await fetch(proxyUrl);
+          const response = await fetch(proxyUrl, { signal: proxyController.signal });
+          clearTimeout(proxyTimeoutId);
           if (response.ok) {
             const blob = await response.blob();
             return await new Promise<string>((resolve, reject) => {
@@ -317,14 +324,18 @@ const QRPrint = () => {
           }
         }
       } catch (err) {
+        clearTimeout(proxyTimeoutId);
         console.warn("Backend CORS Proxy fetch failed, trying public proxy:", err);
       }
 
-      // 3. Try public CORS proxy as a final client-side fallback
+      // 3. Try public CORS proxy as a final client-side fallback (with 3.5-second timeout)
+      const publicController = new AbortController();
+      const publicTimeoutId = setTimeout(() => publicController.abort(), 3500);
       try {
         if (url.startsWith("http://") || url.startsWith("https://")) {
           const publicProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-          const response = await fetch(publicProxyUrl);
+          const response = await fetch(publicProxyUrl, { signal: publicController.signal });
+          clearTimeout(publicTimeoutId);
           if (response.ok) {
             const blob = await response.blob();
             return await new Promise<string>((resolve, reject) => {
@@ -336,6 +347,7 @@ const QRPrint = () => {
           }
         }
       } catch (err) {
+        clearTimeout(publicTimeoutId);
         console.warn("Public CORS proxy fallback failed for url:", url, err);
       }
 
