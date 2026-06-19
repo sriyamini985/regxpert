@@ -271,6 +271,7 @@ const QRPrint = () => {
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [converting, setConverting] = useState(true);
+  const [pdfProgress, setPdfProgress] = useState<number | null>(null);
   const [base64Photos, setBase64Photos] = useState<{[url: string]: string}>({});
 
   const badgeBackUrl = activePayload?.backUrl || "";
@@ -496,47 +497,90 @@ const QRPrint = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!(window as any).html2pdf) {
       alert("PDF library is still loading. Please try again in a second.");
       return;
     }
 
-    const element = document.getElementById("badges-container-wrapper");
-    if (!element) return;
+    const badgeContainers = document.querySelectorAll(".badge-container");
+    if (badgeContainers.length === 0) return;
+
+    const jsPDFClass = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
+    if (!jsPDFClass) {
+      alert("PDF generator class not found. Please reload and try again.");
+      return;
+    }
 
     const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
     const formatVal = badgeSize === "A5" ? "a5" : badgeSize === "A6" ? "a6" : [dim.widthMm, dim.heightMm];
 
-    const opt = {
-      margin:       0,
-      filename:     badges.length === 1 ? `badge-${badges[0].regId || "pass"}.pdf` : `badges-bulk-${badges.length}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { 
-        scale: 2, 
-        useCORS: true,
-        onclone: (clonedDoc: any) => {
-          const badgeContainers = clonedDoc.querySelectorAll(".badge-container");
-          badgeContainers.forEach((container: any, idx: number) => {
-            // Remove margins and rounding for a clean edge-to-edge PDF render
-            container.style.margin = "0";
-            container.style.borderRadius = "0";
-            container.style.border = "none";
-            container.style.boxShadow = "none";
-            
-            // Apply page breaks between badge pages (but avoid trailing empty page)
-            if (idx < badgeContainers.length - 1) {
-              container.style.pageBreakAfter = "always";
-              container.style.breakAfter = "page";
-            }
-          });
-        }
-      },
-      jsPDF:        { unit: 'mm', format: formatVal, orientation: 'portrait' },
-      pagebreak:    { mode: ['css'] }
-    };
+    // Create new PDF document
+    const pdf = new jsPDFClass({
+      unit: "mm",
+      format: formatVal,
+      orientation: "portrait"
+    });
 
-    (window as any).html2pdf().from(element).set(opt).save();
+    setPdfProgress(0);
+
+    try {
+      for (let i = 0; i < badgeContainers.length; i++) {
+        setPdfProgress(Math.round((i / badgeContainers.length) * 100));
+
+        const container = badgeContainers[i] as HTMLElement;
+
+        // Clone the container to apply clean print styles without borders/shadows
+        const clone = container.cloneNode(true) as HTMLElement;
+        clone.style.margin = "0";
+        clone.style.borderRadius = "0";
+        clone.style.border = "none";
+        clone.style.boxShadow = "none";
+        clone.style.position = "fixed";
+        clone.style.top = "-9999px";
+        clone.style.left = "-9999px";
+        clone.style.width = `${dim.widthMm}mm`;
+        clone.style.height = `${dim.heightMm}mm`;
+        document.body.appendChild(clone);
+
+        // Capture this single badge container to canvas
+        const canvas = await (window as any).html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          logging: false
+        });
+
+        // Remove the clone from DOM
+        document.body.removeChild(clone);
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+        // Add image to PDF page
+        if (i > 0) {
+          pdf.addPage();
+        }
+
+        // Add image starting at top-left corner (0,0) fitting the exact dimensions
+        pdf.addImage(
+          imgData,
+          "JPEG",
+          0,
+          0,
+          badgeSize === "A5" ? 148 : badgeSize === "A6" ? 105 : dim.widthMm,
+          badgeSize === "A5" ? 210 : badgeSize === "A6" ? 148 : dim.heightMm
+        );
+      }
+
+      setPdfProgress(100);
+      
+      const filename = badges.length === 1 ? `badge-${badges[0].regId || "pass"}.pdf` : `badges-bulk-${badges.length}.pdf`;
+      pdf.save(filename);
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      alert("An error occurred during PDF generation. Please try again.");
+    } finally {
+      setTimeout(() => setPdfProgress(null), 1000);
+    }
   };
 
   if (badges.length === 0) {
@@ -1043,6 +1087,54 @@ const QRPrint = () => {
         </div>
 
       </div>
+
+      {pdfProgress !== null && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(15, 23, 42, 0.75)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 9999,
+          color: "#ffffff",
+          fontFamily: "system-ui, -apple-system, sans-serif"
+        }}>
+          <div style={{
+            background: "#1e293b",
+            border: "1px solid #334155",
+            borderRadius: "16px",
+            padding: "24px 32px",
+            width: "360px",
+            textAlign: "center",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3)"
+          }}>
+            <p style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: 700 }}>
+              {pdfProgress === 100 ? "🎉 Completed!" : "📥 Generating PDF..."}
+            </p>
+            <div style={{
+              background: "#334155",
+              borderRadius: "9999px",
+              height: "8px",
+              width: "100%",
+              overflow: "hidden",
+              marginBottom: "12px"
+            }}>
+              <div style={{
+                background: "#3b82f6",
+                height: "100%",
+                width: `${pdfProgress}%`,
+                transition: "width 0.2s ease-out"
+              }} />
+            </div>
+            <p style={{ margin: 0, fontSize: "12px", color: "#94a3b8", fontWeight: 600 }}>
+              Rendering page {Math.round((pdfProgress / 100) * badges.length) + 1} of {badges.length} ({pdfProgress}%)
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 };
