@@ -295,6 +295,18 @@ const QRPrint = () => {
       const cacheBuster = `cb=${Date.now()}`;
       const bustedUrl = url.includes("?") ? `${url}&${cacheBuster}` : `${url}?${cacheBuster}`;
 
+      // Calculate fallback local url if it is a remote uploads path
+      let fallbackLocalUrl = "";
+      if (url.includes("/uploads/")) {
+        const parts = url.split("/uploads/");
+        const filename = parts[parts.length - 1].split("?")[0];
+        fallbackLocalUrl = `${API_URL}/uploads/${filename}?${cacheBuster}`;
+      } else if (url.includes("/profile_photo/")) {
+        const parts = url.split("/profile_photo/");
+        const filename = parts[parts.length - 1].split("?")[0];
+        fallbackLocalUrl = `${API_URL}/profile_photo/${filename}?${cacheBuster}`;
+      }
+
       // 1. Try direct fetch first (with 3-second timeout)
       const directController = new AbortController();
       const directTimeoutId = setTimeout(() => directController.abort(), 3000);
@@ -335,10 +347,28 @@ const QRPrint = () => {
         }
       } catch (err) {
         clearTimeout(proxyTimeoutId);
-        console.warn("Backend CORS Proxy fetch failed, trying public proxy:", err);
+        console.warn("Backend CORS Proxy fetch failed, trying local fallback:", err);
       }
 
-      // 3. Try public CORS proxy as a final client-side fallback (with 15-second timeout)
+      // 3. Try fetching from the local server's uploads folder (CORS safe, same-origin)
+      if (fallbackLocalUrl) {
+        try {
+          const response = await fetch(fallbackLocalUrl);
+          if (response.ok) {
+            const blob = await response.blob();
+            return await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+          }
+        } catch (e) {
+          console.log("Local fallback image fetch failed:", fallbackLocalUrl);
+        }
+      }
+
+      // 4. Try public CORS proxy as a final client-side fallback (with 15-second timeout)
       const publicController = new AbortController();
       const publicTimeoutId = setTimeout(() => publicController.abort(), 15000);
       try {
