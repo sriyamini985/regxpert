@@ -273,6 +273,12 @@ const QRPrint = () => {
   const [converting, setConverting] = useState(true);
   const [pdfProgress, setPdfProgress] = useState<number | null>(null);
   const [base64Photos, setBase64Photos] = useState<{[url: string]: string}>({});
+  const [photoStats, setPhotoStats] = useState<{
+    total: number;
+    loaded: number;
+    failed: number;
+    failedUrls: string[];
+  } | null>(null);
 
   const badgeBackUrl = activePayload?.backUrl || "";
   const badges: BadgePayload[] = activePayload?.badges || (activePayload ? [activePayload as BadgePayload] : []);
@@ -363,6 +369,18 @@ const QRPrint = () => {
       
       const newMap: {[url: string]: string} = {};
       const batchSize = 8;
+      let totalPhotos = 0;
+      let loadedCount = 0;
+      let failedCount = 0;
+      const failedUrls: string[] = [];
+
+      // Calculate total photos to fetch
+      badges.forEach(badge => {
+        const url = getParticipantPhoto(badge);
+        if (url && !url.startsWith("data:image")) {
+          totalPhotos++;
+        }
+      });
       
       for (let i = 0; i < badges.length; i += batchSize) {
         const batch = badges.slice(i, i + batchSize);
@@ -372,8 +390,14 @@ const QRPrint = () => {
             if (url && !url.startsWith("data:image") && !base64Photos[url] && !newMap[url]) {
               const base64 = await fetchAndConvertImage(url);
               if (base64) {
+                loadedCount++;
                 return { url, base64 };
+              } else {
+                failedCount++;
+                failedUrls.push(url);
               }
+            } else if (url && (url.startsWith("data:image") || base64Photos[url] || newMap[url])) {
+              loadedCount++;
             }
             return null;
           })
@@ -389,6 +413,14 @@ const QRPrint = () => {
       if (Object.keys(newMap).length > 0) {
         setBase64Photos(prev => ({ ...prev, ...newMap }));
       }
+
+      setPhotoStats({
+        total: totalPhotos,
+        loaded: loadedCount,
+        failed: failedCount,
+        failedUrls: failedUrls
+      });
+
       setConverting(false);
     };
 
@@ -745,6 +777,33 @@ const QRPrint = () => {
                 )}
               </div>
             </div>
+
+            {/* Photo Loading Status Roster (for bulk processing) */}
+            {photoStats && photoStats.total > 0 && (
+              <div className="bg-slate-800/35 border border-slate-800/60 rounded-2xl p-5 mb-6 space-y-3">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Photo Status Report</h3>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-400">Total Badge Photos:</span>
+                  <span className="font-bold text-white">{photoStats.total}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-400">Loaded Successfully:</span>
+                  <span className="font-bold text-emerald-400">{photoStats.loaded}</span>
+                </div>
+                {photoStats.failed > 0 && (
+                  <div className="space-y-1.5 pt-1.5 border-t border-slate-855">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-red-400 font-bold">⚠️ Failed to Load:</span>
+                      <span className="font-bold text-red-400">{photoStats.failed}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-normal">
+                      Some photo files are missing or returned 404 (Not Found) on the remote server. 
+                      Please ensure the upload files are moved/copied to the uploads folder of your server.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Controls panel */}
             <div className="bg-slate-800/35 border border-slate-800/60 rounded-2xl p-5 mb-6 space-y-4">
