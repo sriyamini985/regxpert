@@ -12,7 +12,7 @@ const Dashboard = () => {
   const [selectedDay, setSelectedDay] = useState("Day 1");
 
   // REAL-TIME data — auto-updates on every scan via Socket.IO
-  const { participants, loading, stats } = useConferenceData(conferenceSlug);
+  const { loading, stats } = useConferenceData(conferenceSlug, { statsOnly: true });
 
   // Map "Day 1" → "day1" for food stats lookup
   const dayKey = selectedDay.toLowerCase().replace(" ", ""); // "day1"

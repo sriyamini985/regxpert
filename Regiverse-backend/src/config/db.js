@@ -5,6 +5,11 @@ import dns from "dns";
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const connectDB = async (retries = 5) => {
+  if (mongoose.connection.readyState >= 1) {
+    console.log("🟢 MongoDB Connection already active");
+    return;
+  }
+
   if (!process.env.MONGO_URI) {
     throw new Error("MONGO_URI is missing in environment variables");
   }
@@ -15,6 +20,10 @@ const connectDB = async (retries = 5) => {
         serverSelectionTimeoutMS: 15000,
         tls: true,
         tlsAllowInvalidCertificates: false,
+        maxPoolSize: 10,
+        minPoolSize: 2,
+        socketTimeoutMS: 45000,
+        keepAlive: true,
       });
       console.log("🟢 MongoDB Connected");
       return;

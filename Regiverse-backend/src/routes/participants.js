@@ -143,6 +143,10 @@ router.get("/", async (req, res) => {
 
     const query = {
       $or: [
+        { regId: safeSearch },
+        { phone: safeSearch },
+        { email: safeSearch },
+        { qrCode: safeSearch },
         { name: { $regex: safeSearch, $options: "i" } }, 
         { phone: { $regex: safeSearch, $options: "i" } }, 
         { regId: { $regex: safeSearch, $options: "i" } }

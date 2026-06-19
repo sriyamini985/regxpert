@@ -50,6 +50,46 @@ const findParticipantByIdentifier = async (identifier) => {
 
   console.log(`[SCAN DEBUG] Parsed details: regIdFromQR="${regIdFromQR}", nameFromQR="${nameFromQR}", emailFromQR="${emailFromQR}", phoneFromQR="${phoneFromQR}"`);
 
+  // --- FAST-PATH EXACT INDEXED MATCHES ---
+  let cleanRaw = safeIdentifier;
+  if (safeIdentifier.toLowerCase().startsWith("name:")) {
+    cleanRaw = safeIdentifier.substring(5).trim();
+  } else if (safeIdentifier.toLowerCase().startsWith("reg id:") || safeIdentifier.toLowerCase().startsWith("regid:")) {
+    cleanRaw = safeIdentifier.split(":").slice(1).join(":").trim();
+  }
+
+  const exactConditions = [];
+  if (mongoose.Types.ObjectId.isValid(safeIdentifier)) {
+    exactConditions.push({ _id: safeIdentifier });
+  }
+  if (cleanRaw) {
+    exactConditions.push({ regId: cleanRaw });
+    exactConditions.push({ qrCode: cleanRaw });
+    exactConditions.push({ phone: cleanRaw });
+    exactConditions.push({ email: cleanRaw });
+  }
+  if (regIdFromQR) {
+    exactConditions.push({ regId: regIdFromQR });
+    if (mongoose.Types.ObjectId.isValid(regIdFromQR)) {
+      exactConditions.push({ _id: regIdFromQR });
+    }
+  }
+  if (phoneFromQR) {
+    exactConditions.push({ phone: phoneFromQR });
+  }
+  if (emailFromQR) {
+    exactConditions.push({ email: emailFromQR });
+  }
+
+  if (exactConditions.length > 0) {
+    const exactResult = await Participant.findOne({ $or: exactConditions });
+    if (exactResult) {
+      console.log(`[SCAN DEBUG] Fast-path exact match found: (ID: ${exactResult._id}, Name: "${exactResult.name}")`);
+      return exactResult;
+    }
+  }
+  // ----------------------------------------
+
   const conditions = [];
 
   // 1. If structured attributes were successfully parsed:
@@ -69,13 +109,6 @@ const findParticipantByIdentifier = async (identifier) => {
 
   // 2. Also match against raw identifier as fallback (cleaning common prefix labels)
   if (safeIdentifier) {
-    let cleanRaw = safeIdentifier;
-    if (safeIdentifier.toLowerCase().startsWith("name:")) {
-      cleanRaw = safeIdentifier.substring(5).trim();
-    } else if (safeIdentifier.toLowerCase().startsWith("reg id:") || safeIdentifier.toLowerCase().startsWith("regid:")) {
-      cleanRaw = safeIdentifier.split(":").slice(1).join(":").trim();
-    }
-
     conditions.push({ phone: cleanRaw });
     conditions.push({ email: { $regex: new RegExp(`^\\s*${cleanRaw}\\s*$`, "i") } });
     conditions.push({ qrCode: { $regex: new RegExp(`^\\s*${cleanRaw}\\s*$`, "i") } });
@@ -92,11 +125,11 @@ const findParticipantByIdentifier = async (identifier) => {
     conditions.push({ _id: regIdFromQR });
   }
 
-  console.log(`[SCAN DEBUG] Generated ${conditions.length} query conditions:`, JSON.stringify(conditions));
+  console.log(`[SCAN DEBUG] Generated ${conditions.length} query conditions fallback:`, JSON.stringify(conditions));
 
   if (conditions.length === 0) return null;
   const result = await Participant.findOne({ $or: conditions });
-  console.log(`[SCAN DEBUG] Query result:`, result ? `Found (ID: ${result._id}, Name: "${result.name}")` : "Not Found");
+  console.log(`[SCAN DEBUG] Query result fallback:`, result ? `Found (ID: ${result._id}, Name: "${result.name}")` : "Not Found");
   return result;
 };
 

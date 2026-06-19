@@ -263,6 +263,11 @@ const participantSchema = new mongoose.Schema(
 // Performance Indexes for faster roster lookup and dashboard aggregation
 participantSchema.index({ conferenceId: 1 });
 participantSchema.index({ conferenceName: 1 });
+participantSchema.index({ regId: 1 });
+participantSchema.index({ phone: 1 });
+participantSchema.index({ email: 1 });
+participantSchema.index({ qrCode: 1 });
+participantSchema.index({ name: 1 });
 
 // Auto-generate regId and qrCode on save if not provided
 participantSchema.pre("save", function () {

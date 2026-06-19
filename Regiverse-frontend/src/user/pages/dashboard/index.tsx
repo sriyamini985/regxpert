@@ -24,7 +24,7 @@ export default function UserDashboard() {
   const { conferenceSlug } = useParams<{ conferenceSlug: string }>();
 
   // Fetch real-time stats from database using WebSocket synchronization hook
-  const { loading, stats } = useConferenceData(conferenceSlug);
+  const { loading, stats } = useConferenceData(conferenceSlug, { statsOnly: true });
 
   // Grouped operational modules for clearer division of labor
   const scannerModules = [

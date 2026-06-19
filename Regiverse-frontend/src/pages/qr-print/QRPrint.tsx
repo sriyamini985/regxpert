@@ -545,9 +545,10 @@ const QRPrint = () => {
 
         // Capture this single badge container to canvas
         const canvas = await (window as any).html2canvas(clone, {
-          scale: 2,
+          scale: 1.5,
           useCORS: true,
-          logging: false
+          logging: false,
+          imageTimeout: 100
         });
 
         // Remove the clone from DOM

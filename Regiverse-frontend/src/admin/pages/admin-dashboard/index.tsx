@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [conferences, setConferences] = useState<any[]>([]);
   const [selectedConferenceId, setSelectedConferenceId] = useState(queryConfId);
   const [loadingConferences, setLoadingConferences] = useState(true);
+  const [downloadingExcel, setDownloadingExcel] = useState(false);
 
   // Fetch all conferences to populate selection dropdown
   useEffect(() => {
@@ -48,42 +49,55 @@ const Dashboard = () => {
     }
   }, [queryConfId]);
 
-  // Load real-time database stats using hook
-  const { participants, loading: loadingStats, stats } = useConferenceData(selectedConferenceId || undefined);
+  // Load real-time database stats using hook (statsOnly: true)
+  const { loading: loadingStats, stats } = useConferenceData(selectedConferenceId || undefined, { statsOnly: true });
 
   const dayKey = selectedDay.toLowerCase().replace(" ", ""); // "day1"
   const mealsForDay = stats?.food?.[dayKey] || { breakfast: 0, lunch: 0, dinner: 0 };
 
-  const handleDownloadExcel = () => {
-    if (!participants || participants.length === 0) {
-      alert("No registration records found to download.");
-      return;
+  const handleDownloadExcel = async () => {
+    if (!selectedConferenceId) return;
+    setDownloadingExcel(true);
+    try {
+      const res = await fetch(`${API_URL}/api/participants/conference/${selectedConferenceId}?admin=true`);
+      if (!res.ok) throw new Error("Failed to fetch participant roster");
+      const roster = await res.json();
+      
+      if (!roster || roster.length === 0) {
+        alert("No registration records found to download.");
+        return;
+      }
+
+      const formattedData = roster.map((p: any, index: number) => ({
+        "S.No": index + 1,
+        "Registration ID": p.regId || "N/A",
+        "Name": p.name || "",
+        "Email": p.email || "",
+        "Phone": p.phone || "",
+        "Category": p.category || "",
+        "State/City": p.state || "",
+        "Checked In": p.isCheckedIn ? "Yes" : "No",
+        "Kitbag Collected": p.kitbagCollected ? "Yes" : "No",
+        "Certificate Issued": p.certificateGiven ? "Yes" : "No",
+        "Printed": p.printed ? "Yes" : "No",
+        "Registration Date": p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "",
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(formattedData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Registration List");
+
+      const match = conferences.find(c => c._id === selectedConferenceId || c.slug === selectedConferenceId);
+      const cleanName = (match?.name || "Event").replace(/\s+/g, "_");
+      const filename = `${cleanName}_Registration_List.xlsx`;
+
+      XLSX.writeFile(workbook, filename);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to export participant roster. Please try again.");
+    } finally {
+      setDownloadingExcel(false);
     }
-
-    const formattedData = participants.map((p, index) => ({
-      "S.No": index + 1,
-      "Registration ID": p.regId || "N/A",
-      "Name": p.name || "",
-      "Email": p.email || "",
-      "Phone": p.phone || "",
-      "Category": p.category || "",
-      "State/City": p.state || "",
-      "Checked In": p.isCheckedIn ? "Yes" : "No",
-      "Kitbag Collected": p.kitbagCollected ? "Yes" : "No",
-      "Certificate Issued": p.certificateGiven ? "Yes" : "No",
-      "Printed": p.printed ? "Yes" : "No",
-      "Registration Date": p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "",
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(formattedData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Registration List");
-
-    const match = conferences.find(c => c._id === selectedConferenceId || c.slug === selectedConferenceId);
-    const cleanName = (match?.name || "Event").replace(/\s+/g, "_");
-    const filename = `${cleanName}_Registration_List.xlsx`;
-
-    XLSX.writeFile(workbook, filename);
   };
 
   const handleConfChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -126,10 +140,10 @@ const Dashboard = () => {
           {/* Download Button */}
           <button
             onClick={handleDownloadExcel}
-            disabled={loadingStats || participants.length === 0}
+            disabled={loadingStats || downloadingExcel}
             className="h-11 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md active:scale-95 text-sm flex items-center justify-center gap-2 mt-4 md:mt-0 flex-1 md:flex-initial disabled:opacity-40 disabled:scale-100"
           >
-            📥 Download Roster (.XLSX)
+            {downloadingExcel ? "⏳ Fetching..." : "📥 Download Roster (.XLSX)"}
           </button>
 
           {/* Status Badge */}
@@ -188,15 +202,15 @@ const Dashboard = () => {
             pending: Math.max(0, (stats?.total || 0) - (stats?.certificateGiven || 0))
           },
           hallScans: {
-            entry: participants.filter(p => p.hallEntries && p.hallEntries.length > 0).length,
-            exit: participants.filter(p => p.hallExits && p.hallExits.length > 0).length
+            entry: stats?.hallEntriesCount || 0,
+            exit: stats?.hallExitsCount || 0
           },
           monoScans: {
             active: stats?.checkedIn || 0,
             total: stats?.total || 0
           },
           workshopScans: {
-            active: participants.filter(p => p.workshopScans && p.workshopScans.length > 0).length,
+            active: stats?.workshopScansCount || 0,
             total: stats?.total || 0
           }
         }}
