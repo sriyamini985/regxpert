@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Participant from "../models/Participant.js";
+import Conference from "../models/Conference.js";
 import { 
   broadcastParticipantCreated, 
   broadcastParticipantUpdated, 
@@ -9,8 +10,8 @@ import {
 import xlsx from "xlsx";
 
 // Centralized helper function to find a participant by name, phone, email, qrCode, regId, or partial regId suffix (case-insensitive)
-const findParticipantByIdentifier = async (identifier) => {
-  console.log(`[SCAN DEBUG] Received identifier: "${identifier}" (Type: ${typeof identifier})`);
+const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
+  console.log(`[SCAN DEBUG] Received identifier: "${identifier}" (Type: ${typeof identifier}), conferenceIdOrSlug: "${conferenceIdOrSlug}"`);
   if (!identifier) return null;
   let safeIdentifier = String(identifier).trim();
   if (safeIdentifier === "") return null;
@@ -50,6 +51,29 @@ const findParticipantByIdentifier = async (identifier) => {
 
   console.log(`[SCAN DEBUG] Parsed details: regIdFromQR="${regIdFromQR}", nameFromQR="${nameFromQR}", emailFromQR="${emailFromQR}", phoneFromQR="${phoneFromQR}"`);
 
+  // Resolve conference filter if specified
+  let conferenceFilter = {};
+  if (conferenceIdOrSlug) {
+    const cleanConf = String(conferenceIdOrSlug).trim();
+    const targetConference = await Conference.findOne({
+      $or: [
+        { _id: mongoose.Types.ObjectId.isValid(cleanConf) ? cleanConf : undefined },
+        { slug: cleanConf },
+        { name: cleanConf }
+      ].filter(Boolean)
+    });
+    if (targetConference) {
+      conferenceFilter = { conferenceId: String(targetConference._id) };
+    } else {
+      conferenceFilter = {
+        $or: [
+          { conferenceId: cleanConf },
+          { conferenceName: cleanConf }
+        ]
+      };
+    }
+  }
+
   // --- FAST-PATH EXACT INDEXED MATCHES ---
   let cleanRaw = safeIdentifier;
   if (safeIdentifier.toLowerCase().startsWith("name:")) {
@@ -82,7 +106,23 @@ const findParticipantByIdentifier = async (identifier) => {
   }
 
   if (exactConditions.length > 0) {
-    const exactResult = await Participant.findOne({ $or: exactConditions });
+    let exactQuery = { $or: exactConditions };
+    if (conferenceIdOrSlug) {
+      if (conferenceFilter.$or) {
+        exactQuery = {
+          $and: [
+            { $or: exactConditions },
+            { $or: conferenceFilter.$or }
+          ]
+        };
+      } else {
+        exactQuery = {
+          ...conferenceFilter,
+          $or: exactConditions
+        };
+      }
+    }
+    const exactResult = await Participant.findOne(exactQuery);
     if (exactResult) {
       console.log(`[SCAN DEBUG] Fast-path exact match found: (ID: ${exactResult._id}, Name: "${exactResult.name}")`);
       return exactResult;
@@ -128,7 +168,25 @@ const findParticipantByIdentifier = async (identifier) => {
   console.log(`[SCAN DEBUG] Generated ${conditions.length} query conditions fallback:`, JSON.stringify(conditions));
 
   if (conditions.length === 0) return null;
-  const result = await Participant.findOne({ $or: conditions });
+  
+  let query = { $or: conditions };
+  if (conferenceIdOrSlug) {
+    if (conferenceFilter.$or) {
+      query = {
+        $and: [
+          { $or: conditions },
+          { $or: conferenceFilter.$or }
+        ]
+      };
+    } else {
+      query = {
+        ...conferenceFilter,
+        $or: conditions
+      };
+    }
+  }
+
+  const result = await Participant.findOne(query);
   console.log(`[SCAN DEBUG] Query result fallback:`, result ? `Found (ID: ${result._id}, Name: "${result.name}")` : "Not Found");
   return result;
 };
@@ -210,8 +268,8 @@ export const createParticipant = async (req, res) => {
 // 3. BASIC SCAN (General check-in)
 export const scanQR = async (req, res) => {
   try {
-    const { identifier } = req.body;
-    const user = await findParticipantByIdentifier(identifier);
+    const { identifier, conferenceId } = req.body;
+    const user = await findParticipantByIdentifier(identifier, conferenceId);
 
     if (!user) return res.status(404).json({ msg: "Participant not found" });
 
@@ -229,8 +287,8 @@ export const scanQR = async (req, res) => {
 // 4. VERIFY AND SCAN (Restricted items: Kitbag/Certificate)
 export const verifyAndScan = async (req, res) => {
   try {
-    const { identifier, scanType } = req.body;
-    const user = await findParticipantByIdentifier(identifier);
+    const { identifier, scanType, conferenceId } = req.body;
+    const user = await findParticipantByIdentifier(identifier, conferenceId);
 
     if (!user) return res.status(404).json({ msg: "Participant not found" });
 
@@ -287,8 +345,8 @@ export const verifyAndScan = async (req, res) => {
 // 5. FOOD SCAN (Day-specific meals)
 export const scanFood = async (req, res) => {
   try {
-    const { identifier, mealType } = req.body;
-    const user = await findParticipantByIdentifier(identifier);
+    const { identifier, mealType, conferenceId } = req.body;
+    const user = await findParticipantByIdentifier(identifier, conferenceId);
 
     if (!user) return res.status(404).json({ msg: "Participant not found" });
 
@@ -332,8 +390,8 @@ export const scanFood = async (req, res) => {
 // 6. GENERAL CHECK-IN (marks isCheckedIn = true)
 export const checkInParticipant = async (req, res) => {
   try {
-    const { identifier } = req.body;
-    const user = await findParticipantByIdentifier(identifier);
+    const { identifier, conferenceId } = req.body;
+    const user = await findParticipantByIdentifier(identifier, conferenceId);
 
     if (!user) return res.status(404).json({ msg: "Participant not found" });
     if (user.isCheckedIn) {
@@ -353,8 +411,8 @@ export const checkInParticipant = async (req, res) => {
 // 7. PATH ENTRY / EXIT SCAN
 export const scanHall = async (req, res) => {
   try {
-    const { identifier, mode } = req.body; // mode: "entry" or "exit"
-    const user = await findParticipantByIdentifier(identifier);
+    const { identifier, mode, conferenceId } = req.body; // mode: "entry" or "exit"
+    const user = await findParticipantByIdentifier(identifier, conferenceId);
     if (!user) return res.status(404).json({ msg: "Participant not found" });
 
     const now = new Date();
@@ -400,8 +458,8 @@ export const scanHall = async (req, res) => {
 // 8. WORKSHOP SCAN
 export const scanWorkshop = async (req, res) => {
   try {
-    const { identifier, workshop } = req.body;
-    const user = await findParticipantByIdentifier(identifier);
+    const { identifier, workshop, conferenceId } = req.body;
+    const user = await findParticipantByIdentifier(identifier, conferenceId);
     if (!user) return res.status(404).json({ msg: "Participant not found" });
 
     const match = workshop.match(/^workshop(\d)$/);

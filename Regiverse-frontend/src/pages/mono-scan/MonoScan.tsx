@@ -100,7 +100,7 @@ const MonoScan = () => {
       const res = await fetch(`${API}/api/participants/check-in`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier.trim() }),
+        body: JSON.stringify({ identifier: identifier.trim(), conferenceId: conferenceSlug }),
       });
       const data = await res.json();
 

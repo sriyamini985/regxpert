@@ -113,7 +113,7 @@ const CheckInStation = () => {
       const res = await fetch(`${API}/api/participants/verify-and-scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier.trim(), scanType: "kitbag" }),
+        body: JSON.stringify({ identifier: identifier.trim(), scanType: "kitbag", conferenceId: conferenceSlug }),
       });
       const data = await res.json();
 

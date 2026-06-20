@@ -148,7 +148,7 @@ const FoodCounter = () => {
       const res = await fetch(`${API}/api/participants/scan-food`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier.trim(), mealType: getMealType() }),
+        body: JSON.stringify({ identifier: identifier.trim(), mealType: getMealType(), conferenceId: conferenceSlug }),
       });
       const data = await res.json();
 

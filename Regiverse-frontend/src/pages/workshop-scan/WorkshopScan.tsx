@@ -129,7 +129,7 @@ const WorkshopScan = () => {
       const res = await fetch(`${API}/api/participants/scan-workshop`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier.trim(), workshop: selectedWorkshop }),
+        body: JSON.stringify({ identifier: identifier.trim(), workshop: selectedWorkshop, conferenceId: conferenceSlug }),
       });
       const data = await res.json();
 

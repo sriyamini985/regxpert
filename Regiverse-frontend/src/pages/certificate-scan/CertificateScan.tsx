@@ -144,7 +144,7 @@ const CertificateScan: React.FC = () => {
       const res = await fetch(`${API}/api/participants/verify-and-scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier.trim(), scanType: "certificate" }),
+        body: JSON.stringify({ identifier: identifier.trim(), scanType: "certificate", conferenceId: conferenceSlug }),
       });
       const data = await res.json();
 
