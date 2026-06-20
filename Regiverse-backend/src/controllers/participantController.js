@@ -234,7 +234,21 @@ export const verifyAndScan = async (req, res) => {
 
     if (!user) return res.status(404).json({ msg: "Participant not found" });
 
-    const blockKey = `block${scanType.charAt(0).toUpperCase() + scanType.slice(1)}`;
+    // Determine the corresponding block key and field mapping dynamically
+    let isKitbag = false;
+    let isCertificate = false;
+    let blockKey;
+
+    if (typeof scanType === "string" && scanType.startsWith("kitbag")) {
+      isKitbag = true;
+      blockKey = "blockKitbag";
+    } else if (typeof scanType === "string" && scanType.startsWith("certificate")) {
+      isCertificate = true;
+      blockKey = "blockCertificate";
+    } else {
+      blockKey = `block${scanType.charAt(0).toUpperCase() + scanType.slice(1)}`;
+    }
+
     if (user[blockKey] === true) {
       return res.status(403).json({ 
         msg: `Access Denied: ${scanType} is restricted.`,
@@ -243,14 +257,14 @@ export const verifyAndScan = async (req, res) => {
     }
 
     // Check if already collected (Duplicate scanning warning)
-    if (scanType === "kitbag" && user.kitbagCollected) {
+    if (isKitbag && user.kitbagCollected) {
       return res.status(409).json({
         msg: "Kitbag has already been collected by this participant.",
         alreadyScanned: true,
         user
       });
     }
-    if (scanType === "certificate" && user.certificateGiven) {
+    if (isCertificate && user.certificateGiven) {
       return res.status(409).json({
         msg: "Certificate has already been issued to this participant.",
         alreadyScanned: true,
@@ -258,8 +272,8 @@ export const verifyAndScan = async (req, res) => {
       });
     }
 
-    if (scanType === "kitbag") user.kitbagCollected = true;
-    if (scanType === "certificate") user.certificateGiven = true;
+    if (isKitbag) user.kitbagCollected = true;
+    if (isCertificate) user.certificateGiven = true;
 
     await user.save();
     broadcastParticipantUpdated(user);
@@ -300,7 +314,11 @@ export const scanFood = async (req, res) => {
       });
     }
 
+    if (!user.foodLogs) {
+      user.foodLogs = new Map();
+    }
     user.foodLogs.set(mealType, true);
+    user.markModified("foodLogs");
     await user.save();
 
     broadcastParticipantUpdated(user);
