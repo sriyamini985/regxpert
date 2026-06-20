@@ -15,9 +15,16 @@ export const ConferenceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     if (currentConferenceId) {
-      // Direct socket to lock into this isolated channel room
-      socket.emit("joinConferenceRoom", currentConferenceId);
-      console.log(`Socket listening to workspace room channel: ${currentConferenceId}`);
+      const joinRoom = () => {
+        socket.emit("joinConferenceRoom", currentConferenceId);
+        console.log(`Socket listening to workspace room channel: ${currentConferenceId}`);
+      };
+
+      // Join immediately on mount/change
+      joinRoom();
+
+      // Re-join automatically on reconnect
+      socket.on("connect", joinRoom);
 
       // Listen for updates specific to this conference room
       socket.on("participantUpdated", (updatedParticipant) => {
@@ -27,12 +34,13 @@ export const ConferenceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       socket.on("conferenceDataUpdated", (data) => {
         setRealtimeUpdate({ type: "BULK_IMPORT", data });
       });
-    }
 
-    return () => {
-      socket.off("participantUpdated");
-      socket.off("conferenceDataUpdated");
-    };
+      return () => {
+        socket.off("connect", joinRoom);
+        socket.off("participantUpdated");
+        socket.off("conferenceDataUpdated");
+      };
+    }
   }, [currentConferenceId]);
 
   return (
