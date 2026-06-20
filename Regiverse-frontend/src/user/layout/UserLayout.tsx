@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, Link, useParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useConference } from "../../contexts/ConferenceContext";
 import { 
   LayoutDashboard, 
   Camera, 
@@ -24,9 +25,20 @@ import { motion } from "framer-motion";
 
 export default function UserLayout() {
   const { conferenceSlug } = useParams<"conferenceSlug">();
+  const { setCurrentConferenceId } = useConference();
   const { logout, user } = useAuth();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+
+  // Sync active conference to socket channel
+  useEffect(() => {
+    if (conferenceSlug) {
+      setCurrentConferenceId(conferenceSlug);
+    }
+    return () => {
+      setCurrentConferenceId(null);
+    };
+  }, [conferenceSlug, setCurrentConferenceId]);
 
   // Restructured IA menu sections
   const sections = [

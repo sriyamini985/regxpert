@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Conference from "./models/Conference.js";
 
 let io = null;
@@ -9,9 +10,25 @@ export const initSocket = (socketServer) => {
     console.log(`🔌 Client connected: ${socket.id}`);
 
     // Handles room grouping channel requests from your frontend Dashboard
-    socket.on("joinConferenceRoom", (conferenceId) => {
+    socket.on("joinConferenceRoom", async (conferenceId) => {
       socket.join(conferenceId);
       console.log(`📡 Socket connection ${socket.id} joined room channel: ${conferenceId}`);
+
+      try {
+        const conf = await Conference.findOne({
+          $or: [
+            { _id: mongoose.Types.ObjectId.isValid(conferenceId) ? conferenceId : undefined },
+            { slug: conferenceId },
+            { name: conferenceId }
+          ].filter(Boolean)
+        });
+        if (conf && String(conf._id) !== conferenceId) {
+          socket.join(String(conf._id));
+          console.log(`📡 Socket connection ${socket.id} also joined room channel by ID: ${conf._id}`);
+        }
+      } catch (err) {
+        console.error("Error joining resolved conference room:", err.message);
+      }
     });
 
     socket.on("disconnect", () => {

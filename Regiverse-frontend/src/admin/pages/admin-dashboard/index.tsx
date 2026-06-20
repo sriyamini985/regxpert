@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useConferenceData } from "../../../hooks/useConferenceData";
+import { useConference } from "../../../contexts/ConferenceContext";
 import { API_URL } from "../../../config/api";
 import * as XLSX from "xlsx";
 import TopStats from "./components/TopStats";
@@ -12,11 +13,23 @@ const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryConfId = searchParams.get("conferenceId") || "";
 
+  const { setCurrentConferenceId } = useConference();
+
   const [selectedDay, setSelectedDay] = useState("Day 1");
   const [conferences, setConferences] = useState<any[]>([]);
   const [selectedConferenceId, setSelectedConferenceId] = useState(queryConfId);
   const [loadingConferences, setLoadingConferences] = useState(true);
   const [downloadingExcel, setDownloadingExcel] = useState(false);
+
+  // Sync active conference to socket channel for real-time live updates
+  useEffect(() => {
+    if (selectedConferenceId) {
+      setCurrentConferenceId(selectedConferenceId);
+    }
+    return () => {
+      setCurrentConferenceId(null);
+    };
+  }, [selectedConferenceId, setCurrentConferenceId]);
 
   // Fetch all conferences to populate selection dropdown
   useEffect(() => {
