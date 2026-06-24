@@ -101,7 +101,7 @@ export default function AdminLogin() {
         if (res.user?.role === "admin") {
           navigate("/admin/conferences");
         } else if (res.user?.role === "user") {
-          navigate("/user-login");
+          navigate("/staff");
         } else {
           navigate("/");
         }

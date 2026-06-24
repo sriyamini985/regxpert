@@ -17,7 +17,7 @@ export default function OperationsDashboard() {
 
   // If logged in as user (staff operator), redirect to workspace selection
   if (user.role === "user") {
-    return <Navigate to="/user-login" replace />;
+    return <Navigate to="/staff" replace />;
   }
 
   return (
@@ -62,7 +62,7 @@ export default function OperationsDashboard() {
               food counters, and hall scanning.
             </p>
             <button
-              onClick={() => navigate("/user-login")}
+              onClick={() => navigate("/staff")}
               className="w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white py-3 rounded-lg font-medium shadow-sm"
             >
               Open Staff Terminal

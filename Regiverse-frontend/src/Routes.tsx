@@ -1,5 +1,5 @@
 import React, { useEffect, lazy, Suspense } from "react";
-import { Routes, Route, useParams, Outlet } from "react-router-dom";
+import { Routes, Route, useParams, Outlet, Navigate } from "react-router-dom";
 import ScrollToTop from "components/ScrollToTop";
 import NotFound from "pages/NotFound";
 
@@ -67,7 +67,8 @@ const AppRoutes: React.FC = () => {
           
           <Route path="/print-qr" element={<QRPrint />} />
           <Route path="/" element={<OperationsDashboard />} />
-          <Route path="/user-login" element={<UserLogin />} />
+          <Route path="/staff" element={<UserLogin />} />
+          <Route path="/user-login" element={<Navigate to="/staff" replace />} />
 
           {/* Dynamic Context Interceptors for User Execution Nodes */}
           <Route path="/user/conference/:conferenceId" element={<ConferenceRoomTracker />}>
