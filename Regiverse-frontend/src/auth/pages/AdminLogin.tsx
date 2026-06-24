@@ -96,7 +96,15 @@ export default function AdminLogin() {
           localStorage.removeItem("adminRememberedPassword");
           localStorage.setItem("adminRememberMe", "false");
         }
-        navigate("/admin/conferences");
+        
+        // Redirect dynamically based on the authenticated user's role
+        if (res.user?.role === "admin") {
+          navigate("/admin/conferences");
+        } else if (res.user?.role === "user") {
+          navigate("/user-login");
+        } else {
+          navigate("/");
+        }
       } else {
         setLoginError(res.error || "Invalid Credentials");
         setLoading(false);

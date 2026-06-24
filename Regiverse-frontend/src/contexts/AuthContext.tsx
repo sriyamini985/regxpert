@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { API_URL } from "../config/api";
 
 const AuthContext = createContext<any>(null);
 
@@ -15,32 +16,29 @@ export const AuthProvider = ({ children }: any) => {
     return null;
   });
 
-  const login = async (email: string, password: string, role: string) => {
-    // 1. Admin Logic
-    if (email === "admin@gmail.com" && password === "123456" && role === "admin") {
-      const userData = { role: "admin", email };
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
-      return { success: true };
-    }
-    
-    // 2. Client Logic
-    if (email === "client@gmail.com" && password === "123456" && role === "client") {
-      const userData = { role: "client", email };
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
-      return { success: true };
-    }
+  const login = async (email: string, password: string, role?: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    // 3. User (Staff) Logic
-    if (email === "user@gmail.com" && password === "123456" && role === "user") {
-      const userData = { role: "user", email };
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
-      return { success: true };
+      const data = await response.json();
+      if (response.ok && data.success) {
+        const userData = { role: data.user.role, email: data.user.email, name: data.user.name };
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+        return { success: true, user: userData };
+      } else {
+        return { success: false, error: data.error || "Invalid Credentials" };
+      }
+    } catch (e: any) {
+      console.error("Login connection error", e);
+      return { success: false, error: "Connection error. Please check server." };
     }
-
-    return { success: false, error: "Invalid Credentials" };
   };
 
   // ADDED: Direct Bypass Helper Function for Developer/Direct Navigation

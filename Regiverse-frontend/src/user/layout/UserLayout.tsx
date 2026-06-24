@@ -73,12 +73,6 @@ export default function UserLayout() {
       items: [
         { name: "Onsite-Dashboard", path: `/u/${conferenceSlug}/admin-dashboard`, icon: BarChart3 }
       ]
-    },
-    {
-      title: "System Settings",
-      items: [
-        { name: "Terminal Settings", path: `/u/${conferenceSlug}/settings`, icon: SettingsIcon }
-      ]
     }
   ];
 

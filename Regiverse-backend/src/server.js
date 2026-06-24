@@ -13,6 +13,7 @@ import conferenceRoutes from "./routes/conferenceRoutes.js";
 import bulkEmailRoutes from "./routes/bulkEmailRoutes.js";
 import bulkWhatsappRoutes from "./routes/bulkWhatsappRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config({ path: path.resolve("./.env") });
 dns.setDefaultResultOrder("ipv4first");
@@ -35,6 +36,7 @@ app.use("/api/participants", participantRoutes);
 app.use("/api/bulk-email", bulkEmailRoutes);
 app.use("/api/bulk-whatsapp", bulkWhatsappRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/auth", authRoutes);
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });

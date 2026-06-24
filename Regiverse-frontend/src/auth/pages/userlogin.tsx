@@ -6,7 +6,7 @@ import { Mail, Lock, Eye, EyeOff, Check, Loader2, ArrowRight, ArrowLeft, Buildin
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function UserLogin() {
-  const { login, quickUserLogin } = useAuth();
+  const { login, quickUserLogin, user } = useAuth();
   const navigate = useNavigate();
 
   // Inputs
@@ -97,16 +97,23 @@ export default function UserLogin() {
 
   const submit = async () => {
     setLoginError(null);
+    if (!selectedSlug) {
+      setLoginError("Please select an active event workspace.");
+      return;
+    }
+
+    // If already logged in as staff user, simply route to the workspace
+    if (user && user.role === "user") {
+      navigate(`/u/${selectedSlug}`);
+      return;
+    }
+
     if (!email) {
       setLoginError("Please enter your email address.");
       return;
     }
     if (!validateEmail(email)) {
       setLoginError("Please enter a valid email address.");
-      return;
-    }
-    if (!selectedSlug) {
-      setLoginError("Please select an active event workspace.");
       return;
     }
     if (!password) {
@@ -191,152 +198,204 @@ export default function UserLogin() {
           </div>
         )}
 
-        {/* Unified Login Form Container */}
-        <div className="space-y-5">
-          {/* Event Dropdown */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-              Active Event Workspace
-            </label>
-            {loadingConferences ? (
-              <div className="flex items-center gap-2 text-xs text-blue-400 py-3 bg-slate-800/40 border border-slate-800 rounded-xl px-4 animate-pulse">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Loading active conferences...</span>
+        {user && user.role === "user" ? (
+          <div className="space-y-5">
+            {/* Event Dropdown */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                Active Event Workspace
+              </label>
+              {loadingConferences ? (
+                <div className="flex items-center gap-2 text-xs text-blue-400 py-3 bg-slate-800/40 border border-slate-800 rounded-xl px-4 animate-pulse">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Loading active conferences...</span>
+                </div>
+              ) : (
+                <div className="relative">
+                  <select
+                    value={selectedSlug}
+                    onChange={(e) => setSelectedSlug(e.target.value)}
+                    className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium appearance-none cursor-pointer transition-all duration-150"
+                  >
+                    {conferences.map((c) => (
+                      <option key={c._id} value={c.slug} className="bg-slate-900 text-slate-100 font-sans">
+                        {c.name} ({c.slug})
+                      </option>
+                    ))}
+                    {conferences.length === 0 && (
+                      <option value="" className="bg-slate-900 text-slate-100 font-sans">
+                        No active events
+                      </option>
+                    )}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                </div>
+              )}
+              {conferenceError && (
+                <p className="text-xs text-rose-400 font-semibold mt-1">⚠️ {conferenceError}</p>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={submit}
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/15 hover:shadow-blue-500/20 transition-all duration-150"
+            >
+              <span>Launch Staff Terminal</span>
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Unified Login Form Container */}
+            <div className="space-y-5">
+              {/* Event Dropdown */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  Active Event Workspace
+                </label>
+                {loadingConferences ? (
+                  <div className="flex items-center gap-2 text-xs text-blue-400 py-3 bg-slate-800/40 border border-slate-800 rounded-xl px-4 animate-pulse">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Loading active conferences...</span>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <select
+                      value={selectedSlug}
+                      onChange={(e) => setSelectedSlug(e.target.value)}
+                      className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium appearance-none cursor-pointer transition-all duration-150"
+                    >
+                      {conferences.map((c) => (
+                        <option key={c._id} value={c.slug} className="bg-slate-900 text-slate-100 font-sans">
+                          {c.name} ({c.slug})
+                        </option>
+                      ))}
+                      {conferences.length === 0 && (
+                        <option value="" className="bg-slate-900 text-slate-100 font-sans">
+                          No active events
+                        </option>
+                      )}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                  </div>
+                )}
+                {conferenceError && (
+                  <p className="text-xs text-rose-400 font-semibold mt-1">⚠️ {conferenceError}</p>
+                )}
               </div>
-            ) : (
-              <div className="relative">
-                <select
-                  value={selectedSlug}
-                  onChange={(e) => setSelectedSlug(e.target.value)}
-                  className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium appearance-none cursor-pointer transition-all duration-150"
-                >
-                  {conferences.map((c) => (
-                    <option key={c._id} value={c.slug} className="bg-slate-900 text-slate-100 font-sans">
-                      {c.name} ({c.slug})
-                    </option>
-                  ))}
-                  {conferences.length === 0 && (
-                    <option value="" className="bg-slate-900 text-slate-100 font-sans">
-                      No active events
-                    </option>
-                  )}
-                </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                  <Building2 className="w-4 h-4" />
+
+              {/* Email Input */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <input
+                    ref={emailInputRef}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={handleEmailKeyDown}
+                    placeholder="user@gmail.com"
+                    className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150"
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                    <Mail className="w-4 h-4" />
+                  </div>
                 </div>
               </div>
-            )}
-            {conferenceError && (
-              <p className="text-xs text-rose-400 font-semibold mt-1">⚠️ {conferenceError}</p>
-            )}
-          </div>
 
-          {/* Email Input */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-              Email Address
-            </label>
-            <div className="relative">
-              <input
-                ref={emailInputRef}
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={handleEmailKeyDown}
-                placeholder="user@gmail.com"
-                className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150"
-              />
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                <Mail className="w-4 h-4" />
+              {/* Password Input */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotModal(true)}
+                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    ref={passwordInputRef}
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={handlePasswordKeyDown}
+                    placeholder="••••••••"
+                    className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150"
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Password Input */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Password
-              </label>
+              {/* Remember Me */}
+              <div className="flex items-center">
+                <label className="relative flex items-center cursor-pointer select-none text-slate-300 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-5 h-5 bg-slate-950 border border-slate-800 rounded-md mr-2.5 peer-checked:bg-blue-600 peer-checked:border-transparent flex items-center justify-center transition-all duration-150">
+                    <Check className="w-3.5 h-3.5 text-white scale-0 peer-checked:scale-100 transition-transform duration-150" />
+                  </div>
+                  <span>Remember me on this terminal</span>
+                </label>
+              </div>
+
+              {/* Submit button */}
               <button
                 type="button"
-                onClick={() => setShowForgotModal(true)}
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                onClick={submit}
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/15 hover:shadow-blue-500/20 disabled:bg-blue-800 disabled:shadow-none hover:-translate-y-0.5 disabled:translate-y-0 active:translate-y-0 transition-all duration-150"
               >
-                Forgot password?
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Signing In...</span>
+                  </>
+                ) : (
+                  <span>Sign In</span>
+                )}
               </button>
             </div>
-            <div className="relative">
-              <input
-                ref={passwordInputRef}
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={handlePasswordKeyDown}
-                placeholder="••••••••"
-                className="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-600 rounded-xl pl-11 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150"
-              />
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                <Lock className="w-4 h-4" />
+
+            {/* Developer Bypass Button */}
+            <div className="mt-8 pt-6 border-t border-slate-800/60">
+              <div className="text-center mb-3">
+                <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+                  Developer Sandbox Tools
+                </span>
               </div>
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                onClick={handleQuickClick}
+                className="w-full bg-slate-800/40 hover:bg-slate-800/70 border border-slate-800 text-slate-300 hover:text-slate-100 text-xs font-semibold py-2.5 px-4 rounded-xl transition-all duration-150 flex items-center justify-center gap-2"
               >
-                {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                <span>Bypass Authentication (Quick Login)</span>
               </button>
             </div>
-          </div>
-
-          {/* Remember Me */}
-          <div className="flex items-center">
-            <label className="relative flex items-center cursor-pointer select-none text-slate-300 text-sm">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-5 h-5 bg-slate-950 border border-slate-800 rounded-md mr-2.5 peer-checked:bg-blue-600 peer-checked:border-transparent flex items-center justify-center transition-all duration-150">
-                <Check className="w-3.5 h-3.5 text-white scale-0 peer-checked:scale-100 transition-transform duration-150" />
-              </div>
-              <span>Remember me on this terminal</span>
-            </label>
-          </div>
-
-          {/* Submit button */}
-          <button
-            type="button"
-            onClick={submit}
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/15 hover:shadow-blue-500/20 disabled:bg-blue-800 disabled:shadow-none hover:-translate-y-0.5 disabled:translate-y-0 active:translate-y-0 transition-all duration-150"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Signing In...</span>
-              </>
-            ) : (
-              <span>Sign In</span>
-            )}
-          </button>
-        </div>
-
-        {/* Developer Bypass Button */}
-        <div className="mt-8 pt-6 border-t border-slate-800/60">
-          <div className="text-center mb-3">
-            <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">
-              Developer Sandbox Tools
-            </span>
-          </div>
-          <button
-            onClick={handleQuickClick}
-            className="w-full bg-slate-800/40 hover:bg-slate-800/70 border border-slate-800 text-slate-300 hover:text-slate-100 text-xs font-semibold py-2.5 px-4 rounded-xl transition-all duration-150 flex items-center justify-center gap-2"
-          >
-            <span>Bypass Authentication (Quick Login)</span>
-          </button>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Forgot Password Modal (Simulated) */}

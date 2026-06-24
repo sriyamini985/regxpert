@@ -20,3 +20,6 @@ const userSchema = new mongoose.Schema({
 
   conferenceId: String,
 });
+
+const User = mongoose.model("User", userSchema);
+export default User;

@@ -27,6 +27,12 @@ export default function AdminLayout() {
           >
             Event Workspaces
           </Link>
+          <Link 
+            to="/admin/settings" 
+            className={`transition-colors ${location.pathname.includes('/settings') ? 'text-blue-600' : 'text-slate-500 hover:text-slate-900'}`}
+          >
+            Settings
+          </Link>
         </nav>
       </header>
 
@@ -50,6 +56,13 @@ export default function AdminLayout() {
             onClick={() => setMenuOpen(false)}
           >
             Event Workspaces
+          </Link>
+          <Link
+            to="/admin/settings"
+            className="block py-3 px-4 bg-slate-50 rounded-xl font-bold text-slate-700"
+            onClick={() => setMenuOpen(false)}
+          >
+            Settings
           </Link>
         </div>
       )}

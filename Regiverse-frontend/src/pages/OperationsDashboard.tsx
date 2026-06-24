@@ -1,7 +1,24 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function OperationsDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // If not logged in, redirect directly to login page
+  if (!user) {
+    return <Navigate to="/admin-login" replace />;
+  }
+
+  // If logged in as admin, redirect to admin conferences list
+  if (user.role === "admin") {
+    return <Navigate to="/admin/conferences" replace />;
+  }
+
+  // If logged in as user (staff operator), redirect to workspace selection
+  if (user.role === "user") {
+    return <Navigate to="/user-login" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-8">

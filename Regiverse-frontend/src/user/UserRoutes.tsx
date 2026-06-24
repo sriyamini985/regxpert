@@ -39,7 +39,6 @@ export default function UserRoutes() {
           <Route path="admin-dashboard" element={<AdminDashboard />} />
           <Route path="participant-management" element={<ParticipantManagement />} />
           <Route path="badge-print" element={<BadgePrint />} />
-          <Route path="settings" element={<Settings />} />
 
           {/* Fallback internal redirection */}
           <Route path="*" element={<Navigate to="" replace />} />

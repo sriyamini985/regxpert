@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import dns from "dns";
+import User from "../models/user.js";
+import bcryptjs from "bcryptjs";
 
 // Force Google Public DNS to bypass local DNS filtering of MongoDB SRV records
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
@@ -25,6 +27,35 @@ const connectDB = async (retries = 5) => {
         socketTimeoutMS: 45000,
       });
       console.log("🟢 MongoDB Connected");
+      
+      // Seed default accounts if collection is empty
+      const count = await User.countDocuments();
+      if (count === 0) {
+        console.log("⏳ User collection is empty. Seeding default accounts...");
+        const hashedDefaultPassword = await bcryptjs.hash("123456", 10);
+        await User.insertMany([
+          {
+            name: "Admin User",
+            email: "admin@gmail.com",
+            password: hashedDefaultPassword,
+            role: "admin"
+          },
+          {
+            name: "Client User",
+            email: "client@gmail.com",
+            password: hashedDefaultPassword,
+            role: "client"
+          },
+          {
+            name: "Staff Operator",
+            email: "user@gmail.com",
+            password: hashedDefaultPassword,
+            role: "user"
+          }
+        ]);
+        console.log("🟢 Default accounts seeded successfully.");
+      }
+      
       return;
     } catch (err) {
       console.error(`🔴 MongoDB attempt ${attempt}/${retries} failed:`, err.message);
