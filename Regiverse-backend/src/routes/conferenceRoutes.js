@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import Conference from "../models/Conference.js";
 import Participant from "../models/Participant.js";
+import SharedData from "../models/SharedData.js";
 import { importExcel } from "../controllers/conferenceController.js";
 
 const router = express.Router();
@@ -69,6 +70,37 @@ router.patch("/:id/activate", async (req, res) => {
     conference.isActive = !conference.isActive;
     await conference.save();
     res.json(conference);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 5. DELETE A CONFERENCE (and all its associated participants/shared data)
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const conference = await Conference.findById(id);
+    if (!conference) {
+      return res.status(404).json({ error: "Conference workspace profile not found" });
+    }
+
+    const conferenceName = conference.name || conference.title || "";
+
+    // Cascade delete: Delete all participants belonging to this conference
+    await Participant.deleteMany({
+      $or: [
+        { conferenceId: id },
+        { conferenceName: conferenceName }
+      ]
+    });
+
+    // Cascade delete: Delete all shared data belonging to this conference
+    await SharedData.deleteMany({ conferenceId: id });
+
+    // Delete the conference itself
+    await Conference.findByIdAndDelete(id);
+
+    res.json({ success: true, message: "Conference and all associated participants/shared data deleted successfully." });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../../../config/api";
+import { Trash2, Loader2 } from "lucide-react";
 
 const Conferences = () => {
   const navigate = useNavigate();
@@ -8,6 +9,11 @@ const Conferences = () => {
   const [loading, setLoading] = useState(false);
   const [conferences, setConferences] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Deleting Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedConferenceToDelete, setSelectedConferenceToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadConferences = async () => {
     setError(null);
@@ -49,6 +55,31 @@ const Conferences = () => {
       setError(err.message || "Failed to create workspace");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedConferenceToDelete) return;
+    setIsDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/api/conferences/${selectedConferenceToDelete._id}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        setShowDeleteModal(false);
+        setSelectedConferenceToDelete(null);
+        loadConferences();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Server error ${res.status} when deleting event`);
+      }
+    } catch (err: any) {
+      console.error("Delete conference failed", err);
+      setError(err.message || "Failed to delete workspace");
+      setShowDeleteModal(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -107,8 +138,22 @@ const Conferences = () => {
         {/* GRID LISTING */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {conferences.map((conf) => (
-            <div key={conf._id} className="bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-200 p-6 sm:p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-              <div className="flex items-center gap-4 mb-6">
+            <div key={conf._id} className="bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-200 p-6 sm:p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative">
+              
+              {/* Delete Button */}
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedConferenceToDelete(conf);
+                  setShowDeleteModal(true);
+                }}
+                className="absolute top-6 right-6 p-2 text-slate-450 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-150"
+                title="Delete Workspace"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-4 mb-6 pr-6">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl group-hover:bg-blue-50 transition-colors">🌐</div>
                 <div className="min-w-0 flex-grow">
                   <h3 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight truncate">{conf.title || conf.name}</h3>
@@ -125,6 +170,59 @@ const Conferences = () => {
           ))}
         </div>
       </div>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && selectedConferenceToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div 
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+            onClick={() => {
+              if (!isDeleting) {
+                setShowDeleteModal(false);
+                setSelectedConferenceToDelete(null);
+              }
+            }}
+          />
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-md w-full relative z-10 shadow-2xl text-slate-800 font-sans">
+            <h3 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight flex items-center gap-2">
+              ⚠️ Delete Workspace
+            </h3>
+            <p className="text-sm text-slate-500 mt-4 leading-relaxed font-semibold">
+              Are you sure you want to permanently delete the workspace for <strong className="text-slate-900">{selectedConferenceToDelete.title || selectedConferenceToDelete.name}</strong>?
+            </p>
+            <div className="bg-rose-50 border border-rose-100/50 rounded-2xl p-4 mt-4 text-xs text-rose-700 leading-relaxed font-bold">
+              Warning: This will permanently delete the event profile, all registered participants ({selectedConferenceToDelete.delegates || 0}), and all scanning/printing history logs. This action cannot be undone.
+            </div>
+            
+            <div className="flex gap-4 mt-6">
+              <button
+                disabled={isDeleting}
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedConferenceToDelete(null);
+                }}
+                className="w-1/2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 rounded-xl py-3 text-sm font-bold transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isDeleting}
+                onClick={handleDelete}
+                className="w-1/2 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-450 text-white rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-rose-600/10"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Yes, Delete</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
