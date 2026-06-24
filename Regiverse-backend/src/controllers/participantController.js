@@ -129,19 +129,22 @@ const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
     }
   }
   // ----------------------------------------
-
+  const escapeRegExp = (string) => string ? string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") : "";
   const conditions = [];
 
   // 1. If structured attributes were successfully parsed:
   if (regIdFromQR) {
-    conditions.push({ regId: { $regex: new RegExp(`^\\s*${regIdFromQR}\\s*$`, "i") } });
-    conditions.push({ regId: { $regex: new RegExp(regIdFromQR + "\\s*$", "i") } });
+    const escapedRegId = escapeRegExp(regIdFromQR);
+    conditions.push({ regId: { $regex: new RegExp(`^\\s*${escapedRegId}\\s*$`, "i") } });
+    conditions.push({ regId: { $regex: new RegExp(escapedRegId + "\\s*$", "i") } });
   }
   if (nameFromQR) {
-    conditions.push({ name: { $regex: new RegExp(`^\\s*${nameFromQR}\\s*$`, "i") } });
+    const escapedName = escapeRegExp(nameFromQR);
+    conditions.push({ name: { $regex: new RegExp(`^\\s*${escapedName}\\s*$`, "i") } });
   }
   if (emailFromQR) {
-    conditions.push({ email: { $regex: new RegExp(`^\\s*${emailFromQR}\\s*$`, "i") } });
+    const escapedEmail = escapeRegExp(emailFromQR);
+    conditions.push({ email: { $regex: new RegExp(`^\\s*${escapedEmail}\\s*$`, "i") } });
   }
   if (phoneFromQR) {
     conditions.push({ phone: phoneFromQR });
@@ -149,12 +152,13 @@ const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
 
   // 2. Also match against raw identifier as fallback (cleaning common prefix labels)
   if (safeIdentifier) {
+    const escapedCleanRaw = escapeRegExp(cleanRaw);
     conditions.push({ phone: cleanRaw });
-    conditions.push({ email: { $regex: new RegExp(`^\\s*${cleanRaw}\\s*$`, "i") } });
-    conditions.push({ qrCode: { $regex: new RegExp(`^\\s*${cleanRaw}\\s*$`, "i") } });
-    conditions.push({ regId: { $regex: new RegExp(`^\\s*${cleanRaw}\\s*$`, "i") } });
-    conditions.push({ regId: { $regex: new RegExp(cleanRaw + "\\s*$", "i") } });
-    conditions.push({ name: { $regex: new RegExp(`^\\s*${cleanRaw}\\s*$`, "i") } });
+    conditions.push({ email: { $regex: new RegExp(`^\\s*${escapedCleanRaw}\\s*$`, "i") } });
+    conditions.push({ qrCode: { $regex: new RegExp(`^\\s*${escapedCleanRaw}\\s*$`, "i") } });
+    conditions.push({ regId: { $regex: new RegExp(`^\\s*${escapedCleanRaw}\\s*$`, "i") } });
+    conditions.push({ regId: { $regex: new RegExp(escapedCleanRaw + "\\s*$", "i") } });
+    conditions.push({ name: { $regex: new RegExp(`^\\s*${escapedCleanRaw}\\s*$`, "i") } });
   }
 
   if (mongoose.Types.ObjectId.isValid(safeIdentifier)) {

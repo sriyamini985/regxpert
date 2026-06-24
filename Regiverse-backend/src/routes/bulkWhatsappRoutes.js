@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import Participant from "../models/Participant.js";
 import Conference from "../models/Conference.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -21,7 +22,7 @@ function formatPhoneForMeta(phone) {
   return cleaned;
 }
 
-router.post("/:conferenceId/send", async (req, res) => {
+router.post("/:conferenceId/send", requireAuth, async (req, res) => {
   try {
     const { message, participantIds } = req.body;
     const param = req.params.conferenceId?.trim();

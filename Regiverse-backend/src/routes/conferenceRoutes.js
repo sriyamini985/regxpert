@@ -8,44 +8,59 @@ import { importExcel } from "../controllers/conferenceController.js";
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
+import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
+
 // 1. Excel Batch Roster Upload Route
-router.post("/import-excel", upload.single("file"), importExcel);
+router.post("/import-excel", requireAuth, requireRole(["admin"]), upload.single("file"), importExcel);
 
 // 2. GET ALL CONFERENCES (with dynamic delegate count calculation)
+// Public route required for staff login dropdown selection
 router.get("/", async (req, res) => {
   try {
-    const conferences = await Conference.find().sort({ createdAt: -1 });
-
-    const formatted = await Promise.all(
-      conferences.map(async (c) => {
-        const conferenceName = c.name || c.title || "";
-        const delegates = await Participant.countDocuments({
-          $or: [
-            { conferenceId: c._id.toString() },
-            { conferenceName: conferenceName },
+    const listWithCounts = await Conference.aggregate([
+      {
+        $lookup: {
+          from: "participants",
+          let: { confId: "$_id", confName: "$name" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ["$conferenceId", { $toString: "$$confId" }] },
+                    { $eq: ["$conferenceName", "$$confName" ] }
+                  ]
+                }
+              }
+            }
           ],
-        });
+          as: "delegatesList"
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          title: "$name",
+          slug: 1,
+          isActive: 1,
+          createdAt: 1,
+          delegates: { $size: "$delegatesList" }
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      }
+    ]);
 
-        return {
-          _id: c._id,
-          name: conferenceName,
-          title: conferenceName,
-          slug: c.slug,
-          delegates,
-          isActive: c.isActive,
-          createdAt: c.createdAt,
-        };
-      })
-    );
-
-    return res.status(200).json(formatted);
+    return res.status(200).json(listWithCounts);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
 
 // 3. CREATE A NEW CONFERENCE
-router.post("/", async (req, res) => {
+router.post("/", requireAuth, requireRole(["admin"]), async (req, res) => {
   try {
     const { title, name, slug } = req.body;
     const newConference = await Conference.create({
@@ -60,7 +75,7 @@ router.post("/", async (req, res) => {
 });
 
 // 4. TOGGLE WORKSPACE ACTIVE STATUS
-router.patch("/:id/activate", async (req, res) => {
+router.patch("/:id/activate", requireAuth, requireRole(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;
     const conference = await Conference.findById(id);
@@ -76,7 +91,7 @@ router.patch("/:id/activate", async (req, res) => {
 });
 
 // 5. DELETE A CONFERENCE (and all its associated participants/shared data)
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAuth, requireRole(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;
     const conference = await Conference.findById(id);

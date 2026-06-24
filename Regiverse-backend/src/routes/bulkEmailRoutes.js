@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import Participant from "../models/Participant.js";
 import Conference from "../models/Conference.js";
 import fs from "fs/promises";
+import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -72,7 +73,7 @@ router.get("/conference/:conferenceId/banner", async (req, res) => {
 /* ==========================================================
    POST ENDPOINT: SEND BULK EMAILS VIA BREVO TRANSACTIONAL HTTP API
    ========================================================== */
-router.post("/:conferenceId/send-emails", async (req, res) => {
+router.post("/:conferenceId/send-emails", requireAuth, async (req, res) => {
   try {
     const { subject, message, bannerImage, participantIds } = req.body;
     const param = req.params.conferenceId?.trim();

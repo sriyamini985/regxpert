@@ -1,5 +1,6 @@
 import User from "../models/user.js";
 import bcryptjs from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 // @desc    Authenticate User
 // @route   POST /api/auth/login
@@ -24,8 +25,15 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, error: "Invalid Credentials" });
     }
 
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || "fallback_default_jwt_secret_key_123456",
+      { expiresIn: "7d" }
+    );
+
     res.json({
       success: true,
+      token,
       user: {
         id: user._id,
         name: user.name,

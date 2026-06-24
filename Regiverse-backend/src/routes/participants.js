@@ -1,5 +1,8 @@
 import express from "express";
 import mongoose from "mongoose";
+import dns from "dns";
+import { promisify } from "util";
+import { URL } from "url";
 import Participant from "../models/Participant.js";
 import Conference from "../models/Conference.js";
 import { 
@@ -16,8 +19,53 @@ import {
   broadcastParticipantUpdated,
   broadcastParticipantDeleted,
 } from "../socket.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
+
+const dnsLookup = promisify(dns.lookup);
+
+const isSafeUrl = async (urlStr) => {
+  try {
+    const parsedUrl = new URL(urlStr);
+    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+      return false;
+    }
+    
+    const hostname = parsedUrl.hostname;
+    // Resolve DNS address
+    const { address } = await dnsLookup(hostname);
+    
+    // Check if the address is IPv4 or IPv6 private range
+    const parts = address.split(".").map(Number);
+    if (parts.length === 4) {
+      const [p1, p2, p3, p4] = parts;
+      // Loopback
+      if (p1 === 127) return false;
+      // Private Class A, B, C
+      if (p1 === 10) return false;
+      if (p1 === 172 && p2 >= 16 && p2 <= 31) return false;
+      if (p1 === 192 && p2 === 168) return false;
+      // Link-local
+      if (p1 === 169 && p2 === 254) return false;
+      // Multicast / Broadcast / Unspecified
+      if (p1 === 0 || p1 >= 224) return false;
+      
+      return true;
+    }
+    
+    // IPv6 checks
+    if (address === "::1" || address === "::") return false;
+    if (address.startsWith("fe80:") || address.startsWith("fc00:") || address.startsWith("fd00:")) return false;
+    
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
 const router = express.Router();
+
+// Apply authentication middleware to protect all participant operations
+router.use(requireAuth);
 
 // 0. Image CORS Proxy Route
 router.get("/proxy-image", async (req, res) => {
@@ -28,6 +76,12 @@ router.get("/proxy-image", async (req, res) => {
     }
 
     const decodedUrl = decodeURIComponent(url);
+
+    // SSRF Check: block private or internal IPs
+    const safe = await isSafeUrl(decodedUrl);
+    if (!safe) {
+      return res.status(403).send("Access denied. Remote URL is in a private or disallowed address space.");
+    }
 
     // Fetch the image from the remote URL with a 4-second timeout
     const controller = new AbortController();
@@ -151,6 +205,7 @@ router.get("/", async (req, res) => {
     }
 
     const safeSearch = identifier.trim();
+    const escapedSearch = safeSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const query = {
       $or: [
@@ -158,9 +213,9 @@ router.get("/", async (req, res) => {
         { phone: safeSearch },
         { email: safeSearch },
         { qrCode: safeSearch },
-        { name: { $regex: safeSearch, $options: "i" } }, 
-        { phone: { $regex: safeSearch, $options: "i" } }, 
-        { regId: { $regex: safeSearch, $options: "i" } }
+        { name: { $regex: "^" + escapedSearch, $options: "i" } }, 
+        { phone: { $regex: "^" + escapedSearch, $options: "i" } }, 
+        { regId: { $regex: "^" + escapedSearch, $options: "i" } }
       ]
     };
 

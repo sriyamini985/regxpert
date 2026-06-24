@@ -17,13 +17,24 @@ import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config({ path: path.resolve("./.env") });
 dns.setDefaultResultOrder("ipv4first");
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const app = express();
 connectDB();
 
-app.use(cors({ origin: "*", credentials: true }));
-app.use(express.json({ limit: "50mb" }));
+const allowedOrigins = process.env.FRONTEND_URL 
+  ? [process.env.FRONTEND_URL, "http://localhost:5172", "http://localhost:5173"] 
+  : ["http://localhost:5172", "http://localhost:5173", "http://localhost:3000"];
+
+app.use(cors({ 
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true 
+}));
+app.use(express.json({ limit: "2mb" }));
 app.use("/uploads", express.static(path.resolve("./uploads")));
 
 app.get("/api/health", (req, res) => {

@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }: any) => {
       if (response.ok && data.success) {
         const userData = { role: data.user.role, email: data.user.email, name: data.user.name };
         localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("token", data.token);
         setUser(userData);
         return { success: true, user: userData };
       } else {
@@ -41,10 +42,9 @@ export const AuthProvider = ({ children }: any) => {
     }
   };
 
-
-
   const logout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
     setUser(null);
   };
 
