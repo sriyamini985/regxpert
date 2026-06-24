@@ -6,7 +6,7 @@ import { Mail, Lock, Eye, EyeOff, Check, Loader2, ArrowRight, ArrowLeft, Buildin
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function UserLogin() {
-  const { login, quickUserLogin, user } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
 
   // Inputs
@@ -148,14 +148,7 @@ export default function UserLogin() {
     }
   };
 
-  const handleQuickClick = () => {
-    if (!selectedSlug) {
-      alert("❌ Please select a conference / event to log in.");
-      return;
-    }
-    quickUserLogin();
-    navigate(`/u/${selectedSlug}`);
-  };
+
 
   const handleForgotSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -380,20 +373,7 @@ export default function UserLogin() {
               </button>
             </div>
 
-            {/* Developer Bypass Button */}
-            <div className="mt-8 pt-6 border-t border-slate-800/60">
-              <div className="text-center mb-3">
-                <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">
-                  Developer Sandbox Tools
-                </span>
-              </div>
-              <button
-                onClick={handleQuickClick}
-                className="w-full bg-slate-800/40 hover:bg-slate-800/70 border border-slate-800 text-slate-300 hover:text-slate-100 text-xs font-semibold py-2.5 px-4 rounded-xl transition-all duration-150 flex items-center justify-center gap-2"
-              >
-                <span>Bypass Authentication (Quick Login)</span>
-              </button>
-            </div>
+
           </>
         )}
       </div>

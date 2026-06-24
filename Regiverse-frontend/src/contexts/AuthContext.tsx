@@ -41,13 +41,7 @@ export const AuthProvider = ({ children }: any) => {
     }
   };
 
-  // ADDED: Direct Bypass Helper Function for Developer/Direct Navigation
-  const quickUserLogin = () => {
-    const userData = { role: "user", email: "user@gmail.com" };
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-    return { success: true };
-  };
+
 
   const logout = () => {
     localStorage.removeItem("user");
@@ -55,8 +49,7 @@ export const AuthProvider = ({ children }: any) => {
   };
 
   return (
-    // FIXED: Added quickUserLogin to the shared context state values
-    <AuthContext.Provider value={{ user, login, logout, quickUserLogin }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
