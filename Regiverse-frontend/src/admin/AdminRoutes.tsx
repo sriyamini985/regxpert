@@ -11,7 +11,7 @@ const Upload = lazy(() => import("./pages/upload"));
 const BulkEmail = lazy(() => import("./pages/BulkEmail"));
 const BulkWhatsapp = lazy(() => import("./pages/BulkWhatsapp"));
 const QRGenerator = lazy(() => import("./pages/qr-code-generator"));
-const Settings = lazy(() => import("../user/pages/settings/Settings"));
+
 
 export default function AdminRoutes() {
   return (
@@ -22,7 +22,7 @@ export default function AdminRoutes() {
           
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="conferences" element={<Conferences />} />
-          <Route path="settings" element={<Settings />} />
+
 
           <Route path="conference/:conferenceId">
             <Route index element={<ConferenceDashboard />} />

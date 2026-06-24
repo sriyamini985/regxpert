@@ -28,33 +28,45 @@ const connectDB = async (retries = 5) => {
       });
       console.log("🟢 MongoDB Connected");
       
-      // Seed default accounts if collection is empty
-      const count = await User.countDocuments();
-      if (count === 0) {
-        console.log("⏳ User collection is empty. Seeding default accounts...");
-        const hashedDefaultPassword = await bcryptjs.hash("123456", 10);
-        await User.insertMany([
-          {
-            name: "Admin User",
-            email: "admin@gmail.com",
-            password: hashedDefaultPassword,
-            role: "admin"
-          },
-          {
-            name: "Client User",
-            email: "client@gmail.com",
-            password: hashedDefaultPassword,
-            role: "client"
-          },
-          {
-            name: "Staff Operator",
-            email: "user@gmail.com",
-            password: hashedDefaultPassword,
-            role: "user"
-          }
-        ]);
-        console.log("🟢 Default accounts seeded successfully.");
+      // Seed/Ensure default accounts exist with fixed credentials
+      console.log("⏳ Checking and ensuring default roles exist...");
+      const adminPasswordHashed = await bcryptjs.hash("Regxperts@2026", 10);
+      const staffPasswordHashed = await bcryptjs.hash("staff@2026", 10);
+      const clientPasswordHashed = await bcryptjs.hash("123456", 10);
+
+      // Upsert admin user
+      await User.findOneAndUpdate(
+        { role: "admin" },
+        {
+          name: "Admin User",
+          email: "harshachinnu637@gmail.com",
+          password: adminPasswordHashed
+        },
+        { upsert: true, returnDocument: "after" }
+      );
+
+      // Upsert staff user
+      await User.findOneAndUpdate(
+        { role: "user" },
+        {
+          name: "Staff Operator",
+          email: "staff@gmail.com",
+          password: staffPasswordHashed
+        },
+        { upsert: true, returnDocument: "after" }
+      );
+
+      // Seed client if not exists
+      const clientExists = await User.findOne({ role: "client" });
+      if (!clientExists) {
+        await User.create({
+          name: "Client User",
+          email: "client@gmail.com",
+          password: clientPasswordHashed,
+          role: "client"
+        });
       }
+      console.log("🟢 Default accounts verified and updated.");
       
       return;
     } catch (err) {
