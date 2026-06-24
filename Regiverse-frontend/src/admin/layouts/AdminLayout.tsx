@@ -1,9 +1,11 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const { logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-[#F4F7FB] font-sans text-slate-800">
@@ -20,7 +22,7 @@ export default function AdminLayout() {
           </h1>
         </div>
 
-        <nav className="flex gap-8 font-bold text-sm">
+        <nav className="flex gap-8 items-center font-bold text-sm">
           <Link 
             to="/admin/conferences" 
             className={`transition-colors ${location.pathname.includes('/conferences') ? 'text-blue-600' : 'text-slate-500 hover:text-slate-900'}`}
@@ -33,6 +35,12 @@ export default function AdminLayout() {
           >
             Settings
           </Link>
+          <button 
+            onClick={logout}
+            className="text-slate-500 hover:text-rose-600 transition-colors border-l border-slate-200 pl-8 py-1.5"
+          >
+            Logout
+          </button>
         </nav>
       </header>
 
@@ -64,6 +72,15 @@ export default function AdminLayout() {
           >
             Settings
           </Link>
+          <button
+            onClick={() => {
+              setMenuOpen(false);
+              logout();
+            }}
+            className="w-full text-left py-3 px-4 bg-rose-50 text-rose-600 rounded-xl font-bold transition-all"
+          >
+            Logout
+          </button>
         </div>
       )}
 

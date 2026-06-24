@@ -160,14 +160,21 @@ export default function UserLayout() {
         </div>
 
         {/* User Session Footer */}
-        <div className="p-4 border-t border-slate-900 bg-slate-950 flex items-center">
-          <div className="truncate">
+        <div className="p-4 border-t border-slate-900 bg-slate-950 flex items-center justify-between gap-2">
+          <div className="truncate flex-1">
             <p className="text-xs font-semibold truncate text-slate-300">{user?.email || "Operator Station"}</p>
             <p className="text-[9px] text-emerald-400 flex items-center gap-1 font-bold mt-0.5 uppercase tracking-wider">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
               Online
             </p>
           </div>
+          <button 
+            onClick={logout}
+            className="p-2 text-slate-550 hover:text-rose-400 hover:bg-slate-900 rounded-xl transition-all duration-150 shrink-0"
+            title="Log Out Session"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </aside>
 
@@ -208,8 +215,7 @@ export default function UserLayout() {
           { name: "Dashboard", path: `/u/${conferenceSlug}`, icon: LayoutDashboard },
           { name: "Scan Hub", path: `/u/${conferenceSlug}/scan-center`, icon: Camera },
           { name: "Participants", path: `/u/${conferenceSlug}/RegisteredList`, icon: Users },
-          { name: "Reports", path: `/u/${conferenceSlug}/admin-dashboard`, icon: BarChart3 },
-          { name: "Settings", path: `/u/${conferenceSlug}/settings`, icon: SettingsIcon },
+          { name: "Reports", path: `/u/${conferenceSlug}/admin-dashboard`, icon: BarChart3 }
         ].map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -226,6 +232,13 @@ export default function UserLayout() {
             </Link>
           );
         })}
+        <button
+          onClick={logout}
+          className="flex flex-col items-center justify-center gap-1 flex-1 h-full px-1 py-1.5 text-slate-450 hover:text-rose-450 transition-all duration-150"
+        >
+          <LogOut className="w-5 h-5 text-slate-400 hover:text-rose-400" />
+          <span className="text-[9px] tracking-tight">Logout</span>
+        </button>
       </nav>
     </div>
   );
