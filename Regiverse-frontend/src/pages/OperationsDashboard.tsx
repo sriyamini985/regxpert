@@ -6,16 +6,6 @@ export default function OperationsDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // If logged in as admin, redirect to admin conferences list
-  if (user && user.role === "admin") {
-    return <Navigate to="/admin/conferences" replace />;
-  }
-
-  // If logged in as user (staff operator), redirect to workspace selection
-  if (user && user.role === "user") {
-    return <Navigate to="/staff" replace />;
-  }
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6 relative overflow-hidden font-sans">
       {/* Background ambient glows */}
@@ -55,7 +45,7 @@ export default function OperationsDashboard() {
             </div>
             
             <button
-              onClick={() => navigate("/admin-login")}
+              onClick={() => navigate(user && user.role === "admin" ? "/admin/conferences" : "/admin-login")}
               className="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] transition-all text-white py-3.5 rounded-2xl font-bold shadow-lg shadow-blue-600/10 hover:shadow-blue-600/25 flex items-center justify-center gap-2"
             >
               Enter Admin Panel
