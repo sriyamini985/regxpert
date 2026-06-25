@@ -207,8 +207,10 @@ router.get("/", async (req, res) => {
     const safeSearch = identifier.trim();
     const escapedSearch = safeSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+    // Performance Optimization: For single-character queries, only check exact indexed fields.
+    // Avoid running regex prefix scans on name/phone/regId for single characters.
     const query = {
-      $or: [
+      $or: safeSearch.length >= 2 ? [
         { regId: safeSearch },
         { phone: safeSearch },
         { email: safeSearch },
@@ -216,6 +218,11 @@ router.get("/", async (req, res) => {
         { name: { $regex: "^" + escapedSearch, $options: "i" } }, 
         { phone: { $regex: "^" + escapedSearch, $options: "i" } }, 
         { regId: { $regex: "^" + escapedSearch, $options: "i" } }
+      ] : [
+        { regId: safeSearch },
+        { phone: safeSearch },
+        { email: safeSearch },
+        { qrCode: safeSearch }
       ]
     };
 

@@ -335,7 +335,6 @@ const CheckInStation = () => {
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 placeholder="Search by name, phone, or Reg ID..."
                 className="flex-1 h-12 px-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-base md:text-sm"
-                disabled={isLoading}
               />
               <button
                 onClick={handleSearch}

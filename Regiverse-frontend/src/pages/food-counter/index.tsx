@@ -401,7 +401,6 @@ const FoodCounter = () => {
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 placeholder="Search by name, phone, or Reg ID..."
                 className="flex-1 px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400"
-                disabled={isSearching}
               />
               <button
                 onClick={handleSearch}
