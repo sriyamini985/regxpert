@@ -132,6 +132,30 @@ const participantSchema = new mongoose.Schema(
       default: [],
     },
 
+    checkInTime: {
+      type: Date,
+    },
+
+    kitbagCollectedTime: {
+      type: Date,
+    },
+
+    certificateGivenTime: {
+      type: Date,
+    },
+
+    foodScanTimes: {
+      type: Map,
+      of: Date,
+      default: {},
+    },
+
+    workshopScanTimes: {
+      type: Map,
+      of: Date,
+      default: {},
+    },
+
     /* =========================
        BLOCK ACCESS
     ========================= */

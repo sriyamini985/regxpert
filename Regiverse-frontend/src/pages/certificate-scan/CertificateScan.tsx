@@ -189,7 +189,7 @@ const CertificateScan: React.FC = () => {
       if (res.status === 403) {
         setScanResult({ type: "error", message: `🚫 ${data.msg}`, user: data.user });
       } else if (res.status === 409) {
-        setScanResult({ type: "warning", message: `⚠️ Already Issued: ${data.msg}`, user: data.user });
+        setScanResult({ type: "warning", message: `⚠️ ${data.msg}`, user: data.user });
       } else if (!res.ok) {
         setScanResult({ type: "error", message: data.msg || "Participant not found." });
       } else {

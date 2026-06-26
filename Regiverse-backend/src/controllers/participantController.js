@@ -277,7 +277,17 @@ export const scanQR = async (req, res) => {
 
     if (!user) return res.status(404).json({ msg: "Participant not found" });
 
+    if (user.isCheckedIn) {
+      const scanDate = user.checkInTime ? new Date(user.checkInTime) : new Date(user.updatedAt);
+      return res.status(409).json({
+        msg: `${user.name} has already checked in. (First checked in on ${scanDate.toLocaleString()})`,
+        alreadyCheckedIn: true,
+        user
+      });
+    }
+
     user.isCheckedIn = true;
+    user.checkInTime = new Date();
     await user.save();
     
     broadcastParticipantUpdated(user);
@@ -320,22 +330,30 @@ export const verifyAndScan = async (req, res) => {
 
     // Check if already collected (Duplicate scanning warning)
     if (isKitbag && user.kitbagCollected) {
+      const scanDate = user.kitbagCollectedTime ? new Date(user.kitbagCollectedTime) : new Date(user.updatedAt);
       return res.status(409).json({
-        msg: "Kitbag has already been collected by this participant.",
+        msg: `Kitbag has already been collected by this participant. (Collected on ${scanDate.toLocaleString()})`,
         alreadyScanned: true,
         user
       });
     }
     if (isCertificate && user.certificateGiven) {
+      const scanDate = user.certificateGivenTime ? new Date(user.certificateGivenTime) : new Date(user.updatedAt);
       return res.status(409).json({
-        msg: "Certificate has already been issued to this participant.",
+        msg: `Certificate has already been issued to this participant. (Issued on ${scanDate.toLocaleString()})`,
         alreadyScanned: true,
         user
       });
     }
 
-    if (isKitbag) user.kitbagCollected = true;
-    if (isCertificate) user.certificateGiven = true;
+    if (isKitbag) {
+      user.kitbagCollected = true;
+      user.kitbagCollectedTime = new Date();
+    }
+    if (isCertificate) {
+      user.certificateGiven = true;
+      user.certificateGivenTime = new Date();
+    }
 
     await user.save();
     broadcastParticipantUpdated(user);
@@ -369,8 +387,10 @@ export const scanFood = async (req, res) => {
 
     // Check if already collected
     if (user.foodLogs && user.foodLogs.get(mealType)) {
+      const scanTime = user.foodScanTimes ? user.foodScanTimes.get(mealType) : null;
+      const scanDate = scanTime ? new Date(scanTime) : new Date(user.updatedAt);
       return res.status(409).json({
-        msg: `Already collected ${meal} on Day ${day}.`,
+        msg: `Already collected ${meal} on Day ${day}. (Collected on ${scanDate.toLocaleString()})`,
         alreadyScanned: true,
         user
       });
@@ -381,6 +401,13 @@ export const scanFood = async (req, res) => {
     }
     user.foodLogs.set(mealType, true);
     user.markModified("foodLogs");
+
+    if (!user.foodScanTimes) {
+      user.foodScanTimes = new Map();
+    }
+    user.foodScanTimes.set(mealType, new Date());
+    user.markModified("foodScanTimes");
+
     await user.save();
 
     broadcastParticipantUpdated(user);
@@ -399,10 +426,16 @@ export const checkInParticipant = async (req, res) => {
 
     if (!user) return res.status(404).json({ msg: "Participant not found" });
     if (user.isCheckedIn) {
-      return res.status(409).json({ msg: `${user.name} has already checked in.`, alreadyCheckedIn: true, user });
+      const scanDate = user.checkInTime ? new Date(user.checkInTime) : new Date(user.updatedAt);
+      return res.status(409).json({
+        msg: `${user.name} has already checked in. (First checked in on ${scanDate.toLocaleString()})`,
+        alreadyCheckedIn: true,
+        user
+      });
     }
 
     user.isCheckedIn = true;
+    user.checkInTime = new Date();
     await user.save();
 
     broadcastParticipantUpdated(user);
@@ -480,14 +513,22 @@ export const scanWorkshop = async (req, res) => {
     }
 
     if (user.workshopScans && user.workshopScans.includes(workshop)) {
+      const scanTime = user.workshopScanTimes ? user.workshopScanTimes.get(workshop) : null;
+      const scanDate = scanTime ? new Date(scanTime) : new Date(user.updatedAt);
       return res.status(409).json({
-        msg: `Already attended Workshop ${workshopNum}.`,
+        msg: `Already attended Workshop ${workshopNum}. (Checked in on ${scanDate.toLocaleString()})`,
         alreadyScanned: true,
         user
       });
     }
 
     user.workshopScans.push(workshop);
+    if (!user.workshopScanTimes) {
+      user.workshopScanTimes = new Map();
+    }
+    user.workshopScanTimes.set(workshop, new Date());
+    user.markModified("workshopScanTimes");
+
     await user.save();
     
     broadcastParticipantUpdated(user);

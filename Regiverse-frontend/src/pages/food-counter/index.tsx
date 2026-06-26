@@ -155,7 +155,7 @@ const FoodCounter = () => {
       if (res.status === 403) {
         setScanResult({ type: "error", message: `🚫 Access Denied: ${data.msg}`, user: data.user });
       } else if (res.status === 409) {
-        setScanResult({ type: "error", message: "❌ Meal Already Claimed", user: data.user });
+        setScanResult({ type: "error", message: `❌ ${data.msg || "Meal Already Claimed"}`, user: data.user });
         
         // Update local search result status if present
         if (data.user) {
