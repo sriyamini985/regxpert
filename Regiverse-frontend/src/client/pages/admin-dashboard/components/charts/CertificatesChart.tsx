@@ -2,7 +2,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 const COLORS = ["#f59e0b", "#3b82f6"];
 
-const CertificatesChart = ({ data }) => {
+const CertificatesChart = ({ data }: { data: { issued: number; pending: number } }) => {
   const chartData = [
     { name: "Issued", value: data.issued },
     { name: "Pending", value: data.pending }

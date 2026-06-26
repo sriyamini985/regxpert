@@ -24,6 +24,7 @@ interface BadgePayload {
   participantId?: string;
   operatorEmail?: string;
   nextBadgePayload?: any;
+  _id?: string;
 }
 
 interface RootPayload {

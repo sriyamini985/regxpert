@@ -23,6 +23,7 @@ type Participant = {
   blockWorkshop1: boolean; blockWorkshop2: boolean; blockWorkshop3: boolean;
   blockWorkshop4: boolean; blockWorkshop5: boolean;
   dynamicData?: Record<string, any>;
+  conferenceId?: string;
 };
 
 const defaultCategories = ["Delegates", "PG Delegates", "Accompanying Person", "Chairman", "Vice President"];

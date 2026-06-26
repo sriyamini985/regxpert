@@ -2,7 +2,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 const COLORS = ["#ef4444", "#3b82f6", "#f97316"];
 
-const MealsPieChart = ({ data }) => {
+const MealsPieChart = ({ data }: { data: { breakfast: number; lunch: number; dinner: number } }) => {
   const chartData = [
     { name: "Breakfast", value: data.breakfast },
     { name: "Lunch", value: data.lunch },

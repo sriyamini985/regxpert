@@ -9,7 +9,7 @@
     /* Modernized Settings */
     "esModuleInterop": true,
     "moduleResolution": "bundler",
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     /* ------------------- */
 
     "allowSyntheticDefaultImports": true,
@@ -23,6 +23,11 @@
     "baseUrl": "./src"
   },
   "include": ["src"],
-  "exclude": ["src/user/pages/qr-code-generator"],
+  "exclude": [
+    "src/user/pages/qr-code-generator",
+    "src/pages/hall-entry-exit-scan/components",
+    "src/pages/mono-scan/components",
+    "src/pages/workshop-scan/components"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

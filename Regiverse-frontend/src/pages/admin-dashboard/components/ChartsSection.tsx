@@ -3,7 +3,7 @@ import MealsPieChart from "./charts/MealsPieChart";
 import KitBagChart from "./charts/KitBagChart";
 import CertificatesChart from "./charts/CertificatesChart";
 
-const ChartsSection = ({ data }) => {
+const ChartsSection = ({ data }: { data: any }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       

@@ -1,5 +1,5 @@
 import React from 'react';
-import Navbar from './components/Navbar';
+import Navbar from '../../components/Navbar';
 import HeroBanner from './home/components/HeroBanner';
 import FeaturedEventsGrid from './home/components/FeaturedEventsGrid';
 import CategoryFilters from './home/components/CategoryFilters';

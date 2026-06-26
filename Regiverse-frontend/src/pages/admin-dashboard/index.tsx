@@ -7,7 +7,7 @@ import ChartsSection from "./components/ChartsSection";
 const Dashboard = () => {
   const [selectedDay, setSelectedDay] = useState("Day 1");
 
-  const allDaysData = {
+  const allDaysData: Record<string, any> = {
   "Day 1": {
     badges: { printed: 52, issued: 45 },
     meals: { breakfast: 30, lunch: 50, dinner: 80 },
