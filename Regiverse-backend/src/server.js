@@ -21,9 +21,27 @@ dns.setDefaultResultOrder("ipv4first");
 const app = express();
 connectDB();
 
-const allowedOrigins = process.env.FRONTEND_URL 
-  ? [process.env.FRONTEND_URL, "http://localhost:5172", "http://localhost:5173"] 
-  : ["http://localhost:5172", "http://localhost:5173", "http://localhost:3000"];
+const allowedOrigins = [
+  "http://localhost:5172",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://regxperts.com",
+  "https://www.regxperts.com"
+];
+
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+  try {
+    const parsed = new URL(process.env.FRONTEND_URL);
+    if (parsed.hostname.startsWith("www.")) {
+      allowedOrigins.push(`${parsed.protocol}//${parsed.hostname.substring(4)}`);
+    } else {
+      allowedOrigins.push(`${parsed.protocol}//www.${parsed.hostname}`);
+    }
+  } catch (e) {
+    // ignore parsing errors
+  }
+}
 
 app.use(cors({ 
   origin: (origin, callback) => {
