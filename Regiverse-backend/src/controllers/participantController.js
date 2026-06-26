@@ -280,7 +280,7 @@ export const scanQR = async (req, res) => {
     if (user.isCheckedIn) {
       const scanDate = user.checkInTime ? new Date(user.checkInTime) : new Date(user.updatedAt);
       return res.status(409).json({
-        msg: `${user.name} has already checked in. (First checked in on ${scanDate.toLocaleString()})`,
+        msg: `${user.name} has already checked in. (First checked in on ${scanDate.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })})`,
         alreadyCheckedIn: true,
         user
       });
@@ -332,7 +332,7 @@ export const verifyAndScan = async (req, res) => {
     if (isKitbag && user.kitbagCollected) {
       const scanDate = user.kitbagCollectedTime ? new Date(user.kitbagCollectedTime) : new Date(user.updatedAt);
       return res.status(409).json({
-        msg: `Kitbag has already been collected by this participant. (Collected on ${scanDate.toLocaleString()})`,
+        msg: `Kitbag has already been collected by this participant. (Collected on ${scanDate.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })})`,
         alreadyScanned: true,
         user
       });
@@ -340,7 +340,7 @@ export const verifyAndScan = async (req, res) => {
     if (isCertificate && user.certificateGiven) {
       const scanDate = user.certificateGivenTime ? new Date(user.certificateGivenTime) : new Date(user.updatedAt);
       return res.status(409).json({
-        msg: `Certificate has already been issued to this participant. (Issued on ${scanDate.toLocaleString()})`,
+        msg: `Certificate has already been issued to this participant. (Issued on ${scanDate.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })})`,
         alreadyScanned: true,
         user
       });
@@ -390,7 +390,7 @@ export const scanFood = async (req, res) => {
       const scanTime = user.foodScanTimes ? user.foodScanTimes.get(mealType) : null;
       const scanDate = scanTime ? new Date(scanTime) : new Date(user.updatedAt);
       return res.status(409).json({
-        msg: `Already collected ${meal} on Day ${day}. (Collected on ${scanDate.toLocaleString()})`,
+        msg: `Already collected ${meal} on Day ${day}. (Collected on ${scanDate.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })})`,
         alreadyScanned: true,
         user
       });
@@ -428,7 +428,7 @@ export const checkInParticipant = async (req, res) => {
     if (user.isCheckedIn) {
       const scanDate = user.checkInTime ? new Date(user.checkInTime) : new Date(user.updatedAt);
       return res.status(409).json({
-        msg: `${user.name} has already checked in. (First checked in on ${scanDate.toLocaleString()})`,
+        msg: `${user.name} has already checked in. (First checked in on ${scanDate.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })})`,
         alreadyCheckedIn: true,
         user
       });
@@ -516,7 +516,7 @@ export const scanWorkshop = async (req, res) => {
       const scanTime = user.workshopScanTimes ? user.workshopScanTimes.get(workshop) : null;
       const scanDate = scanTime ? new Date(scanTime) : new Date(user.updatedAt);
       return res.status(409).json({
-        msg: `Already attended Workshop ${workshopNum}. (Checked in on ${scanDate.toLocaleString()})`,
+        msg: `Already attended Workshop ${workshopNum}. (Checked in on ${scanDate.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })})`,
         alreadyScanned: true,
         user
       });
