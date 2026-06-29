@@ -1437,24 +1437,18 @@ const BadgePrint = () => {
                                   >
                                     
                                     {/* Photo Placeholder */}
-                                    {printPhoto && (
-                                      <div className="border border-slate-400 flex items-center justify-center overflow-hidden relative" 
+                                    {printPhoto && photoUrl && (
+                                      <div className="border border-slate-400 flex items-center justify-center overflow-hidden relative animate-fade-in" 
                                         style={{ 
                                           width: `${dim.previewPhotoWidthPx}px`,
                                           height: `${dim.previewPhotoHeightPx}px`
                                         }}
                                       >
-                                        {photoUrl ? (
-                                          <img 
-                                            src={photoUrl} 
-                                            alt="Delegate" 
-                                            className={`w-full h-full ${photoFit === "contain" ? "object-contain bg-slate-100" : "object-cover object-top"}`} 
-                                          />
-                                        ) : (
-                                          <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
-                                          </svg>
-                                        )}
+                                        <img 
+                                          src={photoUrl} 
+                                          alt="Delegate" 
+                                          className={`w-full h-full ${photoFit === "contain" ? "object-contain bg-slate-100" : "object-cover object-top"}`} 
+                                        />
                                       </div>
                                     )}
 

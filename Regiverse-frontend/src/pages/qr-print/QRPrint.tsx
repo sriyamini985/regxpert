@@ -1413,7 +1413,7 @@ const QRPrint = () => {
                     gap: `calc(${dim.gap} * 0.6)`
                   }}>
                     {/* 1. Portrait Photo Frame with viewfinder corners */}
-                    {showPhoto && (
+                    {showPhoto && photoUrl && (
                       <div style={{
                         width: `${imgWidth}mm`,
                         height: `${Math.round(imgWidth * (dim.photoHeightMm / dim.photoWidthMm))}mm`,
@@ -1423,26 +1423,19 @@ const QRPrint = () => {
                         justifyContent: "center",
                         overflow: "hidden"
                       }}>
-
-                        {photoUrl ? (
-                          <img 
-                            src={getBadgePhotoUrl(photoUrl, base64Photos)} 
-                            alt="Participant" 
-                            crossOrigin={getBadgePhotoUrl(photoUrl, base64Photos).startsWith("data:") ? undefined : "anonymous"}
-                            style={{ 
-                              width: "100%", 
-                              height: "100%", 
-                              objectFit: photoFit === "contain" ? "contain" : "cover", 
-                              objectPosition: photoFit === "contain" ? "center" : "top", 
-                              borderRadius: "2px",
-                              backgroundColor: photoFit === "contain" ? "#f8fafc" : "transparent"
-                            }} 
-                          />
-                        ) : (
-                          <svg style={{ width: "9mm", height: "9mm", color: "#cbd5e1" }} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
-                          </svg>
-                        )}
+                        <img 
+                          src={getBadgePhotoUrl(photoUrl, base64Photos)} 
+                          alt="Participant" 
+                          crossOrigin={getBadgePhotoUrl(photoUrl, base64Photos).startsWith("data:") ? undefined : "anonymous"}
+                          style={{ 
+                            width: "100%", 
+                            height: "100%", 
+                            objectFit: photoFit === "contain" ? "contain" : "cover", 
+                            objectPosition: photoFit === "contain" ? "center" : "top", 
+                            borderRadius: "2px",
+                            backgroundColor: photoFit === "contain" ? "#f8fafc" : "transparent"
+                          }} 
+                        />
                       </div>
                     )}
 
