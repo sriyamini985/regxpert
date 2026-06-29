@@ -59,7 +59,10 @@ export default function UserLogin() {
         const list = Array.isArray(data) ? data : [];
         setConferences(list);
         if (list.length > 0) {
-          setSelectedSlug((prev) => prev || list[0].slug);
+          setSelectedSlug((prev) => {
+            const exists = list.some((c: any) => c.slug === prev);
+            return exists ? prev : list[0].slug;
+          });
         }
       })
       .catch((err) => {
