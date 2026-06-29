@@ -64,10 +64,7 @@ const isSafeUrl = async (urlStr) => {
 
 const router = express.Router();
 
-// Apply authentication middleware to protect all participant operations
-router.use(requireAuth);
-
-// 0. Image CORS Proxy Route
+// 0. Image CORS Proxy Route (Public - needed for browser img tags to bypass CORS on print)
 router.get("/proxy-image", async (req, res) => {
   try {
     const { url } = req.query;
@@ -116,6 +113,9 @@ router.get("/proxy-image", async (req, res) => {
     return res.status(500).send(err.message);
   }
 });
+
+// Apply authentication middleware to protect all subsequent participant database operations
+router.use(requireAuth);
 
 // 1. Verify and Scan Route (Kitbag / Certificate)
 router.post("/verify-and-scan", verifyAndScan);
