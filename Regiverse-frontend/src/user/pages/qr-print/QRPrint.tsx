@@ -1305,7 +1305,7 @@ const QRPrint = () => {
                     zIndex: 1,
                     width: "80%",
                     height: "1px",
-                    background: "linear-gradient(to right, transparent, #e2e8f0, transparent)",
+                    backgroundColor: "#e2e8f0",
                     margin: "0.5mm 0"
                   }} />
 

@@ -1385,7 +1385,7 @@ const BadgePrint = () => {
                                   style={{
                                     width: "80%",
                                     height: "1px",
-                                    background: "linear-gradient(to right, transparent, #e2e8f0, transparent)",
+                                    backgroundColor: "#e2e8f0",
                                     marginTop: "2px",
                                     marginBottom: "2px"
                                   }}
