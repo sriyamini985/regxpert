@@ -213,7 +213,23 @@ const getParticipantPhoto = (p: any): string => {
 
   // Convert to string and trim
   let srcUrl = String(rawPhoto).trim();
-  if (!srcUrl) return "";
+  const lowerUrl = srcUrl.toLowerCase();
+  if (
+    !srcUrl ||
+    lowerUrl === "n/a" ||
+    lowerUrl === "na" ||
+    lowerUrl === "-" ||
+    lowerUrl === "null" ||
+    lowerUrl === "undefined" ||
+    lowerUrl === "no image" ||
+    lowerUrl === "no-image" ||
+    lowerUrl === "no photo" ||
+    lowerUrl === "no-photo" ||
+    lowerUrl === "no" ||
+    lowerUrl === "none"
+  ) {
+    return "";
+  }
 
   // If it's already a full URL, return it
   if (srcUrl.startsWith("http://") || srcUrl.startsWith("https://") || srcUrl.startsWith("data:image")) {
@@ -1469,7 +1485,7 @@ const BadgePrint = () => {
 
                                   {/* B. Center Attendee Details */}
                                   <div 
-                                    className="flex-1 flex flex-col items-center justify-center w-full px-1 box-border relative z-10 animate-fade-in"
+                                    className="flex-none flex flex-col items-center justify-center w-full px-1 box-border relative z-10 animate-fade-in"
                                     style={{ gap: `${dim.innerGapPx}px` }}
                                   >
                                     

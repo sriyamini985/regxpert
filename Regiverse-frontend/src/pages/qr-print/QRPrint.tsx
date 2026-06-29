@@ -186,7 +186,23 @@ const getParticipantPhoto = (p: any): string => {
 
   // Convert to string and trim
   let srcUrl = String(rawPhoto).trim();
-  if (!srcUrl) return "";
+  const lowerUrl = srcUrl.toLowerCase();
+  if (
+    !srcUrl ||
+    lowerUrl === "n/a" ||
+    lowerUrl === "na" ||
+    lowerUrl === "-" ||
+    lowerUrl === "null" ||
+    lowerUrl === "undefined" ||
+    lowerUrl === "no image" ||
+    lowerUrl === "no-image" ||
+    lowerUrl === "no photo" ||
+    lowerUrl === "no-photo" ||
+    lowerUrl === "no" ||
+    lowerUrl === "none"
+  ) {
+    return "";
+  }
 
   // If it's already a full URL, return it
   if (srcUrl.startsWith("http://") || srcUrl.startsWith("https://") || srcUrl.startsWith("data:image")) {
@@ -1415,8 +1431,7 @@ const QRPrint = () => {
                     width: "100%",
                     padding: "0 3.5mm",
                     boxSizing: "border-box",
-                    gap: `calc(${dim.gap} * 0.6)`,
-                    flexGrow: 1
+                    gap: `calc(${dim.gap} * 0.6)`
                   }}>
                     {/* 1. Portrait Photo Frame with viewfinder corners */}
                     {showPhoto && photoUrl && !failedImageUrls.includes(photoUrl) && (
