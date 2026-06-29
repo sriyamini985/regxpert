@@ -1325,130 +1325,26 @@ const QRPrint = () => {
 
               const templateResult = getTemplateForBadge(badge);
 
-              if (templateResult) {
-                const { template } = templateResult;
-                return (
-                  <div 
-                    key={index} 
-                    className="badge-container"
-                    style={{
-                      width: `${template.canvasWidthMm}mm`,
-                      height: `${template.canvasHeightMm}mm`,
-                      backgroundImage: template.backgroundImage ? `url(${API_URL}/${template.backgroundImage})` : "none",
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      borderRadius: "0px",
-                      border: "none",
-                      boxShadow: "none",
-                      margin: "20px auto",
-                      padding: "0px",
-                      position: "relative",
-                      overflow: "hidden"
-                    }}
-                  >
-                    {template.fields.map((field: any) => {
-                      return (
-                        <div 
-                          key={field.id}
-                          style={{
-                            position: "absolute",
-                            left: `${field.x}mm`,
-                            top: `${field.y}mm`,
-                            width: `${field.width}mm`,
-                            height: `${field.height}mm`,
-                            transform: `rotate(${field.rotation || 0}deg)`,
-                            transformOrigin: "center center",
-                            boxSizing: "border-box",
-                            backgroundColor: field.backgroundColor,
-                            borderRadius: `${field.borderRadius}px`,
-                            opacity: field.opacity,
-                            boxShadow: field.shadow,
-                            padding: field.padding,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            overflow: "hidden"
-                          }}
-                        >
-                          {field.type === "qr" ? (
-                            <div style={{
-                              backgroundColor: field.qrBgColor,
-                              border: `1px solid ${field.color}25`,
-                              padding: "0.5mm",
-                              borderRadius: "4px",
-                              width: "100%",
-                              height: "100%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              boxSizing: "border-box"
-                            }}>
-                              <QRCode 
-                                value={badgeQrCode} 
-                                size={256}
-                                fgColor={field.qrFgColor}
-                                bgColor={field.qrBgColor}
-                                level={field.qrErrorCorrection as any}
-                                style={{ width: "100%", height: "100%" }}
-                              />
-                            </div>
-                          ) : field.type === "photo" ? (
-                            <div style={{
-                              width: "100%",
-                              height: "100%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              background: "#f8fafc",
-                              border: "1px solid #e2e8f0",
-                              borderRadius: field.circular ? "50%" : "3px",
-                              overflow: "hidden"
-                            }}>
-                              {photoUrl ? (
-                                <img 
-                                  src={photoUrl} 
-                                  alt="Profile"
-                                  crossOrigin={photoUrl.startsWith("data:") ? undefined : "anonymous"}
-                                  style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: field.photoFit as any,
-                                    borderRadius: field.circular ? "50%" : "3px"
-                                  }}
-                                />
-                              ) : (
-                                <svg style={{ width: "9mm", height: "9mm", color: "#cbd5e1" }} fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
-                                </svg>
-                              )}
-                            </div>
-                          ) : (
-                            <span style={{
-                              fontSize: `${field.fontSize * 0.9}px`,
-                              fontWeight: field.fontWeight as any,
-                              fontStyle: field.fontStyle,
-                              fontFamily: field.fontFamily,
-                              color: field.color,
-                              textAlign: field.alignment as any,
-                              letterSpacing: field.letterSpacing,
-                              lineHeight: field.lineHeight,
-                              width: "100%",
-                              textTransform: "uppercase",
-                              whiteSpace: "normal",
-                              wordBreak: "break-word"
-                            }}>
-                              {getPreviewFieldValue(badge, field.type, field.label)}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              }
+              const template = templateResult?.template;
+              const bgImage = template?.backgroundImage 
+                ? `url(${API_URL}/${template.backgroundImage})` 
+                : "none";
 
               return (
-                <div key={index} className="badge-container">
+                <div 
+                  key={index} 
+                  className="badge-container"
+                  style={{
+                    width: template ? `${template.canvasWidthMm}mm` : undefined,
+                    height: template ? `${template.canvasHeightMm}mm` : undefined,
+                    backgroundImage: bgImage,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    border: template ? "none" : undefined,
+                    boxShadow: template ? "none" : undefined,
+                    borderRadius: template ? "0" : undefined
+                  }}
+                >
                   
                   {/* B. Middle Section: Attendee Profile */}
                   <div style={{
