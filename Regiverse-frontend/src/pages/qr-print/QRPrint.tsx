@@ -996,6 +996,10 @@ const QRPrint = () => {
             position: relative;
           }
 
+          .badge-print-page {
+            display: contents;
+          }
+
           @media print {
             .no-print { display: none !important; }
             
@@ -1038,10 +1042,28 @@ const QRPrint = () => {
               margin: 0 !important; 
             }
 
-            .badge-container {
-              position: relative !important;
+            .badge-print-page {
+              display: block !important;
+              page-break-after: always !important;
+              break-after: page !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
               width: ${BADGE_SIZES[badgeSize]?.widthMm || 54}mm !important;
               height: ${BADGE_SIZES[badgeSize]?.heightMm || 86}mm !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: visible !important;
+            }
+
+            .badge-print-page:last-child {
+              page-break-after: avoid !important;
+              break-after: avoid !important;
+            }
+
+            .badge-container {
+              position: relative !important;
+              width: 100% !important;
+              height: 100% !important;
               margin: 0 !important;
               padding-top: ${topSpacing}mm !important;
               padding-left: 0 !important;
@@ -1051,20 +1073,13 @@ const QRPrint = () => {
               border: none !important;
               box-shadow: none !important;
               border-radius: 0 !important;
-              page-break-after: always !important;
-              break-after: page !important;
-              page-break-inside: avoid !important;
-              break-inside: avoid !important;
               display: flex !important;
               flex-direction: column !important;
               justify-content: flex-start !important;
               align-items: center !important;
               background: white !important;
               gap: ${BADGE_SIZES[badgeSize]?.gap || "1.5mm"} !important;
-            }
-            .badge-container:last-child {
-              page-break-after: avoid !important;
-              break-after: avoid !important;
+              overflow: hidden !important;
             }
           }
         `}
@@ -1387,9 +1402,9 @@ const QRPrint = () => {
                 : null;
 
               return (
-                <div 
-                  key={index} 
-                  className="badge-container"
+                <div key={index} className="badge-print-page">
+                  <div 
+                    className="badge-container"
                   style={{
                     position: "relative",
                     overflow: "hidden",
@@ -1589,6 +1604,7 @@ const QRPrint = () => {
 
 
 
+                  </div>
                 </div>
               );
             })}
