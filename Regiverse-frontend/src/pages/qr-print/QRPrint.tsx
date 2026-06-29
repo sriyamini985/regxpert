@@ -285,6 +285,24 @@ const QRPrint = () => {
         : 20;
   });
 
+  const [regIdFontSize, setRegIdFontSize] = useState<number>(() => {
+    const saved = localStorage.getItem(`regxpert_regid_font_size_${badgeSize}`);
+    if (saved) return Number(saved);
+    return parseInt(BADGE_SIZES[badgeSize]?.fontSizeRegId || "7");
+  });
+
+  const [cityFontSize, setCityFontSize] = useState<number>(() => {
+    const saved = localStorage.getItem(`regxpert_city_font_size_${badgeSize}`);
+    if (saved) return Number(saved);
+    return parseFloat(BADGE_SIZES[badgeSize]?.fontSizeOrg || "7.5");
+  });
+
+  const [imgWidth, setImgWidth] = useState<number>(() => {
+    const saved = localStorage.getItem(`regxpert_img_width_${badgeSize}`);
+    if (saved) return Number(saved);
+    return BADGE_SIZES[badgeSize]?.photoWidthMm || 20;
+  });
+
   const [photoFit, setPhotoFit] = useState<string>(() => {
     const localVal = localStorage.getItem("regxpert_badge_photo_fit");
     if (localVal) return localVal;
@@ -371,6 +389,42 @@ const QRPrint = () => {
       localStorage.setItem(`regxpert_qr_code_size_${badgeSize}`, String(qrCodeSize));
     }
   }, [qrCodeSize, badgeSize]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`regxpert_regid_font_size_${badgeSize}`);
+    const defaultFS = parseInt(BADGE_SIZES[badgeSize]?.fontSizeRegId || "7");
+    setRegIdFontSize(saved ? Number(saved) : defaultFS);
+  }, [badgeSize]);
+
+  useEffect(() => {
+    if (regIdFontSize > 0) {
+      localStorage.setItem(`regxpert_regid_font_size_${badgeSize}`, String(regIdFontSize));
+    }
+  }, [regIdFontSize, badgeSize]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`regxpert_city_font_size_${badgeSize}`);
+    const defaultFS = parseFloat(BADGE_SIZES[badgeSize]?.fontSizeOrg || "7.5");
+    setCityFontSize(saved ? Number(saved) : defaultFS);
+  }, [badgeSize]);
+
+  useEffect(() => {
+    if (cityFontSize > 0) {
+      localStorage.setItem(`regxpert_city_font_size_${badgeSize}`, String(cityFontSize));
+    }
+  }, [cityFontSize, badgeSize]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`regxpert_img_width_${badgeSize}`);
+    const defaultFS = BADGE_SIZES[badgeSize]?.photoWidthMm || 20;
+    setImgWidth(saved ? Number(saved) : defaultFS);
+  }, [badgeSize]);
+
+  useEffect(() => {
+    if (imgWidth > 0) {
+      localStorage.setItem(`regxpert_img_width_${badgeSize}`, String(imgWidth));
+    }
+  }, [imgWidth, badgeSize]);
 
   const [isPrinted, setIsPrinted] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -938,28 +992,27 @@ const QRPrint = () => {
             <div className="bg-slate-800/50 border border-slate-800/80 rounded-2xl p-5 mb-6">
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3.5">Attendee Profile</h3>
               <div className="space-y-3.5">
-                <div>
-                  <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider">Full Name</span>
-                  <span className="text-sm font-bold text-white truncate block">{primaryBadge.name || "Unknown"}</span>
-                </div>
-                
                 <div className="grid grid-cols-2 gap-3.5">
+                  <div>
+                    <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider">Full Name</span>
+                    <span className="text-sm font-bold text-white truncate block">{primaryBadge.name || "Unknown"}</span>
+                  </div>
                   <div>
                     <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider">Reg ID</span>
                     <span className="text-xs font-mono font-bold text-blue-400 block">{primaryBadge.regId || "N/A"}</span>
                   </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3.5">
                   <div>
                     <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider">Category</span>
                     <span className="text-xs font-bold text-white truncate block">{primaryCategory || "Delegate"}</span>
                   </div>
-                </div>
-
-                {primaryBadge.state && (
                   <div>
                     <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider">Location / City</span>
-                    <span className="text-xs text-white block truncate">{primaryBadge.state}</span>
+                    <span className="text-xs text-white block truncate">{primaryBadge.state || "N/A"}</span>
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
@@ -1062,6 +1115,51 @@ const QRPrint = () => {
                   max="100"
                   value={qrCodeSize}
                   onChange={(e) => setQrCodeSize(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reg ID Font Size</label>
+                  <span className="text-xs font-bold text-blue-400 font-mono">{regIdFontSize}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="4"
+                  max="35"
+                  value={regIdFontSize}
+                  onChange={(e) => setRegIdFontSize(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">City Font Size</label>
+                  <span className="text-xs font-bold text-blue-400 font-mono">{cityFontSize}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="4"
+                  max="35"
+                  value={cityFontSize}
+                  onChange={(e) => setCityFontSize(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Photo Size (Img)</label>
+                  <span className="text-xs font-bold text-blue-400 font-mono">{imgWidth}mm</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="120"
+                  value={imgWidth}
+                  onChange={(e) => setImgWidth(Number(e.target.value))}
                   className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
                 />
               </div>
@@ -1200,8 +1298,8 @@ const QRPrint = () => {
                     {showPhoto && (
                       <div style={{
                         position: "relative",
-                        width: `${dim.photoWidthMm}mm`,
-                        height: `${dim.photoHeightMm}mm`,
+                        width: `${imgWidth}mm`,
+                        height: `${Math.round(imgWidth * (dim.photoHeightMm / dim.photoWidthMm))}mm`,
                         background: "#f8fafc",
                         border: "1px solid #e2e8f0",
                         borderRadius: "4px",
@@ -1285,7 +1383,7 @@ const QRPrint = () => {
                     {/* 4. City / Location Details */}
                     {showCity && badgeState && (
                       <p style={{
-                        fontSize: dim.fontSizeOrg,
+                        fontSize: `${cityFontSize}px`,
                         fontWeight: 600,
                         color: "#64748b",
                         margin: 0,
@@ -1352,7 +1450,7 @@ const QRPrint = () => {
                           justifyContent: "center"
                         }}>
                           <p style={{ 
-                            fontSize: dim.fontSizeRegId, 
+                            fontSize: `${regIdFontSize}px`, 
                             fontWeight: 700, 
                             color: "#475569", 
                             margin: 0,
