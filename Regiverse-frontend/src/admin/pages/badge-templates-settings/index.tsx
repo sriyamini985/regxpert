@@ -721,7 +721,9 @@ export default function BadgeTemplatesSettings() {
                 style={{
                   width: `${selectedTemplate.canvasWidthMm * 4.5}px`, // 4.5px per mm scaling
                   height: `${selectedTemplate.canvasHeightMm * 4.5}px`,
-                  backgroundImage: selectedTemplate.backgroundImage ? `url(${API_URL}/${selectedTemplate.backgroundImage})` : "none",
+                  backgroundImage: selectedTemplate.backgroundImage 
+                    ? `url(${selectedTemplate.backgroundImage.startsWith("http") ? selectedTemplate.backgroundImage : `${API_URL}/${selectedTemplate.backgroundImage}`})` 
+                    : "none",
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                   boxSizing: "border-box"
