@@ -738,7 +738,7 @@ export default function BadgeTemplatesSettings() {
                   />
                 )}
 
-
+              </div>
             </div>
           ) : (
             <div className="text-center bg-[#0f1320]/30 border border-slate-800 p-12 rounded-3xl max-w-sm">
