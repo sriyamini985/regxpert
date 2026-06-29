@@ -57,7 +57,12 @@ app.use(express.json({ limit: "2mb" }));
 app.use("/uploads", express.static(path.resolve("./uploads")));
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "healthy", timestamp: new Date() });
+  res.json({ 
+    status: "healthy", 
+    timestamp: new Date(),
+    version: "1.0.1",
+    commit: "63ce11c"
+  });
 });
 
 
