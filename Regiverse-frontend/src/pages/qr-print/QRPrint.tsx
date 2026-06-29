@@ -1361,25 +1361,43 @@ const QRPrint = () => {
 
               const template = templateResult?.template;
               const bgImageUrl = template?.backgroundImage;
-              const bgImage = bgImageUrl
-                ? `url(${base64Templates[bgImageUrl] || `${API_URL}/${bgImageUrl}`})`
-                : "none";
+              const bgImageSrc = bgImageUrl
+                ? (base64Templates[bgImageUrl] || `${API_URL}/${bgImageUrl}`)
+                : null;
 
               return (
                 <div 
                   key={index} 
                   className="badge-container"
                   style={{
+                    position: "relative",
+                    overflow: "hidden",
                     width: template ? `${template.canvasWidthMm}mm` : undefined,
                     height: template ? `${template.canvasHeightMm}mm` : undefined,
-                    backgroundImage: bgImage,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
                     border: template ? "none" : undefined,
                     boxShadow: template ? "none" : undefined,
                     borderRadius: template ? "0" : undefined
                   }}
                 >
+                  {/* Template background image — rendered as <img> for maximum print resolution */}
+                  {bgImageSrc && (
+                    <img
+                      src={bgImageSrc}
+                      alt=""
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "fill",
+                        zIndex: 0,
+                        display: "block",
+                        imageRendering: "high-quality"
+                      }}
+                    />
+                  )}
                   
                   {/* B. Middle Section: Attendee Profile */}
                   <div style={{
