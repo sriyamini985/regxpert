@@ -479,7 +479,7 @@ const ParticipantPage = () => {
           />
 
           <input
-            placeholder="Medical Council Number *"
+            placeholder="Medical Council Number"
             value={form.medicalCouncilNumber}
             onChange={(e) =>
               handleChange(
@@ -552,7 +552,7 @@ const ParticipantPage = () => {
           </div>
 
           <input
-            placeholder="Reference *"
+            placeholder="Reference"
             value={form.reference}
             onChange={(e) =>
               handleChange(
