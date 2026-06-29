@@ -27,32 +27,38 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
   "https://regxperts.com",
-  "https://www.regxperts.com"
+  "https://www.regxperts.com",
 ];
 
+// Allow any explicitly configured frontend URL
 if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL);
-  try {
-    const parsed = new URL(process.env.FRONTEND_URL);
-    if (parsed.hostname.startsWith("www.")) {
-      allowedOrigins.push(`${parsed.protocol}//${parsed.hostname.substring(4)}`);
-    } else {
-      allowedOrigins.push(`${parsed.protocol}//www.${parsed.hostname}`);
-    }
-  } catch (e) {
-    // ignore parsing errors
-  }
+  const urls = process.env.FRONTEND_URL.split(",").map(u => u.trim()).filter(Boolean);
+  urls.forEach(url => {
+    if (!allowedOrigins.includes(url)) allowedOrigins.push(url);
+  });
 }
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // allow server-to-server / curl
+  if (allowedOrigins.includes(origin)) return true;
+  // Allow all Vercel preview deployments (*.vercel.app)
+  if (origin.endsWith(".vercel.app")) return true;
+  // Allow all Render preview deployments (*.onrender.com) for internal use
+  if (origin.endsWith(".onrender.com")) return true;
+  return false;
+};
 
 app.use(cors({ 
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
+    if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
+    console.warn(`CORS blocked: ${origin}`);
     return callback(new Error("Not allowed by CORS"));
   },
   credentials: true 
 }));
+
 app.use(express.json({ limit: "2mb" }));
 app.use("/uploads", express.static(path.resolve("./uploads")));
 
