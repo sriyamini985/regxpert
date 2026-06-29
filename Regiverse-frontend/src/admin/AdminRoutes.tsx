@@ -11,6 +11,7 @@ const Upload = lazy(() => import("./pages/upload"));
 const BulkEmail = lazy(() => import("./pages/BulkEmail"));
 const BulkWhatsapp = lazy(() => import("./pages/BulkWhatsapp"));
 const QRGenerator = lazy(() => import("./pages/qr-code-generator"));
+const BadgeTemplatesSettings = lazy(() => import("./pages/badge-templates-settings"));
 
 
 export default function AdminRoutes() {
@@ -31,6 +32,7 @@ export default function AdminRoutes() {
             <Route path="registered-list" element={<RegisteredList />} />
             <Route path="bulk-email" element={<BulkEmail />} />
             <Route path="bulk-whatsapp" element={<BulkWhatsapp />} />
+            <Route path="badge-templates" element={<BadgeTemplatesSettings />} />
           </Route>
 
           <Route path="qr-generator" element={<QRGenerator />} />

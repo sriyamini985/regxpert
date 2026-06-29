@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
 import { useAuth } from "../../../contexts/AuthContext";
 import LoadingBar from "../../../components/ui/LoadingBar";
-import { ArrowLeft, Check, Search } from "lucide-react";
+import { ArrowLeft, Check, Search, AlertTriangle } from "lucide-react";
 import { API_URL } from "../../../config/api";
 
 const API = API_URL;
@@ -240,6 +240,7 @@ const BadgePrint = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [fetching, setFetching] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
 
   // Mobile Tabs and Zoom support states
   const [activeTab, setActiveTab] = useState<"roster" | "options" | "preview">("roster");
@@ -341,6 +342,37 @@ const BadgePrint = () => {
     loadParticipants();
   }, [conferenceSlug]);
 
+  const getTemplateForParticipant = (p: Participant | null) => {
+    if (!p) return null;
+    const pCategory = p.category?.trim().toLowerCase();
+    
+    // Find matching template (case insensitive)
+    const match = templates.find(t => t.category?.trim().toLowerCase() === pCategory && t.category?.trim().toLowerCase() !== "default");
+    if (match) return { template: match, isDefaultFallback: false };
+
+    // Fallback to default template
+    const defaultTemplate = templates.find(t => t.isDefault || t.category?.trim().toLowerCase() === "default");
+    if (defaultTemplate) {
+      return { template: defaultTemplate, isDefaultFallback: true };
+    }
+
+    return null;
+  };
+
+  const getPreviewFieldValue = (p: Participant, type: string, label: string) => {
+    switch (type) {
+      case "name": return p.name || "PARTICIPANT NAME";
+      case "regId": return p.regId || p._id;
+      case "category": return p.category || "DELEGATE";
+      case "city": return p.state || p.dynamicData?.City || "";
+      case "state": return p.state || "";
+      case "organization": return p.dynamicData?.Organization || "HOSPITAL / ORG";
+      case "designation": return p.dynamicData?.Designation || "DESIGNATION";
+      case "customText": return label;
+      default: return label;
+    }
+  };
+
   const loadParticipants = async () => {
     if (!conferenceSlug) return;
     try {
@@ -349,6 +381,13 @@ const BadgePrint = () => {
       const data = await res.json();
       setParticipants(Array.isArray(data) ? data : []);
       setSelectedIds([]);
+
+      // Load Templates
+      const tRes = await fetch(`${API}/api/badge-templates/conference/${conferenceSlug}`);
+      if (tRes.ok) {
+        const tData = await tRes.json();
+        setTemplates(tData);
+      }
     } catch (err) {
       console.error("Failed to load participants", err);
     } finally {
@@ -572,7 +611,9 @@ const BadgePrint = () => {
         nextBadgePayload: nextBadgePayload,
         avatar: selectedParticipant.avatar || "",
         avatarUrl: selectedParticipant.avatarUrl || "",
-        photo: selectedParticipant.photo || ""
+        photo: selectedParticipant.photo || "",
+        category: selectedParticipant.category || "",
+        conferenceSlug: conferenceSlug
       };
 
       sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
@@ -653,7 +694,8 @@ const BadgePrint = () => {
           photoFit: photoFit,
           avatar: p.avatar || "",
           avatarUrl: p.avatarUrl || "",
-          photo: p.photo || ""
+          photo: p.photo || "",
+          category: p.category || ""
         };
       });
 
@@ -662,7 +704,8 @@ const BadgePrint = () => {
         backUrl: `/u/${conferenceSlug}/badge-print`,
         badgeSize: badgeSize,
         topSpacing: topSpacing,
-        photoFit: photoFit
+        photoFit: photoFit,
+        conferenceSlug: conferenceSlug
       };
 
       sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
@@ -1280,8 +1323,142 @@ const BadgePrint = () => {
                           transition: "transform 0.1s ease-out"
                         }} className="flex-none flex items-center justify-center">
                           {(() => {
+                            const templateResult = getTemplateForParticipant(selectedParticipant);
                             const themeColor = getCategoryColor(editDestination);
                             const photoUrl = getParticipantPhoto(selectedParticipant);
+
+                            if (templateResult) {
+                              const { template, isDefaultFallback } = templateResult;
+                              const previewWidth = dim.previewWidthPx || 260;
+                              const mmToPx = previewWidth / template.canvasWidthMm;
+                              const previewHeight = Math.round(template.canvasHeightMm * mmToPx);
+
+                              return (
+                                <div className="flex flex-col items-center w-full">
+                                  {/* Template Selection Info Banner */}
+                                  <div className="w-full mb-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between text-xs font-bold no-print">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                                      <span className="text-slate-800 uppercase tracking-wide text-[9px]">Template Automatically Selected</span>
+                                    </div>
+                                    <div className="text-slate-500 uppercase tracking-wider text-[9px] text-right font-mono leading-tight">
+                                      <div>Category: {selectedParticipant.category || "N/A"}</div>
+                                      <div>Template: {template.name}</div>
+                                      {isDefaultFallback && (
+                                        <div className="text-amber-600 font-extrabold flex items-center gap-0.5 justify-end text-[8px] mt-0.5">
+                                          <AlertTriangle size={10} /> Default Template Applied
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div 
+                                    id="badge-preview-card"
+                                    className="bg-white border border-slate-350 rounded-2xl shadow-lg relative overflow-hidden font-sans select-none"
+                                    style={{
+                                      width: `${previewWidth}px`,
+                                      height: `${previewHeight}px`,
+                                      backgroundImage: template.backgroundImage ? `url(${API}/${template.backgroundImage})` : "none",
+                                      backgroundSize: "cover",
+                                      backgroundPosition: "center",
+                                      boxSizing: "border-box"
+                                    }}
+                                  >
+                                    {/* Lanyard Slot Simulator */}
+                                    <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-8 h-2 rounded-full bg-slate-200 border border-slate-300/65 flex items-center justify-center z-20 shadow-inner">
+                                      <div className="w-5 h-0.5 rounded-full bg-slate-300/40" />
+                                    </div>
+
+                                    {/* Render dynamic mapped fields */}
+                                    {template.fields.map((field: any) => {
+                                      const pPhoto = getParticipantPhoto(selectedParticipant);
+                                      return (
+                                        <div 
+                                          key={field.id}
+                                          className="absolute flex items-center justify-center overflow-hidden"
+                                          style={{
+                                            left: `${field.x * mmToPx}px`,
+                                            top: `${field.y * mmToPx}px`,
+                                            width: `${field.width * mmToPx}px`,
+                                            height: `${field.height * mmToPx}px`,
+                                            transform: `rotate(${field.rotation || 0}deg)`,
+                                            transformOrigin: "center center",
+                                            boxSizing: "border-box",
+                                            backgroundColor: field.backgroundColor,
+                                            borderRadius: `${field.borderRadius}px`,
+                                            opacity: field.opacity,
+                                            boxShadow: field.shadow,
+                                            padding: field.padding
+                                          }}
+                                        >
+                                          {field.type === "qr" ? (
+                                            <div className="p-0.5 bg-white border rounded" style={{
+                                              backgroundColor: field.qrBgColor,
+                                              borderColor: field.color + "25",
+                                              width: "100%",
+                                              height: "100%",
+                                              display: "flex",
+                                              alignItems: "center",
+                                              justifyContent: "center",
+                                              boxSizing: "border-box"
+                                            }}>
+                                              <QRCode 
+                                                value={selectedParticipant.regId || selectedParticipant._id} 
+                                                size={256}
+                                                fgColor={field.qrFgColor}
+                                                bgColor={field.qrBgColor}
+                                                level={field.qrErrorCorrection as any}
+                                                style={{ width: "100%", height: "100%" }}
+                                              />
+                                            </div>
+                                          ) : field.type === "photo" ? (
+                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 border border-slate-200" style={{
+                                              borderRadius: field.circular ? "50%" : "3px"
+                                            }}>
+                                              {pPhoto ? (
+                                                <img 
+                                                  src={pPhoto} 
+                                                  alt="Profile"
+                                                  style={{
+                                                    width: "100%",
+                                                    height: "100%",
+                                                    objectFit: field.photoFit as any,
+                                                    borderRadius: field.circular ? "50%" : "3px"
+                                                  }}
+                                                />
+                                              ) : (
+                                                <svg className="w-8 h-8 text-slate-350" fill="currentColor" viewBox="0 0 24 24">
+                                                  <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
+                                                </svg>
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <span style={{
+                                              fontSize: `${Math.round(field.fontSize * (previewWidth / 260))}px`,
+                                              fontWeight: field.fontWeight as any,
+                                              fontStyle: field.fontStyle,
+                                              fontFamily: field.fontFamily,
+                                              color: field.color,
+                                              textAlign: field.alignment as any,
+                                              letterSpacing: field.letterSpacing,
+                                              lineHeight: field.lineHeight,
+                                              width: "100%",
+                                              textTransform: "uppercase",
+                                              whiteSpace: "normal",
+                                              wordBreak: "break-word"
+                                            }}>
+                                              {getPreviewFieldValue(selectedParticipant, field.type, field.label)}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            // Fallback to static legacy preview card
                             return (
                               <div 
                                 id="badge-preview-card"
@@ -1427,9 +1604,6 @@ const BadgePrint = () => {
                                     )}
                                   </div>
                                 )}
-
-
-
                               </div>
                             );
                           })()}

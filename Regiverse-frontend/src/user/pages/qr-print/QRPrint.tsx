@@ -51,6 +51,7 @@ interface RootPayload {
   operatorEmail?: string;
   nextBadgePayload?: any;
   photoFit?: string;
+  conferenceSlug?: string;
 }
 
 const getCategoryColor = (category: string) => {
@@ -255,6 +256,50 @@ const QRPrint = () => {
   })();
 
   const [activePayload, setActivePayload] = useState<RootPayload | null>(initialPayload);
+  const [templates, setTemplates] = useState<any[]>([]);
+
+  useEffect(() => {
+    const slug = activePayload?.conferenceSlug;
+    if (!slug) return;
+    
+    fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5001"}/api/badge-templates/conference/${slug}`)
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error("Failed to load templates");
+      })
+      .then(data => setTemplates(data))
+      .catch(err => console.error(err));
+  }, [activePayload]);
+
+  const getTemplateForBadge = (badge: any) => {
+    const categoryName = (badge.category || badge.destination || "").trim().toLowerCase();
+    
+    // Find matching template (case insensitive)
+    const match = templates.find(t => t.category?.trim().toLowerCase() === categoryName && t.category?.trim().toLowerCase() !== "default");
+    if (match) return { template: match, isDefaultFallback: false };
+
+    // Fallback to default template
+    const defaultTemplate = templates.find(t => t.isDefault || t.category?.trim().toLowerCase() === "default");
+    if (defaultTemplate) {
+      return { template: defaultTemplate, isDefaultFallback: true };
+    }
+
+    return null;
+  };
+
+  const getPreviewFieldValue = (badge: any, type: string, label: string) => {
+    switch (type) {
+      case "name": return badge.name || "PARTICIPANT NAME";
+      case "regId": return badge.regId || badge.participantId || badge._id;
+      case "category": return badge.category || badge.destination || "DELEGATE";
+      case "city": return badge.state || badge.city || badge.dynamicData?.City || "";
+      case "state": return badge.state || "";
+      case "organization": return badge.dynamicData?.Organization || "HOSPITAL / ORG";
+      case "designation": return badge.dynamicData?.Designation || "DESIGNATION";
+      case "customText": return label;
+      default: return label;
+    }
+  };
   const [badgeSize, setBadgeSize] = useState<string>(() => {
     const localVal = localStorage.getItem("regxpert_badge_size");
     if (localVal) return localVal;
@@ -1277,6 +1322,130 @@ const QRPrint = () => {
 
               const badgeColor = getCategoryColor(badgeDestination);
               const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
+
+              const templateResult = getTemplateForBadge(badge);
+
+              if (templateResult) {
+                const { template } = templateResult;
+                return (
+                  <div 
+                    key={index} 
+                    className="badge-container"
+                    style={{
+                      width: `${template.canvasWidthMm}mm`,
+                      height: `${template.canvasHeightMm}mm`,
+                      backgroundImage: template.backgroundImage ? `url(${API_URL}/${template.backgroundImage})` : "none",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      borderRadius: "0px",
+                      border: "none",
+                      boxShadow: "none",
+                      margin: "20px auto",
+                      padding: "0px",
+                      position: "relative",
+                      overflow: "hidden"
+                    }}
+                  >
+                    {template.fields.map((field: any) => {
+                      return (
+                        <div 
+                          key={field.id}
+                          style={{
+                            position: "absolute",
+                            left: `${field.x}mm`,
+                            top: `${field.y}mm`,
+                            width: `${field.width}mm`,
+                            height: `${field.height}mm`,
+                            transform: `rotate(${field.rotation || 0}deg)`,
+                            transformOrigin: "center center",
+                            boxSizing: "border-box",
+                            backgroundColor: field.backgroundColor,
+                            borderRadius: `${field.borderRadius}px`,
+                            opacity: field.opacity,
+                            boxShadow: field.shadow,
+                            padding: field.padding,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            overflow: "hidden"
+                          }}
+                        >
+                          {field.type === "qr" ? (
+                            <div style={{
+                              backgroundColor: field.qrBgColor,
+                              border: `1px solid ${field.color}25`,
+                              padding: "0.5mm",
+                              borderRadius: "4px",
+                              width: "100%",
+                              height: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              boxSizing: "border-box"
+                            }}>
+                              <QRCode 
+                                value={badgeQrCode} 
+                                size={256}
+                                fgColor={field.qrFgColor}
+                                bgColor={field.qrBgColor}
+                                level={field.qrErrorCorrection as any}
+                                style={{ width: "100%", height: "100%" }}
+                              />
+                            </div>
+                          ) : field.type === "photo" ? (
+                            <div style={{
+                              width: "100%",
+                              height: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              background: "#f8fafc",
+                              border: "1px solid #e2e8f0",
+                              borderRadius: field.circular ? "50%" : "3px",
+                              overflow: "hidden"
+                            }}>
+                              {photoUrl ? (
+                                <img 
+                                  src={photoUrl} 
+                                  alt="Profile"
+                                  crossOrigin={photoUrl.startsWith("data:") ? undefined : "anonymous"}
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: field.photoFit as any,
+                                    borderRadius: field.circular ? "50%" : "3px"
+                                  }}
+                                />
+                              ) : (
+                                <svg style={{ width: "9mm", height: "9mm", color: "#cbd5e1" }} fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
+                                </svg>
+                              )}
+                            </div>
+                          ) : (
+                            <span style={{
+                              fontSize: `${field.fontSize * 0.9}px`,
+                              fontWeight: field.fontWeight as any,
+                              fontStyle: field.fontStyle,
+                              fontFamily: field.fontFamily,
+                              color: field.color,
+                              textAlign: field.alignment as any,
+                              letterSpacing: field.letterSpacing,
+                              lineHeight: field.lineHeight,
+                              width: "100%",
+                              textTransform: "uppercase",
+                              whiteSpace: "normal",
+                              wordBreak: "break-word"
+                            }}>
+                              {getPreviewFieldValue(badge, field.type, field.label)}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
 
               return (
                 <div key={index} className="badge-container">
