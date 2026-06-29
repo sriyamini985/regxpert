@@ -998,7 +998,10 @@ const BadgePrint = () => {
                     <div className="min-w-0 flex-1" onClick={() => { setSelectedParticipant(p); setActiveTab("preview"); }}>
                       <p className="font-bold text-slate-800 text-sm truncate group-hover:text-indigo-950 transition-colors">{p.name}</p>
                       <p className="text-xs font-semibold text-slate-400 mt-0.5 truncate">
-                        ID: {p.regId || "N/A"} • {p.category || "No Category"}
+                        ID: {p.regId || "N/A"}
+                      </p>
+                      <p className="text-xs font-semibold text-slate-400 mt-0.5 truncate">
+                        {p.category || "No Category"}
                       </p>
                     </div>
                     
@@ -1044,15 +1047,7 @@ const BadgePrint = () => {
                         />
                       </div>
                       
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Category Ribbon</label>
-                        <input
-                          type="text"
-                          value={editDestination}
-                          onChange={(e) => setEditDestination(e.target.value)}
-                          className="w-full bg-slate-55/65 hover:bg-slate-50 focus:bg-white border border-slate-200/80 p-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-550 font-bold text-sm text-slate-800 transition-all"
-                        />
-                      </div>
+
 
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Badge Print Size</label>
@@ -1299,7 +1294,7 @@ const BadgePrint = () => {
                                   paddingTop: `${(topSpacing * 380) / dim.heightMm}px`,
                                   paddingLeft: "12px",
                                   paddingRight: "12px",
-                                  paddingBottom: editDestination ? "35px" : "12px",
+                                  paddingBottom: "12px",
                                   boxSizing: "border-box",
                                   display: "flex",
                                   flexDirection: "column",
@@ -1433,17 +1428,7 @@ const BadgePrint = () => {
                                   </div>
                                 )}
 
-                                {/* Category Ribbon */}
-                                {editDestination && (
-                                  <div 
-                                    className="absolute bottom-0 left-0 w-full text-white font-black uppercase text-center tracking-widest py-2 z-20 text-[10px] shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
-                                    style={{
-                                      backgroundColor: themeColor,
-                                    }}
-                                  >
-                                    {editDestination}
-                                  </div>
-                                )}
+
 
                               </div>
                             );

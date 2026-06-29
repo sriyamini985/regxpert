@@ -1366,26 +1366,7 @@ const QRPrint = () => {
                     </div>
                   )}
 
-                  {/* D. Category Ribbon - Colored Solid Band at the Bottom */}
-                  {badgeDestination && (
-                    <div style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      width: "100%",
-                      background: badgeColor,
-                      color: "#ffffff",
-                      fontWeight: 900,
-                      fontSize: dim.fontSizeOrg,
-                      padding: "1.5mm 0",
-                      textTransform: "uppercase",
-                      textAlign: "center",
-                      letterSpacing: "1px",
-                      zIndex: 10
-                    }}>
-                      {badgeDestination}
-                    </div>
-                  )}
+
 
                 </div>
               );
