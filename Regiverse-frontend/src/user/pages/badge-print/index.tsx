@@ -1328,9 +1328,9 @@ const BadgePrint = () => {
                             const photoUrl = getParticipantPhoto(selectedParticipant);
 
                             const template = templateResult?.template;
-                            const bgImage = template?.backgroundImage 
-                              ? `url(${API}/${template.backgroundImage})` 
-                              : "none";
+                            const bgImgSrc = template?.backgroundImage
+                              ? (template.backgroundImage.startsWith("http") ? template.backgroundImage : `${API}/${template.backgroundImage}`)
+                              : null;
 
                             return (
                               <div className="flex flex-col items-center w-full">
@@ -1359,6 +1359,8 @@ const BadgePrint = () => {
                                     dim.gap
                                   }`}
                                   style={{
+                                    position: "relative",
+                                    overflow: "hidden",
                                     height: "380px",
                                     width: `${dim.previewWidthPx}px`,
                                     paddingTop: `${(topSpacing * 380) / dim.heightMm}px`,
@@ -1369,12 +1371,25 @@ const BadgePrint = () => {
                                     display: "flex",
                                     flexDirection: "column",
                                     justifyContent: "start",
-                                    alignItems: "center",
-                                    backgroundImage: bgImage,
-                                    backgroundSize: "cover",
-                                    backgroundPosition: "center"
+                                    alignItems: "center"
                                   }}
                                 >
+                                  {/* Template background image */}
+                                  {bgImgSrc && (
+                                    <img
+                                      src={bgImgSrc}
+                                      alt=""
+                                      aria-hidden="true"
+                                      style={{
+                                        position: "absolute",
+                                        top: 0, left: 0,
+                                        width: "100%", height: "100%",
+                                        objectFit: "fill",
+                                        zIndex: 0,
+                                        display: "block"
+                                      }}
+                                    />
+                                  )}
                                   {/* Glassmorphic Shine Effect */}
                                   <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none z-30" />
                                   

@@ -276,7 +276,7 @@ const QRPrint = () => {
           const promises = data
             .filter((t: any) => t.backgroundImage)
             .map(async (t: any) => {
-              const imgUrl = `${import.meta.env.VITE_API_URL || "http://localhost:5001"}/${t.backgroundImage}`;
+              const imgUrl = t.backgroundImage.startsWith("http") ? t.backgroundImage : `${import.meta.env.VITE_API_URL || "http://localhost:5001"}/${t.backgroundImage}`;
               try {
                 const response = await fetch(imgUrl);
                 if (response.ok) {
@@ -1362,7 +1362,7 @@ const QRPrint = () => {
               const template = templateResult?.template;
               const bgImageUrl = template?.backgroundImage;
               const bgImageSrc = bgImageUrl
-                ? (base64Templates[bgImageUrl] || `${API_URL}/${bgImageUrl}`)
+                ? (base64Templates[bgImageUrl] || (bgImageUrl.startsWith("http") ? bgImageUrl : `${API_URL}/${bgImageUrl}`))
                 : null;
 
               return (

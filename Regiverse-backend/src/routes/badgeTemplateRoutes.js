@@ -5,26 +5,32 @@ import path from "path";
 import BadgeTemplate from "../models/BadgeTemplate.js";
 import Conference from "../models/Conference.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import cloudinary from "../config/cloudinary.js";
 
 const router = express.Router();
 
-// Setup Disk Storage for Multer to store template files locally
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const dir = "./uploads/badge-templates";
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    cb(null, dir);
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, "badge-template-" + uniqueSuffix + ext);
-  }
-});
+// Use memory storage - we stream directly to Cloudinary
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-const upload = multer({ storage: storage });
+// Helper: upload buffer to Cloudinary and return secure URL
+const uploadToCloudinary = (buffer, originalname) => {
+  return new Promise((resolve, reject) => {
+    const ext = path.extname(originalname).replace(".", "");
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "badge-templates",
+        resource_type: "image",
+        format: ext || "jpg",
+        quality: "auto:best",
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    uploadStream.end(buffer);
+  });
+};
 
 // 1. Get all templates for a conference (supporting slug, ID, or name)
 router.get("/conference/:conferenceId", async (req, res) => {
@@ -80,7 +86,8 @@ router.post("/", upload.single("backgroundImageFile"), async (req, res) => {
 
     let backgroundImage = req.body.backgroundImage || "";
     if (req.file) {
-      backgroundImage = `uploads/badge-templates/${req.file.filename}`;
+      // Upload to Cloudinary for persistent storage
+      backgroundImage = await uploadToCloudinary(req.file.buffer, req.file.originalname);
     }
 
     const templateData = {
