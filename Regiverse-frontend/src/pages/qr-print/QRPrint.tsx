@@ -267,7 +267,38 @@ const QRPrint = () => {
         if (res.ok) return res.json();
         throw new Error("Failed to load templates");
       })
-      .then(data => setTemplates(data))
+      .then(data => {
+        setTemplates(data);
+        // Convert template background images to base64 for reliable printing
+        if (Array.isArray(data) && data.length > 0) {
+          setTemplatesConverting(true);
+          const newMap: {[url: string]: string} = {};
+          const promises = data
+            .filter((t: any) => t.backgroundImage)
+            .map(async (t: any) => {
+              const imgUrl = `${import.meta.env.VITE_API_URL || "http://localhost:5001"}/${t.backgroundImage}`;
+              try {
+                const response = await fetch(imgUrl);
+                if (response.ok) {
+                  const blob = await response.blob();
+                  const b64 = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                  });
+                  newMap[t.backgroundImage] = b64;
+                }
+              } catch (e) {
+                console.warn("Could not preload template background:", imgUrl, e);
+              }
+            });
+          Promise.all(promises).then(() => {
+            setBase64Templates(newMap);
+            setTemplatesConverting(false);
+          });
+        }
+      })
       .catch(err => console.error(err));
   }, [activePayload]);
 
@@ -477,6 +508,8 @@ const QRPrint = () => {
   const [converting, setConverting] = useState(true);
   const [pdfProgress, setPdfProgress] = useState<number | null>(null);
   const [base64Photos, setBase64Photos] = useState<{[url: string]: string}>({});
+  const [base64Templates, setBase64Templates] = useState<{[url: string]: string}>({});
+  const [templatesConverting, setTemplatesConverting] = useState(false);
   const [photoStats, setPhotoStats] = useState<{
     total: number;
     loaded: number;
@@ -699,6 +732,7 @@ const QRPrint = () => {
   useEffect(() => {
     if (badges.length === 0) return;
     if (converting) return; // Wait for base64 conversion!
+    if (templatesConverting) return; // Wait for template background conversion!
     if (imagesLoaded) return;
 
     const triggerPrint = () => {
@@ -750,7 +784,7 @@ const QRPrint = () => {
     });
 
     return () => clearTimeout(fallbackTimer);
-  }, [activePayload, imagesLoaded, converting]);
+  }, [activePayload, imagesLoaded, converting, templatesConverting]);
 
   // 3. Listen to print finish events to trigger success overlay options
   useEffect(() => {
@@ -1326,8 +1360,9 @@ const QRPrint = () => {
               const templateResult = getTemplateForBadge(badge);
 
               const template = templateResult?.template;
-              const bgImage = template?.backgroundImage 
-                ? `url(${API_URL}/${template.backgroundImage})` 
+              const bgImageUrl = template?.backgroundImage;
+              const bgImage = bgImageUrl
+                ? `url(${base64Templates[bgImageUrl] || `${API_URL}/${bgImageUrl}`})`
                 : "none";
 
               return (
