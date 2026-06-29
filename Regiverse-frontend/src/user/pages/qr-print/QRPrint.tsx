@@ -182,11 +182,32 @@ const getParticipantPhoto = (p: any): string => {
     }
   }
 
-  if (!rawPhoto) return "";
-
   // Convert to string and trim
   let srcUrl = String(rawPhoto).trim();
-  if (!srcUrl) return "";
+  const lowerUrl = srcUrl.toLowerCase();
+  if (
+    !srcUrl ||
+    lowerUrl === "n/a" ||
+    lowerUrl === "na" ||
+    lowerUrl === "-" ||
+    lowerUrl === "null" ||
+    lowerUrl === "undefined" ||
+    lowerUrl === "no image" ||
+    lowerUrl === "no-image" ||
+    lowerUrl === "no photo" ||
+    lowerUrl === "no-photo" ||
+    lowerUrl === "no" ||
+    lowerUrl === "none"
+  ) {
+    return "";
+  }
+
+  // Convert Google Drive preview/sharing links to direct download links
+  const driveRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)|docs\.google\.com\/(?:file\/d\/|open\?id=))([a-zA-Z0-9_-]{25,})/;
+  const match = srcUrl.match(driveRegex);
+  if (match && match[1]) {
+    srcUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
+  }
 
   // If it's already a full URL, return it
   if (srcUrl.startsWith("http://") || srcUrl.startsWith("https://") || srcUrl.startsWith("data:image")) {

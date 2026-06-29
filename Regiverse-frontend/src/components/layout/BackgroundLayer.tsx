@@ -2,7 +2,7 @@ import React from 'react';
 
 const BackgroundLayer: React.FC = React.memo(() => {
     return (
-        <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-slate-50">
+        <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-slate-50 no-print">
             {/* Side Glows - Framing the content */}
             <div
                 className="absolute top-1/2 -translate-y-1/2 left-[-10%] w-[35%] h-[80%] bg-purple-200/30 rounded-[100%] blur-[120px] mix-blend-multiply opacity-60"
