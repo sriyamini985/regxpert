@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
 import { useAuth } from "../../../contexts/AuthContext";
 import LoadingBar from "../../../components/ui/LoadingBar";
-import { ArrowLeft, Check, Search, AlertTriangle, Filter } from "lucide-react";
+import { ArrowLeft, Check, Search, AlertTriangle, Filter, Camera } from "lucide-react";
 import { API_URL } from "../../../config/api";
 
 const API = API_URL;
@@ -239,6 +239,7 @@ const BadgePrint = () => {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [photoFilter, setPhotoFilter] = useState<"all" | "with" | "without">("all");
   const [fetching, setFetching] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
@@ -503,16 +504,26 @@ const BadgePrint = () => {
   // Filter list (optimized with useMemo to prevent lag)
   const filtered = useMemo(() => {
     let result = participants;
+    
+    // 1. Filter by category
     if (selectedCategory) {
       result = result.filter(p => p.category?.trim() === selectedCategory);
     }
+    
+    // 2. Filter by photo status
+    if (photoFilter === "with") {
+      result = result.filter(p => !!getParticipantPhoto(p));
+    } else if (photoFilter === "without") {
+      result = result.filter(p => !getParticipantPhoto(p));
+    }
+    
     const term = searchTerm.toLowerCase().trim();
     if (!term) return result;
     return result.filter((p) =>
       (p.name && p.name.toLowerCase().includes(term)) ||
       (p.regId && p.regId.toLowerCase().includes(term))
     );
-  }, [participants, searchTerm, selectedCategory]);
+  }, [participants, searchTerm, selectedCategory, photoFilter]);
 
   // Individual Print Action
   const handlePrintBadge = async () => {
@@ -1005,24 +1016,47 @@ const BadgePrint = () => {
               )}
             </div>
 
-            {/* Category Filter Dropdown */}
-            <div className="relative mb-3 animate-fade-in">
-              <Filter className="absolute left-4 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
-              <select
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
-                  setSelectedIds([]); // Clear selection when category changes
-                }}
-                className="w-full bg-slate-50 hover:bg-slate-100/50 border border-slate-200/80 pl-11 pr-10 py-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-550 font-bold text-xs text-slate-700 cursor-pointer appearance-none transition-all"
-              >
-                <option value="">All Categories</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">
-                ▼
+            {/* Filter controls row */}
+            <div className="grid grid-cols-2 gap-2 mb-3.5 animate-fade-in">
+              {/* Category Dropdown */}
+              <div className="relative">
+                <Filter className="absolute left-3 top-3 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setSelectedIds([]); // Clear selection when category changes
+                  }}
+                  className="w-full bg-slate-50 hover:bg-slate-100/50 border border-slate-200/80 pl-8 pr-6 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-550 font-bold text-[10px] text-slate-700 cursor-pointer appearance-none transition-all"
+                >
+                  <option value="">All Categories</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px]">
+                  ▼
+                </div>
+              </div>
+
+              {/* Photo Filter Dropdown */}
+              <div className="relative">
+                <Camera className="absolute left-3 top-3 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                <select
+                  value={photoFilter}
+                  onChange={(e) => {
+                    setPhotoFilter(e.target.value as any);
+                    setSelectedIds([]); // Clear selection when photo filter changes
+                  }}
+                  className="w-full bg-slate-50 hover:bg-slate-100/50 border border-slate-200/80 pl-8 pr-6 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-550 font-bold text-[10px] text-slate-700 cursor-pointer appearance-none transition-all"
+                >
+                  <option value="all">All Photos</option>
+                  <option value="with">With Photo</option>
+                  <option value="without">Without Photo</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px]">
+                  ▼
+                </div>
               </div>
             </div>
 
