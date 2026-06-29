@@ -268,6 +268,7 @@ const BadgePrint = () => {
   // Selection state
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [imageError, setImageError] = useState(false);
 
   // Editable badge fields
   const [editName, setEditName] = useState("");
@@ -448,11 +449,13 @@ const BadgePrint = () => {
           [pId]: defaults
         }));
       }
+      setImageError(false);
     } else {
       setEditName("");
       setEditDestination("");
       setEditState("");
       setSelectedCheckpoints([]);
+      setImageError(false);
     }
   }, [selectedParticipant]);
 
@@ -1432,12 +1435,12 @@ const BadgePrint = () => {
 
                                   {/* B. Center Attendee Details */}
                                   <div 
-                                    className="flex-none flex flex-col items-center justify-center w-full px-1 box-border relative z-10 animate-fade-in"
+                                    className="flex-1 flex flex-col items-center justify-center w-full px-1 box-border relative z-10 animate-fade-in"
                                     style={{ gap: `${dim.innerGapPx}px` }}
                                   >
                                     
                                     {/* Photo Placeholder */}
-                                    {printPhoto && photoUrl && (
+                                    {printPhoto && photoUrl && !imageError && (
                                       <div className="border border-slate-400 flex items-center justify-center overflow-hidden relative animate-fade-in" 
                                         style={{ 
                                           width: `${dim.previewPhotoWidthPx}px`,
@@ -1447,6 +1450,7 @@ const BadgePrint = () => {
                                         <img 
                                           src={photoUrl} 
                                           alt="Delegate" 
+                                          onError={() => setImageError(true)}
                                           className={`w-full h-full ${photoFit === "contain" ? "object-contain bg-slate-100" : "object-cover object-top"}`} 
                                         />
                                       </div>
