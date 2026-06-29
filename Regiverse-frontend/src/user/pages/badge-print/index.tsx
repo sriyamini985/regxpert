@@ -1353,9 +1353,12 @@ const BadgePrint = () => {
 
                                   {/* 1. Name */}
                                   {printName && (
-                                    <h3 className={`font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1 transition-all duration-300 ${
-                                      dim.fontSizeName
-                                    }`}>
+                                    <h3 
+                                      className={`font-extrabold text-slate-900 uppercase line-clamp-2 px-1 transition-all duration-300 ${
+                                        dim.fontSizeName
+                                      }`}
+                                      style={{ lineHeight: 1.3, paddingBottom: "4px" }}
+                                    >
                                       {editName || "PARTICIPANT NAME"}
                                     </h3>
                                   )}
