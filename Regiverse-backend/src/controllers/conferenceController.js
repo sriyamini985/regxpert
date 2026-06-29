@@ -184,30 +184,43 @@ export const importExcel = async (req, res) => {
       });
     }
 
-    // Filter out duplicates (by email or phone in this conference)
+    // Filter out duplicates (by email, phone, custom regId, or name fallback in this conference)
     const existingParticipants = await Participant.find({ conferenceId: finalConferenceId });
     const existingPhones = new Set(existingParticipants.map(p => p.phone?.trim()).filter(Boolean));
     const existingEmails = new Set(existingParticipants.map(p => p.email?.trim().toLowerCase()).filter(Boolean));
+    const existingRegIds = new Set(existingParticipants.map(p => p.regId?.trim()).filter(Boolean));
+    const existingNames = new Set(existingParticipants.map(p => p.name?.trim().toLowerCase()).filter(Boolean));
 
     const uniqueFormatted = [];
     let skippedCount = 0;
     
     const seenPhonesInExcel = new Set();
     const seenEmailsInExcel = new Set();
+    const seenRegIdsInExcel = new Set();
+    const seenNamesInExcel = new Set();
 
     processedParticipants.forEach(item => {
       const phone = item.phone?.trim();
       const email = item.email?.trim().toLowerCase();
+      const regId = item.regId?.trim();
+      const name = item.name?.trim().toLowerCase();
+      
+      // Auto-generated regIds start with "RegID - "
+      const isAutoRegId = regId && regId.startsWith("RegID - ");
       
       const isDuplicate = 
         (phone && (existingPhones.has(phone) || seenPhonesInExcel.has(phone))) ||
-        (email && (existingEmails.has(email) || seenEmailsInExcel.has(email)));
+        (email && (existingEmails.has(email) || seenEmailsInExcel.has(email))) ||
+        (regId && !isAutoRegId && (existingRegIds.has(regId) || seenRegIdsInExcel.has(regId))) ||
+        (!phone && !email && name && (existingNames.has(name) || seenNamesInExcel.has(name)));
         
       if (isDuplicate) {
         skippedCount++;
       } else {
         if (phone) seenPhonesInExcel.add(phone);
         if (email) seenEmailsInExcel.add(email);
+        if (regId && !isAutoRegId) seenRegIdsInExcel.add(regId);
+        if (!phone && !email && name) seenNamesInExcel.add(name);
         uniqueFormatted.push(item);
       }
     });
