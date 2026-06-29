@@ -1362,24 +1362,14 @@ const QRPrint = () => {
                     {/* 1. Portrait Photo Frame with viewfinder corners */}
                     {showPhoto && (
                       <div style={{
-                        position: "relative",
                         width: `${imgWidth}mm`,
                         height: `${Math.round(imgWidth * (dim.photoHeightMm / dim.photoWidthMm))}mm`,
-                        background: "#f8fafc",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "4px",
+                        border: "1px solid #7f7f7f",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        overflow: "hidden",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-                        padding: "1.5px"
+                        overflow: "hidden"
                       }}>
-                        {/* Viewfinder Corner Accents */}
-                        <div style={{ position: "absolute", top: 0, left: 0, width: "5px", height: "5px", borderTop: `1.5px solid ${badgeColor}`, borderLeft: `1.5px solid ${badgeColor}` }} />
-                        <div style={{ position: "absolute", top: 0, right: 0, width: "5px", height: "5px", borderTop: `1.5px solid ${badgeColor}`, borderRight: `1.5px solid ${badgeColor}` }} />
-                        <div style={{ position: "absolute", bottom: 0, left: 0, width: "5px", height: "5px", borderBottom: `1.5px solid ${badgeColor}`, borderLeft: `1.5px solid ${badgeColor}` }} />
-                        <div style={{ position: "absolute", bottom: 0, right: 0, width: "5px", height: "5px", borderBottom: `1.5px solid ${badgeColor}`, borderRight: `1.5px solid ${badgeColor}` }} />
 
                         {photoUrl ? (
                           <img 
@@ -1516,13 +1506,13 @@ const QRPrint = () => {
                         }}>
                           <p style={{ 
                             fontSize: `${regIdFontSize}px`, 
-                            fontWeight: 700, 
-                            color: "#475569", 
+                            fontWeight: 800, 
+                            color: "#000000", 
                             margin: 0,
                             letterSpacing: "0.2px",
                             fontFamily: "system-ui, -apple-system, sans-serif"
                           }}>
-                            <span style={{ color: "#0f172a", fontWeight: 800 }}>{badgeRegId}</span>
+                            <span>ID: {badgeRegId}</span>
                           </p>
                         </div>
                       )}

@@ -1391,24 +1391,17 @@ const BadgePrint = () => {
                                     
                                     {/* Photo Placeholder */}
                                     {printPhoto && (
-                                      <div className="bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden shadow-md transition-all duration-300 relative" 
+                                      <div className="border border-slate-400 flex items-center justify-center overflow-hidden relative" 
                                         style={{ 
-                                          padding: "1.5px",
                                           width: `${dim.previewPhotoWidthPx}px`,
                                           height: `${dim.previewPhotoHeightPx}px`
                                         }}
                                       >
-                                        {/* Viewfinder Corner Accents */}
-                                        <div className="absolute top-0 left-0 border-t-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                                        <div className="absolute top-0 right-0 border-t-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                                        <div className="absolute bottom-0 left-0 border-b-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                                        <div className="absolute bottom-0 right-0 border-b-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                                        
                                         {photoUrl ? (
                                           <img 
                                             src={photoUrl} 
                                             alt="Delegate" 
-                                            className={`w-full h-full rounded-[3px] ${photoFit === "contain" ? "object-contain bg-slate-100" : "object-cover object-top"}`} 
+                                            className={`w-full h-full ${photoFit === "contain" ? "object-contain bg-slate-100" : "object-cover object-top"}`} 
                                           />
                                         ) : (
                                           <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
@@ -1492,8 +1485,8 @@ const BadgePrint = () => {
                                         <div 
                                           className="flex items-center justify-center transition-all duration-300"
                                         >
-                                          <p className={`font-sans text-slate-500 font-bold tracking-wider leading-none ${dim.fontSizeRegId}`}>
-                                            <span className="text-slate-800 font-extrabold">{selectedParticipant.regId || selectedParticipant._id}</span>
+                                          <p className={`font-sans text-black font-extrabold tracking-wider leading-none ${dim.fontSizeRegId}`}>
+                                            <span>ID: {selectedParticipant.regId || selectedParticipant._id}</span>
                                           </p>
                                         </div>
                                       )}
