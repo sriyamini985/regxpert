@@ -697,35 +697,43 @@ const BadgePrint = () => {
       const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
       const formatVal = badgeSize === "A5" ? "a5" : badgeSize === "A6" ? "a6" : [dim.widthMm, dim.heightMm];
 
-      // Clone card for clean render
-      const clone = element.cloneNode(true) as HTMLElement;
-      clone.style.borderRadius = "0";
-      clone.style.border = "none";
-      clone.style.boxShadow = "none";
-      clone.style.position = "absolute";
-      clone.style.top = "0";
-      clone.style.left = "0";
-      clone.style.zIndex = "-9999";
-      clone.style.opacity = "0.01";
-      clone.style.pointerEvents = "none";
-      clone.style.width = `${dim.widthMm}mm`;
-      clone.style.height = `${dim.heightMm}mm`;
-      clone.style.transform = "none"; // Clear zoom transform!
-      clone.style.paddingTop = `${topSpacing}mm`;
-      clone.style.paddingLeft = "0";
-      clone.style.paddingRight = "0";
-      clone.style.paddingBottom = "0";
-      document.body.appendChild(clone);
+      // Save original styles
+      const originalBorderRadius = element.style.borderRadius;
+      const originalBorder = element.style.border;
+      const originalBoxShadow = element.style.boxShadow;
+      const originalTransform = element.style.transform;
+      const originalPaddingTop = element.style.paddingTop;
+      const originalPaddingLeft = element.style.paddingLeft;
+      const originalPaddingRight = element.style.paddingRight;
+      const originalPaddingBottom = element.style.paddingBottom;
 
-      const canvas = await html2canvasFn(clone, {
+      // Apply print styles temporarily
+      element.style.borderRadius = "0";
+      element.style.border = "none";
+      element.style.boxShadow = "none";
+      element.style.transform = "none";
+      element.style.paddingTop = `${topSpacing}mm`;
+      element.style.paddingLeft = "0";
+      element.style.paddingRight = "0";
+      element.style.paddingBottom = "0";
+
+      const canvas = await html2canvasFn(element, {
         scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: "#ffffff",
-        imageTimeout: 100
+        imageTimeout: 15000
       });
 
-      document.body.removeChild(clone);
+      // Restore original styles
+      element.style.borderRadius = originalBorderRadius;
+      element.style.border = originalBorder;
+      element.style.boxShadow = originalBoxShadow;
+      element.style.transform = originalTransform;
+      element.style.paddingTop = originalPaddingTop;
+      element.style.paddingLeft = originalPaddingLeft;
+      element.style.paddingRight = originalPaddingRight;
+      element.style.paddingBottom = originalPaddingBottom;
 
       const imgData = canvas.toDataURL("image/png");
 
@@ -774,31 +782,43 @@ const BadgePrint = () => {
       const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
       const formatVal = badgeSize === "A5" ? "a5" : badgeSize === "A6" ? "a6" : [dim.widthMm, dim.heightMm];
 
-      const clone = element.cloneNode(true) as HTMLElement;
-      clone.style.borderRadius = "0";
-      clone.style.border = "none";
-      clone.style.boxShadow = "none";
-      clone.style.position = "fixed";
-      clone.style.top = "-9999px";
-      clone.style.left = "-9999px";
-      clone.style.width = `${dim.widthMm}mm`;
-      clone.style.height = `${dim.heightMm}mm`;
-      clone.style.transform = "none";
-      clone.style.paddingTop = `${topSpacing}mm`;
-      clone.style.paddingLeft = "0";
-      clone.style.paddingRight = "0";
-      clone.style.paddingBottom = "0";
-      document.body.appendChild(clone);
+      // Save original styles
+      const originalBorderRadius = element.style.borderRadius;
+      const originalBorder = element.style.border;
+      const originalBoxShadow = element.style.boxShadow;
+      const originalTransform = element.style.transform;
+      const originalPaddingTop = element.style.paddingTop;
+      const originalPaddingLeft = element.style.paddingLeft;
+      const originalPaddingRight = element.style.paddingRight;
+      const originalPaddingBottom = element.style.paddingBottom;
 
-      const canvas = await html2canvasFn(clone, {
+      // Apply print styles temporarily
+      element.style.borderRadius = "0";
+      element.style.border = "none";
+      element.style.boxShadow = "none";
+      element.style.transform = "none";
+      element.style.paddingTop = `${topSpacing}mm`;
+      element.style.paddingLeft = "0";
+      element.style.paddingRight = "0";
+      element.style.paddingBottom = "0";
+
+      const canvas = await html2canvasFn(element, {
         scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: null,
-        imageTimeout: 100
+        imageTimeout: 15000
       });
 
-      document.body.removeChild(clone);
+      // Restore original styles
+      element.style.borderRadius = originalBorderRadius;
+      element.style.border = originalBorder;
+      element.style.boxShadow = originalBoxShadow;
+      element.style.transform = originalTransform;
+      element.style.paddingTop = originalPaddingTop;
+      element.style.paddingLeft = originalPaddingLeft;
+      element.style.paddingRight = originalPaddingRight;
+      element.style.paddingBottom = originalPaddingBottom;
 
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
 

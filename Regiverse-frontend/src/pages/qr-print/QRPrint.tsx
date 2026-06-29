@@ -740,34 +740,36 @@ const QRPrint = () => {
 
         const container = badgeContainers[i] as HTMLElement;
 
-        // Clone the container to apply clean print styles without borders/shadows
-        const clone = container.cloneNode(true) as HTMLElement;
-        clone.style.margin = "0";
-        clone.style.borderRadius = "0";
-        clone.style.border = "none";
-        clone.style.boxShadow = "none";
-        clone.style.position = "absolute";
-        clone.style.top = "0";
-        clone.style.left = "0";
-        clone.style.zIndex = "-9999";
-        clone.style.opacity = "0.01";
-        clone.style.pointerEvents = "none";
-        clone.style.width = `${dim.widthMm}mm`;
-        clone.style.height = `${dim.heightMm}mm`;
-        document.body.appendChild(clone);
+        // Save original styles
+        const originalShadow = container.style.boxShadow;
+        const originalBorder = container.style.border;
+        const originalBorderRadius = container.style.borderRadius;
+        const originalMargin = container.style.margin;
+        const originalTransform = container.style.transform;
 
-        // Capture this single badge container to canvas
-        const canvas = await (window as any).html2canvas(clone, {
+        // Apply clean print styles temporarily
+        container.style.boxShadow = "none";
+        container.style.border = "none";
+        container.style.borderRadius = "0";
+        container.style.margin = "0";
+        container.style.transform = "none";
+
+        // Capture this single badge container to canvas directly
+        const canvas = await (window as any).html2canvas(container, {
           scale: 2,
           useCORS: true,
           allowTaint: false,
           backgroundColor: "#ffffff",
           logging: false,
-          imageTimeout: 100
+          imageTimeout: 15000
         });
 
-        // Remove the clone from DOM
-        document.body.removeChild(clone);
+        // Restore original styles
+        container.style.boxShadow = originalShadow;
+        container.style.border = originalBorder;
+        container.style.borderRadius = originalBorderRadius;
+        container.style.margin = originalMargin;
+        container.style.transform = originalTransform;
 
         const imgData = canvas.toDataURL("image/png");
 
