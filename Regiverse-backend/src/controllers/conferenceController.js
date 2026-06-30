@@ -185,9 +185,27 @@ export const importExcel = async (req, res) => {
     }
 
     // Filter out duplicates (by email, phone, custom regId, or name fallback in this conference)
+    const isPlaceholder = (val) => {
+      if (!val) return true;
+      const clean = String(val).trim().toLowerCase();
+      return (
+        clean === "" ||
+        clean === "-" ||
+        clean === "n/a" ||
+        clean === "na" ||
+        clean === "null" ||
+        clean === "undefined" ||
+        clean === "none" ||
+        clean === "no" ||
+        clean === "0" ||
+        clean === "0000000000" ||
+        clean === "1234567890"
+      );
+    };
+
     const existingParticipants = await Participant.find({ conferenceId: finalConferenceId });
-    const existingPhones = new Set(existingParticipants.map(p => p.phone?.trim()).filter(Boolean));
-    const existingEmails = new Set(existingParticipants.map(p => p.email?.trim().toLowerCase()).filter(Boolean));
+    const existingPhones = new Set(existingParticipants.map(p => p.phone?.trim()).filter(p => p && !isPlaceholder(p)));
+    const existingEmails = new Set(existingParticipants.map(p => p.email?.trim().toLowerCase()).filter(e => e && !isPlaceholder(e)));
     const existingRegIds = new Set(existingParticipants.map(p => p.regId?.trim()).filter(Boolean));
     const existingNames = new Set(existingParticipants.map(p => p.name?.trim().toLowerCase()).filter(Boolean));
 
@@ -205,22 +223,25 @@ export const importExcel = async (req, res) => {
       const regId = item.regId?.trim();
       const name = item.name?.trim().toLowerCase();
       
+      const hasPhone = phone && !isPlaceholder(phone);
+      const hasEmail = email && !isPlaceholder(email);
+      
       // Auto-generated regIds start with "RegID - "
       const isAutoRegId = regId && regId.startsWith("RegID - ");
       
       const isDuplicate = 
-        (phone && (existingPhones.has(phone) || seenPhonesInExcel.has(phone))) ||
-        (email && (existingEmails.has(email) || seenEmailsInExcel.has(email))) ||
+        (hasPhone && (existingPhones.has(phone) || seenPhonesInExcel.has(phone))) ||
+        (hasEmail && (existingEmails.has(email) || seenEmailsInExcel.has(email))) ||
         (regId && !isAutoRegId && (existingRegIds.has(regId) || seenRegIdsInExcel.has(regId))) ||
-        (!phone && !email && name && (existingNames.has(name) || seenNamesInExcel.has(name)));
+        (!hasPhone && !hasEmail && name && (existingNames.has(name) || seenNamesInExcel.has(name)));
         
       if (isDuplicate) {
         skippedCount++;
       } else {
-        if (phone) seenPhonesInExcel.add(phone);
-        if (email) seenEmailsInExcel.add(email);
+        if (hasPhone) seenPhonesInExcel.add(phone);
+        if (hasEmail) seenEmailsInExcel.add(email);
         if (regId && !isAutoRegId) seenRegIdsInExcel.add(regId);
-        if (!phone && !email && name) seenNamesInExcel.add(name);
+        if (!hasPhone && !hasEmail && name) seenNamesInExcel.add(name);
         uniqueFormatted.push(item);
       }
     });
