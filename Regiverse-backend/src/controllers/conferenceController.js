@@ -251,48 +251,28 @@ export const importExcel = async (req, res) => {
       
       let isDuplicate = false;
 
-      const hasMatchingPhone = (p) => p.phone && phone && p.phone.trim() === phone && !isPlaceholder(phone);
-      const hasMatchingEmail = (p) => p.email && email && p.email.trim().toLowerCase() === email && !isPlaceholder(email);
-      const hasMatchingRegId = (p) => p.regId && regId && !isAutoRegId && p.regId.trim() === regId;
-      const hasMatchingName = (p) => p.name && name && cleanName(p.name) === cleanName(item.name);
+      const checkMatch = (other) => {
+        const nameMatches = namesAreSimilar(other.name, item.name);
+        
+        const otherRegId = other.regId?.trim();
+        const hasOtherRegId = otherRegId && !otherRegId.startsWith("RegID - ") && !isPlaceholder(otherRegId);
+        const hasItemRegId = regId && !isAutoRegId && !isPlaceholder(regId);
+
+        const differentUniqueIds = hasOtherRegId && hasItemRegId && otherRegId !== regId;
+
+        return nameMatches && !differentUniqueIds;
+      };
 
       // 1. Check existing in DB
-      const dbMatch = existingParticipants.find(p => {
-        const matchPhone = hasMatchingPhone(p);
-        const matchEmail = hasMatchingEmail(p);
-        const matchRegId = hasMatchingRegId(p);
-        const matchNameOnly = !hasPhone && !hasEmail && hasMatchingName(p);
-
-        if (matchPhone || matchEmail || matchRegId || matchNameOnly) {
-          if (matchPhone || matchEmail || matchRegId) {
-            return namesAreSimilar(p.name, item.name);
-          }
-          return true;
-        }
-        return false;
-      });
+      const dbMatch = existingParticipants.find(checkMatch);
 
       if (dbMatch) {
         isDuplicate = true;
       } else {
         // 2. Check seen in Excel
-        for (const seen of uniqueFormatted) {
-          const matchPhone = hasMatchingPhone(seen);
-          const matchEmail = hasMatchingEmail(seen);
-          const matchRegId = hasMatchingRegId(seen);
-          const matchNameOnly = !hasPhone && !hasEmail && hasMatchingName(seen);
-
-          if (matchPhone || matchEmail || matchRegId || matchNameOnly) {
-            if (matchPhone || matchEmail || matchRegId) {
-              if (namesAreSimilar(seen.name, item.name)) {
-                isDuplicate = true;
-                break;
-              }
-            } else {
-              isDuplicate = true;
-              break;
-            }
-          }
+        const seenMatch = uniqueFormatted.find(checkMatch);
+        if (seenMatch) {
+          isDuplicate = true;
         }
       }
         
