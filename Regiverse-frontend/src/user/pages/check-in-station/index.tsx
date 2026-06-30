@@ -266,8 +266,6 @@ const CheckInStation = () => {
                 className="flex-1 h-12 px-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-base md:text-sm"
                 autoFocus
                 disabled={isProcessing}
-                inputMode="numeric"
-                pattern="[0-9]*"
               />
               <button
                 type="submit"

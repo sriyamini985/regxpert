@@ -34,7 +34,7 @@ const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
     const trimmedLine = line.trim();
     const lowerLine = trimmedLine.toLowerCase();
     
-    if (lowerLine.startsWith("reg id:") || lowerLine.startsWith("regid:")) {
+    if (lowerLine.startsWith("reg id:") || lowerLine.startsWith("regid:") || lowerLine.startsWith("id:") || lowerLine.startsWith("id :")) {
       const parts = trimmedLine.split(":");
       if (parts[1]) regIdFromQR = parts.slice(1).join(":").trim();
     } else if (lowerLine.startsWith("name:")) {
@@ -78,8 +78,9 @@ const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
   let cleanRaw = safeIdentifier;
   if (safeIdentifier.toLowerCase().startsWith("name:")) {
     cleanRaw = safeIdentifier.substring(5).trim();
-  } else if (safeIdentifier.toLowerCase().startsWith("reg id:") || safeIdentifier.toLowerCase().startsWith("regid:")) {
-    cleanRaw = safeIdentifier.split(":").slice(1).join(":").trim();
+  } else {
+    const prefixRegex = /^(?:reg\s*id|regid|id)\s*[-\s:]*/i;
+    cleanRaw = safeIdentifier.replace(prefixRegex, "").trim();
   }
 
   const exactConditions = [];
