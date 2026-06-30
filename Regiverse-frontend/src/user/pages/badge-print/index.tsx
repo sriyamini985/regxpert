@@ -1590,7 +1590,13 @@ const BadgePrint = () => {
                                           className="flex items-center justify-center transition-all duration-300"
                                         >
                                           <p className={`font-sans text-black font-extrabold tracking-wider leading-none ${dim.fontSizeRegId}`}>
-                                            <span>ID : {((selectedParticipant.regId || selectedParticipant._id) || "").replace(/^(reg\s*id|regid|id)\s*[-\s:]*/i, "")}</span>
+                                            {(() => {
+                                              const rawId = selectedParticipant.regId || selectedParticipant._id || "";
+                                              const cleanId = rawId.replace(/^(reg\s*id|regid|id)\s*[-\s:]*/i, "");
+                                              const cat = String(selectedParticipant.category || "").toLowerCase();
+                                              const isIndustryPartner = cat.includes("industry partner") || cat.includes("industry-partner") || cat.includes("exhibitor") || cat.includes("sponsor");
+                                              return isIndustryPartner ? <span>{cleanId}</span> : <span>ID : {cleanId}</span>;
+                                            })()}
                                           </p>
                                         </div>
                                       )}

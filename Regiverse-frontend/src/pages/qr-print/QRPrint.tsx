@@ -1602,7 +1602,12 @@ const QRPrint = () => {
                             letterSpacing: "0.2px",
                             fontFamily: "system-ui, -apple-system, sans-serif"
                           }}>
-                            <span>ID : {(badgeRegId || "").replace(/^(reg\s*id|regid|id)\s*[-\s:]*/i, "")}</span>
+                            {(() => {
+                              const cleanId = (badgeRegId || "").replace(/^(reg\s*id|regid|id)\s*[-\s:]*/i, "");
+                              const cat = String(badgeDestination || "").toLowerCase();
+                              const isIndustryPartner = cat.includes("industry partner") || cat.includes("industry-partner") || cat.includes("exhibitor") || cat.includes("sponsor");
+                              return isIndustryPartner ? <span>{cleanId}</span> : <span>ID : {cleanId}</span>;
+                            })()}
                           </p>
                         </div>
                       )}
