@@ -203,19 +203,39 @@ export const importExcel = async (req, res) => {
       );
     };
 
+    const cleanName = (n) => {
+      if (!n) return "";
+      return String(n)
+        .toLowerCase()
+        .replace(/^(dr|prof|mr|mrs|ms)\.?\s+/g, "")
+        .replace(/[^a-z0-9]/g, "");
+    };
+
+    const namesAreSimilar = (name1, name2) => {
+      const n1 = cleanName(name1);
+      const n2 = cleanName(name2);
+      if (!n1 || !n2) return false;
+      if (n1 === n2) return true;
+      if (n1.includes(n2) || n2.includes(n1)) return true;
+      
+      const words1 = name1.toLowerCase().replace(/^(dr|prof|mr|mrs|ms)\.?\s+/g, "").trim().split(/\s+/).filter(Boolean);
+      const words2 = name2.toLowerCase().replace(/^(dr|prof|mr|mrs|ms)\.?\s+/g, "").trim().split(/\s+/).filter(Boolean);
+      if (words1.length > 0 && words2.length > 0) {
+        const first1 = words1[0];
+        const last1 = words1[words1.length - 1];
+        const first2 = words2[0];
+        const last2 = words2[words2.length - 1];
+        if (first1 === first2 && last1 === last2) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     const existingParticipants = await Participant.find({ conferenceId: finalConferenceId });
-    const existingPhones = new Set(existingParticipants.map(p => p.phone?.trim()).filter(p => p && !isPlaceholder(p)));
-    const existingEmails = new Set(existingParticipants.map(p => p.email?.trim().toLowerCase()).filter(e => e && !isPlaceholder(e)));
-    const existingRegIds = new Set(existingParticipants.map(p => p.regId?.trim()).filter(Boolean));
-    const existingNames = new Set(existingParticipants.map(p => p.name?.trim().toLowerCase()).filter(Boolean));
 
     const uniqueFormatted = [];
     let skippedCount = 0;
-    
-    const seenPhonesInExcel = new Set();
-    const seenEmailsInExcel = new Set();
-    const seenRegIdsInExcel = new Set();
-    const seenNamesInExcel = new Set();
 
     processedParticipants.forEach(item => {
       const phone = item.phone?.trim();
@@ -229,19 +249,56 @@ export const importExcel = async (req, res) => {
       // Auto-generated regIds start with "RegID - "
       const isAutoRegId = regId && regId.startsWith("RegID - ");
       
-      const isDuplicate = 
-        (hasPhone && (existingPhones.has(phone) || seenPhonesInExcel.has(phone))) ||
-        (hasEmail && (existingEmails.has(email) || seenEmailsInExcel.has(email))) ||
-        (regId && !isAutoRegId && (existingRegIds.has(regId) || seenRegIdsInExcel.has(regId))) ||
-        (!hasPhone && !hasEmail && name && (existingNames.has(name) || seenNamesInExcel.has(name)));
+      let isDuplicate = false;
+
+      const hasMatchingPhone = (p) => p.phone && phone && p.phone.trim() === phone && !isPlaceholder(phone);
+      const hasMatchingEmail = (p) => p.email && email && p.email.trim().toLowerCase() === email && !isPlaceholder(email);
+      const hasMatchingRegId = (p) => p.regId && regId && !isAutoRegId && p.regId.trim() === regId;
+      const hasMatchingName = (p) => p.name && name && cleanName(p.name) === cleanName(item.name);
+
+      // 1. Check existing in DB
+      const dbMatch = existingParticipants.find(p => {
+        const matchPhone = hasMatchingPhone(p);
+        const matchEmail = hasMatchingEmail(p);
+        const matchRegId = hasMatchingRegId(p);
+        const matchNameOnly = !hasPhone && !hasEmail && hasMatchingName(p);
+
+        if (matchPhone || matchEmail || matchRegId || matchNameOnly) {
+          if (matchPhone || matchEmail || matchRegId) {
+            return namesAreSimilar(p.name, item.name);
+          }
+          return true;
+        }
+        return false;
+      });
+
+      if (dbMatch) {
+        isDuplicate = true;
+      } else {
+        // 2. Check seen in Excel
+        for (const seen of uniqueFormatted) {
+          const matchPhone = hasMatchingPhone(seen);
+          const matchEmail = hasMatchingEmail(seen);
+          const matchRegId = hasMatchingRegId(seen);
+          const matchNameOnly = !hasPhone && !hasEmail && hasMatchingName(seen);
+
+          if (matchPhone || matchEmail || matchRegId || matchNameOnly) {
+            if (matchPhone || matchEmail || matchRegId) {
+              if (namesAreSimilar(seen.name, item.name)) {
+                isDuplicate = true;
+                break;
+              }
+            } else {
+              isDuplicate = true;
+              break;
+            }
+          }
+        }
+      }
         
       if (isDuplicate) {
         skippedCount++;
       } else {
-        if (hasPhone) seenPhonesInExcel.add(phone);
-        if (hasEmail) seenEmailsInExcel.add(email);
-        if (regId && !isAutoRegId) seenRegIdsInExcel.add(regId);
-        if (!hasPhone && !hasEmail && name) seenNamesInExcel.add(name);
         uniqueFormatted.push(item);
       }
     });
