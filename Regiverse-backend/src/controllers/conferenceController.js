@@ -16,7 +16,7 @@ const generateCustomRegId = () => {
   for (let k = 0; k < 3; k++) {
     numPart += numbers.charAt(Math.floor(Math.random() * numbers.length));
   }
-  return `RegID - ${alphaPart}${numPart}`;
+  return `ID - ${alphaPart}${numPart}`;
 };
 
 export const importExcel = async (req, res) => {
@@ -246,8 +246,8 @@ export const importExcel = async (req, res) => {
       const hasPhone = phone && !isPlaceholder(phone);
       const hasEmail = email && !isPlaceholder(email);
       
-      // Auto-generated regIds start with "RegID - "
-      const isAutoRegId = regId && regId.startsWith("RegID - ");
+      // Auto-generated regIds start with "RegID - " or "ID - "
+      const isAutoRegId = regId && (regId.startsWith("RegID - ") || regId.startsWith("ID - "));
       
       let isDuplicate = false;
 
@@ -255,7 +255,7 @@ export const importExcel = async (req, res) => {
         const nameMatches = namesAreSimilar(other.name, item.name);
         
         const otherRegId = other.regId?.trim();
-        const hasOtherRegId = otherRegId && !otherRegId.startsWith("RegID - ") && !isPlaceholder(otherRegId);
+        const hasOtherRegId = otherRegId && !otherRegId.startsWith("RegID - ") && !otherRegId.startsWith("ID - ") && !isPlaceholder(otherRegId);
         const hasItemRegId = regId && !isAutoRegId && !isPlaceholder(regId);
 
         const differentUniqueIds = hasOtherRegId && hasItemRegId && otherRegId !== regId;

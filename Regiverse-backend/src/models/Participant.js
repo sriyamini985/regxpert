@@ -306,7 +306,7 @@ participantSchema.pre("save", function () {
     for (let k = 0; k < 3; k++) {
       numPart += numbers.charAt(Math.floor(Math.random() * numbers.length));
     }
-    this.regId = `RegID - ${alphaPart}${numPart}`;
+    this.regId = `ID - ${alphaPart}${numPart}`;
   }
 
   if (!this.qrCode || this.qrCode.trim() === "") {
