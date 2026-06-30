@@ -1590,7 +1590,7 @@ const BadgePrint = () => {
                                           className="flex items-center justify-center transition-all duration-300"
                                         >
                                           <p className={`font-sans text-black font-extrabold tracking-wider leading-none ${dim.fontSizeRegId}`}>
-                                            <span>ID: {selectedParticipant.regId || selectedParticipant._id}</span>
+                                            <span>ID : {((selectedParticipant.regId || selectedParticipant._id) || "").replace(/^(reg\s*id|regid|id)\s*[-\s:]*/i, "")}</span>
                                           </p>
                                         </div>
                                       )}

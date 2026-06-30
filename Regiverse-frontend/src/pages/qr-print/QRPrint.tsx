@@ -1602,7 +1602,7 @@ const QRPrint = () => {
                             letterSpacing: "0.2px",
                             fontFamily: "system-ui, -apple-system, sans-serif"
                           }}>
-                            <span>ID: {badgeRegId}</span>
+                            <span>ID : {(badgeRegId || "").replace(/^(reg\s*id|regid|id)\s*[-\s:]*/i, "")}</span>
                           </p>
                         </div>
                       )}
