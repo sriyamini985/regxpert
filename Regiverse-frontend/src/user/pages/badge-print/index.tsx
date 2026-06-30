@@ -826,7 +826,7 @@ const BadgePrint = () => {
       element.style.paddingRight = originalPaddingRight;
       element.style.paddingBottom = originalPaddingBottom;
 
-      const imgData = canvas.toDataURL("image/png");
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
       const pdf = new jsPDFClass({
         unit: "mm",
@@ -836,7 +836,7 @@ const BadgePrint = () => {
 
       pdf.addImage(
         imgData,
-        "PNG",
+        "JPEG",
         0,
         0,
         badgeSize === "A5" ? 148 : badgeSize === "A6" ? 105 : dim.widthMm,
@@ -1472,6 +1472,7 @@ const BadgePrint = () => {
                                       src={bgImgSrc}
                                       alt=""
                                       aria-hidden="true"
+                                      crossOrigin={bgImgSrc.startsWith("data:") ? undefined : "anonymous"}
                                       style={{
                                         position: "absolute",
                                         top: 0, left: 0,
@@ -1508,6 +1509,7 @@ const BadgePrint = () => {
                                           src={photoUrl} 
                                           alt="Delegate" 
                                           onError={() => setImageError(true)}
+                                          crossOrigin={photoUrl.startsWith("data:") ? undefined : "anonymous"}
                                           className={`w-full h-full ${photoFit === "contain" ? "object-contain bg-slate-100" : "object-cover object-top"}`} 
                                         />
                                       </div>

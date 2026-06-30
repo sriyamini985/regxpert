@@ -925,7 +925,7 @@ const QRPrint = () => {
         container.style.margin = originalMargin;
         container.style.transform = originalTransform;
 
-        const imgData = canvas.toDataURL("image/png");
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
         // Add image to PDF page
         if (i > 0) {
@@ -935,7 +935,7 @@ const QRPrint = () => {
         // Add image starting at top-left corner (0,0) fitting the exact dimensions
         pdf.addImage(
           imgData,
-          "PNG",
+          "JPEG",
           0,
           0,
           badgeSize === "A5" ? 148 : badgeSize === "A6" ? 105 : dim.widthMm,
@@ -1400,12 +1400,12 @@ const QRPrint = () => {
                     borderRadius: template ? "0" : undefined
                   }}
                 >
-                  {/* Template background image — rendered as <img> for maximum print resolution */}
                   {bgImageSrc && (
                     <img
                       src={bgImageSrc}
                       alt=""
                       aria-hidden="true"
+                      crossOrigin={bgImageSrc.startsWith("data:") ? undefined : "anonymous"}
                       style={{
                         position: "absolute",
                         top: 0,
