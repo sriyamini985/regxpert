@@ -24,6 +24,10 @@ const HallScan = () => {
   const [cameraStarted, setCameraStarted] = useState(false);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
 
+  // Disambiguation: when multiple people share the same QR/regId
+  const [ambiguousMatches, setAmbiguousMatches] = useState<any[]>([]);
+  const [pendingIdentifier, setPendingIdentifier] = useState("");
+
   const [scanResult, setScanResult] = useState<{
     type: "success" | "error" | "warning";
     message: string;
@@ -41,6 +45,8 @@ const HallScan = () => {
     setSearchQuery("");
     setSearchResults([]);
     setScanResult(null);
+    setAmbiguousMatches([]);
+    setPendingIdentifier("");
     stopCameraScanner();
   }, [location.search]);
 
@@ -148,20 +154,28 @@ const HallScan = () => {
   /* ===========================
      CALL BACKEND SCAN API
   =========================== */
-  const callScanAPI = async (identifier: string) => {
+  const callScanAPI = async (identifier: string, participantId?: string) => {
     if (!identifier.trim() || !mode) return;
     setIsProcessing(true);
     setScanResult(null);
+    setAmbiguousMatches([]);
 
     try {
+      const body: any = { identifier: identifier.trim(), mode, conferenceId: conferenceSlug };
+      if (participantId) body.participantId = participantId;
+
       const res = await fetch(`${API}/api/participants/scan-hall`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier.trim(), mode, conferenceId: conferenceSlug }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
 
-      if (res.status === 409) {
+      if (res.status === 300 && data.multipleMatches) {
+        // Multiple people share the same QR code — show disambiguation picker
+        setPendingIdentifier(identifier.trim());
+        setAmbiguousMatches(data.participants || []);
+      } else if (res.status === 409) {
         setScanResult({ type: "warning", message: `⚠️ ${data.msg}`, user: data.user });
       } else if (!res.ok) {
         setScanResult({ type: "error", message: data.msg || "Participant not found." });
@@ -174,6 +188,15 @@ const HallScan = () => {
     }
 
     setIsProcessing(false);
+  };
+
+  /* ===========================
+     CONFIRM DISAMBIGUATION
+  =========================== */
+  const confirmPersonScan = async (person: any) => {
+    setAmbiguousMatches([]);
+    setPendingIdentifier("");
+    await callScanAPI(pendingIdentifier || person.regId, String(person._id));
   };
 
   /* ===========================
@@ -405,6 +428,61 @@ const HallScan = () => {
               </div>
             )}
           </div>
+
+          {/* DISAMBIGUATION PICKER — shown when multiple people share the same QR code */}
+          {ambiguousMatches.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border-2 border-amber-400 p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <span className="text-2xl">⚠️</span>
+                <div>
+                  <h3 className="font-bold text-amber-700 text-lg">Multiple People Found</h3>
+                  <p className="text-sm text-slate-600 mt-1">
+                    The scanned badge (<span className="font-mono font-bold">{pendingIdentifier}</span>) is shared by
+                    <span className="font-bold text-amber-700"> {ambiguousMatches.length} people</span>.
+                    Tap the <span className="font-bold">correct person</span> to log their {mode}.
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                {ambiguousMatches.map((p: any) => {
+                  const entryCount = p.hallEntries ? p.hallEntries.length : 0;
+                  const exitCount = p.hallExits ? p.hallExits.length : 0;
+                  return (
+                    <button
+                      key={String(p._id)}
+                      onClick={() => confirmPersonScan(p)}
+                      disabled={isProcessing}
+                      className={`w-full flex items-center justify-between text-left px-4 py-3 rounded-xl border transition active:scale-95 disabled:opacity-60 ${
+                        mode === 'entry'
+                          ? 'border-green-200 bg-green-50 hover:bg-green-100 hover:border-green-400'
+                          : 'border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-400'
+                      }`}
+                    >
+                      <div>
+                        <p className="font-bold text-slate-800 text-base">{p.name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {p.phone || "No phone"} ·
+                          <span className="text-green-600 font-semibold"> {entryCount} entries</span> ·
+                          <span className="text-red-500 font-semibold"> {exitCount} exits</span>
+                        </p>
+                      </div>
+                      <span className={`text-sm font-bold px-3 py-1.5 rounded-lg text-white ${
+                        mode === 'entry' ? 'bg-green-600' : 'bg-red-600'
+                      }`}>
+                        {mode === 'entry' ? 'Log Entry ✓' : 'Log Exit ✓'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => { setAmbiguousMatches([]); setPendingIdentifier(""); }}
+                className="mt-4 text-sm text-slate-400 underline"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
 
           {/* FEEDBACK RESULT */}
           {scanResult && (

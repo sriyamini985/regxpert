@@ -196,6 +196,55 @@ const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
   return result;
 };
 
+// Same as findParticipantByIdentifier but returns ALL matches (for disambiguation when multiple share the same qrCode/regId)
+const findAllParticipantsByIdentifier = async (identifier, conferenceIdOrSlug) => {
+  if (!identifier) return [];
+  let safeIdentifier = String(identifier).trim();
+  if (safeIdentifier === "") return [];
+
+  // Resolve conference filter
+  let conferenceFilter = {};
+  if (conferenceIdOrSlug) {
+    const cleanConf = String(conferenceIdOrSlug).trim();
+    const targetConference = await Conference.findOne({
+      $or: [
+        { _id: mongoose.Types.ObjectId.isValid(cleanConf) ? cleanConf : undefined },
+        { slug: cleanConf },
+        { name: cleanConf }
+      ].filter(Boolean)
+    });
+    if (targetConference) {
+      conferenceFilter = { conferenceId: String(targetConference._id) };
+    }
+  }
+
+  // Strip prefix labels
+  let cleanRaw = safeIdentifier;
+  if (safeIdentifier.toLowerCase().startsWith("name:")) {
+    cleanRaw = safeIdentifier.substring(5).trim();
+  } else {
+    const prefixRegex = /^(?:reg\s*id|regid|id)\s*[-\s:]*/i;
+    cleanRaw = safeIdentifier.replace(prefixRegex, "").trim();
+  }
+
+  const conditions = [];
+  if (mongoose.Types.ObjectId.isValid(safeIdentifier)) conditions.push({ _id: safeIdentifier });
+  if (cleanRaw) {
+    conditions.push({ regId: cleanRaw });
+    conditions.push({ qrCode: cleanRaw });
+    conditions.push({ phone: cleanRaw });
+    conditions.push({ email: cleanRaw });
+  }
+
+  if (conditions.length === 0) return [];
+
+  const query = conferenceFilter.conferenceId
+    ? { ...conferenceFilter, $or: conditions }
+    : { $or: conditions };
+
+  return await Participant.find(query).lean();
+};
+
 // 1. BULK EXCEL IMPORT CONTROLLER
 export const importExcel = async (req, res) => {
   try {
@@ -449,9 +498,42 @@ export const checkInParticipant = async (req, res) => {
 // 7. PATH ENTRY / EXIT SCAN
 export const scanHall = async (req, res) => {
   try {
-    const { identifier, mode, conferenceId } = req.body; // mode: "entry" or "exit"
-    const user = await findParticipantByIdentifier(identifier, conferenceId);
-    if (!user) return res.status(404).json({ msg: "Participant not found" });
+    const { identifier, mode, conferenceId, participantId } = req.body; // mode: "entry" or "exit"
+
+    let user;
+
+    if (participantId && mongoose.Types.ObjectId.isValid(participantId)) {
+      // Operator explicitly confirmed which person to log (disambiguation flow)
+      user = await Participant.findById(participantId);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    } else {
+      // First check if multiple participants share the same scanned identifier
+      const allMatches = await findAllParticipantsByIdentifier(identifier, conferenceId);
+
+      if (allMatches.length === 0) {
+        return res.status(404).json({ msg: "Participant not found" });
+      }
+
+      if (allMatches.length > 1) {
+        // Multiple people share the same QR/regId — ask the operator to pick the correct one
+        return res.status(300).json({
+          multipleMatches: true,
+          msg: `Multiple participants found for "${identifier}". Please select the correct person.`,
+          participants: allMatches.map(p => ({
+            _id: p._id,
+            name: p.name,
+            regId: p.regId,
+            phone: p.phone || "",
+            category: p.category || "",
+            hallEntries: p.hallEntries || [],
+            hallExits: p.hallExits || []
+          }))
+        });
+      }
+
+      user = await Participant.findById(allMatches[0]._id);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    }
 
     const now = new Date();
     const THRESHOLD_MS = 30000;
