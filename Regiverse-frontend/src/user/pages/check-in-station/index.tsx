@@ -27,6 +27,10 @@ const CheckInStation = () => {
   const [cameraStarted, setCameraStarted] = useState(false);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
 
+  // Disambiguation for shared QR codes (e.g. industry partners)
+  const [ambiguousMatches, setAmbiguousMatches] = useState<any[]>([]);
+  const [pendingIdentifier, setPendingIdentifier] = useState("");
+
   // Cleanup scanner on unmount
   useEffect(() => {
     return () => {
@@ -46,6 +50,8 @@ const CheckInStation = () => {
     setSearchQuery("");
     setSearchResult(null);
     setQrInput("");
+    setAmbiguousMatches([]);
+    setPendingIdentifier("");
   }, [location.search]);
 
   /* ===========================
@@ -142,20 +148,31 @@ const CheckInStation = () => {
   /* ===========================
      CALL SCAN API
   =========================== */
-  const callScanAPI = async (identifier: string) => {
+  const callScanAPI = async (identifier: string, participantId?: string) => {
     if (!identifier.trim()) return;
     setIsProcessing(true);
     setScanResult(null);
+    setAmbiguousMatches([]);
 
     try {
+      const body: any = { 
+        identifier: identifier.trim(), 
+        scanType: "kitbag", 
+        conferenceId: conferenceSlug 
+      };
+      if (participantId) body.participantId = participantId;
+
       const res = await fetch(`${API}/api/participants/verify-and-scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier.trim(), scanType: "kitbag", conferenceId: conferenceSlug }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
 
-      if (res.status === 403) {
+      if (res.status === 300 && data.multipleMatches) {
+        setPendingIdentifier(identifier.trim());
+        setAmbiguousMatches(data.participants || []);
+      } else if (res.status === 403) {
         setScanResult({ type: "error", message: `🚫 ${data.msg}`, user: data.user });
       } else if (res.status === 409) {
         setScanResult({ type: "warning", message: `⚠️ ${data.msg}`, user: data.user });
@@ -170,6 +187,12 @@ const CheckInStation = () => {
     }
 
     setIsProcessing(false);
+  };
+
+  const confirmPersonScan = async (person: any) => {
+    setAmbiguousMatches([]);
+    setPendingIdentifier("");
+    await callScanAPI(pendingIdentifier || person.regId, String(person._id));
   };
 
   /* ===========================
@@ -432,6 +455,58 @@ const CheckInStation = () => {
               );
             })}
           </div>
+
+          {/* DISAMBIGUATION PICKER — shown when multiple people share the same QR code */}
+          {ambiguousMatches.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border-2 border-blue-400 p-6 mb-4">
+              <div className="flex items-start gap-3 mb-4">
+                <span className="text-2xl">⚠️</span>
+                <div>
+                  <h3 className="font-bold text-blue-700 text-lg">Multiple People Found</h3>
+                  <p className="text-sm text-slate-600 mt-1">
+                    The scanned badge (<span className="font-mono font-bold">{pendingIdentifier}</span>) is shared by
+                    <span className="font-bold text-blue-700"> {ambiguousMatches.length} people</span>.
+                    Tap the <span className="font-bold">correct person</span> to log their kitbag scan.
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                {ambiguousMatches.map((p: any) => {
+                  const alreadyCollected = p.kitbagCollected === true;
+                  return (
+                    <button
+                      key={String(p._id)}
+                      onClick={() => !alreadyCollected && confirmPersonScan(p)}
+                      disabled={isProcessing || alreadyCollected}
+                      className={`w-full flex items-center justify-between text-left px-4 py-3 rounded-xl border transition active:scale-95 disabled:opacity-60 ${
+                        alreadyCollected
+                          ? 'border-gray-200 bg-gray-50'
+                          : 'border-blue-200 bg-blue-50 hover:bg-blue-100 hover:border-blue-400'
+                      }`}
+                    >
+                      <div>
+                        <p className="font-bold text-slate-800 text-base">{p.name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {p.phone || "No phone"} · <span className="font-semibold">{p.category}</span> · {alreadyCollected ? '✅ Kitbag Already Collected' : '🎒 Pending'}
+                        </p>
+                      </div>
+                      <span className={`text-sm font-bold px-3 py-1.5 rounded-lg text-white ${
+                        alreadyCollected ? 'bg-gray-400' : 'bg-blue-600'
+                      }`}>
+                        {alreadyCollected ? 'Collected' : 'Select ✓'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => { setAmbiguousMatches([]); setPendingIdentifier(""); }}
+                className="mt-4 text-sm text-slate-400 underline"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
 
           {/* SCAN RESULT FEEDBACK */}
           {scanResult && (

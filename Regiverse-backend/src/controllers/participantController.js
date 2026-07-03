@@ -351,10 +351,45 @@ export const scanQR = async (req, res) => {
 // 4. VERIFY AND SCAN (Restricted items: Kitbag/Certificate)
 export const verifyAndScan = async (req, res) => {
   try {
-    const { identifier, scanType, conferenceId } = req.body;
-    const user = await findParticipantByIdentifier(identifier, conferenceId);
+    const { identifier, scanType, conferenceId, participantId } = req.body;
+    let user;
 
-    if (!user) return res.status(404).json({ msg: "Participant not found" });
+    if (participantId && mongoose.Types.ObjectId.isValid(participantId)) {
+      // Explicit selection by operator
+      user = await Participant.findById(participantId);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    } else {
+      // General scan lookup
+      const allMatches = await findAllParticipantsByIdentifier(identifier, conferenceId);
+
+      if (allMatches.length === 0) {
+        return res.status(404).json({ msg: "Participant not found" });
+      }
+
+      if (allMatches.length > 1) {
+        // Return multiple matches for disambiguation
+        return res.status(300).json({
+          multipleMatches: true,
+          msg: `Multiple participants found for "${identifier}". Please select the correct person.`,
+          participants: allMatches.map(p => ({
+            _id: p._id,
+            name: p.name,
+            regId: p.regId,
+            phone: p.phone || "",
+            category: p.category || "",
+            isCheckedIn: p.isCheckedIn || false,
+            printed: p.printed || false,
+            kitbagCollected: p.kitbagCollected || false,
+            certificateGiven: p.certificateGiven || false,
+            foodLogs: p.foodLogs || {},
+            workshopScans: p.workshopScans || []
+          }))
+        });
+      }
+
+      user = await Participant.findById(allMatches[0]._id);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    }
 
     // Determine the corresponding block key and field mapping dynamically
     let isKitbag = false;
@@ -374,7 +409,8 @@ export const verifyAndScan = async (req, res) => {
     if (user[blockKey] === true) {
       return res.status(403).json({ 
         msg: `Access Denied: ${scanType} is restricted.`,
-        blocked: true 
+        blocked: true,
+        user
       });
     }
 
