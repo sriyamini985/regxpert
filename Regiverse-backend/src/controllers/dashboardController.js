@@ -33,8 +33,8 @@ export const getDashboardStats = async (req, res) => {
       printed,
       kitbagCollected,
       certificateGiven,
-      hallEntriesCount,
-      hallExitsCount,
+      hallEntriesAgg,
+      hallExitsAgg,
       workshopScansCount,
       foodLogsGrouped
     ] = await Promise.all([
@@ -43,8 +43,14 @@ export const getDashboardStats = async (req, res) => {
       Participant.countDocuments({ conferenceId: finalConferenceId, printed: true }),
       Participant.countDocuments({ conferenceId: finalConferenceId, kitbagCollected: true }),
       Participant.countDocuments({ conferenceId: finalConferenceId, certificateGiven: true }),
-      Participant.countDocuments({ conferenceId: finalConferenceId, "hallEntries.0": { $exists: true } }),
-      Participant.countDocuments({ conferenceId: finalConferenceId, "hallExits.0": { $exists: true } }),
+      Participant.aggregate([
+        { $match: { conferenceId: finalConferenceId } },
+        { $group: { _id: null, total: { $sum: { $cond: [ { $isArray: "$hallEntries" }, { $size: "$hallEntries" }, 0 ] } } } }
+      ]),
+      Participant.aggregate([
+        { $match: { conferenceId: finalConferenceId } },
+        { $group: { _id: null, total: { $sum: { $cond: [ { $isArray: "$hallExits" }, { $size: "$hallExits" }, 0 ] } } } }
+      ]),
       Participant.countDocuments({ conferenceId: finalConferenceId, "workshopScans.0": { $exists: true } }),
       Participant.aggregate([
         { $match: { conferenceId: finalConferenceId } },
@@ -54,6 +60,9 @@ export const getDashboardStats = async (req, res) => {
         { $group: { _id: "$foodLogsArray.k", count: { $sum: 1 } } }
       ])
     ]);
+
+    const hallEntriesCount = hallEntriesAgg[0]?.total || 0;
+    const hallExitsCount = hallExitsAgg[0]?.total || 0;
 
     // Construct day-specific meal stats
     const food = {};
