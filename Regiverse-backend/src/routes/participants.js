@@ -236,9 +236,15 @@ router.get("/", async (req, res) => {
         { phone: safeSearch },
         { email: safeSearch },
         { qrCode: safeSearch },
-        { name: { $regex: "^" + escapedSearch, $options: "i" } }, 
-        { phone: { $regex: "^" + escapedSearch, $options: "i" } }, 
-        { regId: { $regex: "^" + escapedSearch, $options: "i" } }
+        // Prefix match (fast – uses index)
+        { name: { $regex: "^" + escapedSearch, $options: "i" } },
+        { phone: { $regex: "^" + escapedSearch, $options: "i" } },
+        { regId: { $regex: "^" + escapedSearch, $options: "i" } },
+        // Substring/contains match on name (catches "Rohit" inside "Dr. Rohit Agarwal")
+        // Only run for queries >= 3 chars to avoid expensive full-collection scans
+        ...(safeSearch.length >= 3 ? [
+          { name: { $regex: escapedSearch, $options: "i" } }
+        ] : [])
       ] : [
         { regId: safeSearch },
         { phone: safeSearch },

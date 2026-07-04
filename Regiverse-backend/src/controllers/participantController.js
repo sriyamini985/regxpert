@@ -159,7 +159,13 @@ const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
     conditions.push({ qrCode: { $regex: new RegExp(`^\\s*${escapedCleanRaw}\\s*$`, "i") } });
     conditions.push({ regId: { $regex: new RegExp(`^\\s*${escapedCleanRaw}\\s*$`, "i") } });
     conditions.push({ regId: { $regex: new RegExp(escapedCleanRaw + "\\s*$", "i") } });
+    // Exact full-name match
     conditions.push({ name: { $regex: new RegExp(`^\\s*${escapedCleanRaw}\\s*$`, "i") } });
+    // Substring / contains match on name (allows partial name scans like "Rohit" → "Dr. Rohit Agarwal")
+    // Only trigger for inputs >= 3 characters to avoid false positives
+    if (cleanRaw.length >= 3) {
+      conditions.push({ name: { $regex: new RegExp(escapedCleanRaw, "i") } });
+    }
   }
 
   if (mongoose.Types.ObjectId.isValid(safeIdentifier)) {

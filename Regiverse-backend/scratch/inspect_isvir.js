@@ -5,32 +5,39 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const MONGO_URI = "mongodb+srv://puppalasagar91_db_user:Sagarpatel54@cluster0.neydetp.mongodb.net/regiverse?appName=Cluster0";
 
-const ConferenceSchema = new mongoose.Schema({}, { strict: false });
-const Conference = mongoose.model("Conference", ConferenceSchema, "conferences");
-
 const ParticipantSchema = new mongoose.Schema({}, { strict: false });
 const Participant = mongoose.model("Participant", ParticipantSchema, "participants");
 
 async function run() {
   await mongoose.connect(MONGO_URI);
-  console.log("Connected to MongoDB!");
+  console.log("Connected.\n");
 
-  const conf = await Conference.findOne({ name: /isvir/i });
-  if (conf) {
-    console.log("Conference ID type:", typeof conf._id, conf._id.constructor.name);
-    const p = await Participant.findOne({
-      $or: [
-        { conferenceId: conf._id },
-        { conferenceId: String(conf._id) }
-      ]
-    });
-    if (p) {
-      console.log("Participant properties:");
-      console.log("conferenceId value:", p.conferenceId, "type:", typeof p.conferenceId, p.conferenceId?.constructor?.name);
-    } else {
-      console.log("No participant found for conference ID", conf._id);
-    }
+  const confId = "6a4359edffc243930809e414";
+
+  // Find a participant with hallEntries
+  const pWithHall = await Participant.findOne({ conferenceId: confId, "hallEntries.0": { $exists: true } });
+  if (pWithHall) {
+    console.log("Participant with hallEntries:");
+    console.log(`  Name: ${pWithHall.name}`);
+    console.log(`  hallEntries:`, pWithHall.hallEntries);
+    console.log(`  hallExits:`, pWithHall.hallExits);
   }
+
+  // Find participants with foodLogs
+  const pWithFood = await Participant.find({ 
+    conferenceId: confId,
+    $and: [
+      { foodLogs: { $exists: true } },
+      { foodLogs: { $ne: null } }
+    ]
+  }).limit(5).lean();
+
+  console.log(`\nFound ${pWithFood.length} participants with foodLogs:`);
+  pWithFood.forEach(p => {
+    console.log(`  Name: ${p.name}`);
+    console.log(`  foodLogs:`, p.foodLogs);
+    console.log(`  foodScanTimes:`, p.foodScanTimes);
+  });
 
   await mongoose.disconnect();
 }

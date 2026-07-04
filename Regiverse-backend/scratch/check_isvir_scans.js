@@ -5,48 +5,48 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const MONGO_URI = "mongodb+srv://puppalasagar91_db_user:Sagarpatel54@cluster0.neydetp.mongodb.net/regiverse?appName=Cluster0";
 
-const ConferenceSchema = new mongoose.Schema({}, { strict: false });
-const Conference = mongoose.model("Conference", ConferenceSchema, "conferences");
-
 const ParticipantSchema = new mongoose.Schema({}, { strict: false });
 const Participant = mongoose.model("Participant", ParticipantSchema, "participants");
 
+const ConferenceSchema = new mongoose.Schema({}, { strict: false });
+const Conference = mongoose.model("Conference", ConferenceSchema, "conferences");
+
 async function run() {
   await mongoose.connect(MONGO_URI);
-  console.log("Connected to MongoDB!");
+  console.log("Connected.\n");
 
-  const conf = await Conference.findOne({ name: /isvir/i });
+  const conf = await Conference.findOne({ slug: "isvir-2026-9435" });
   if (!conf) {
-    console.log("ISVIR conference not found!");
+    console.log("ISVIR conference not found");
     await mongoose.disconnect();
     return;
   }
+  const confId = String(conf._id);
+  console.log(`Conference: ${conf.name} (${confId})`);
 
-  const query = {
-    $or: [
-      { conferenceId: conf._id },
-      { conferenceId: String(conf._id) }
-    ]
-  };
+  // Count unique participants with entries
+  const uniqueEntries = await Participant.countDocuments({ conferenceId: confId, "hallEntries.0": { $exists: true } });
+  const uniqueExits = await Participant.countDocuments({ conferenceId: confId, "hallExits.0": { $exists: true } });
 
-  const checkedInCount = await Participant.countDocuments({ ...query, isCheckedIn: true });
-  const kitbagCount = await Participant.countDocuments({ ...query, kitbagCollected: true });
-  const certCount = await Participant.countDocuments({ ...query, certificateGiven: true });
-  
-  // Count how many have any food logs
-  const allParticipants = await Participant.find(query);
-  let foodScannedCount = 0;
-  for (const p of allParticipants) {
-    if (p.foodLogs && p.foodLogs.size > 0) {
-      foodScannedCount++;
-    }
-  }
+  // Sum of all entries using aggregation
+  const entrySumAgg = await Participant.aggregate([
+    { $match: { conferenceId: confId } },
+    { $project: { numEntries: { $cond: { if: { $isArray: "$hallEntries" }, then: { $size: "$hallEntries" }, else: 0 } } } },
+    { $group: { _id: null, total: { $sum: "$numEntries" } } }
+  ]);
+  const totalEntries = entrySumAgg[0]?.total || 0;
 
-  console.log(`ISVIR 2026 Statistics:`);
-  console.log(`- Total Checked In (isCheckedIn): ${checkedInCount}`);
-  console.log(`- Kitbags Collected (kitbagCollected): ${kitbagCount}`);
-  console.log(`- Certificates Given (certificateGiven): ${certCount}`);
-  console.log(`- Food Scanned (foodLogs map not empty): ${foodScannedCount}`);
+  const exitSumAgg = await Participant.aggregate([
+    { $match: { conferenceId: confId } },
+    { $project: { numExits: { $cond: { if: { $isArray: "$hallExits" }, then: { $size: "$hallExits" }, else: 0 } } } },
+    { $group: { _id: null, total: { $sum: "$numExits" } } }
+  ]);
+  const totalExits = exitSumAgg[0]?.total || 0;
+
+  console.log(`Unique participants with at least 1 entry: ${uniqueEntries}`);
+  console.log(`Total entry scan events (sum of lengths): ${totalEntries}`);
+  console.log(`Unique participants with at least 1 exit: ${uniqueExits}`);
+  console.log(`Total exit scan events (sum of lengths): ${totalExits}`);
 
   await mongoose.disconnect();
 }
