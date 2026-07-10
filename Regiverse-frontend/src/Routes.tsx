@@ -11,6 +11,7 @@ import PublicRoute from "./PublicRoute";
 const AdminRoutes = lazy(() => import("./admin/AdminRoutes"));
 const AdminLogin = lazy(() => import("./auth/pages/AdminLogin"));
 const OperationsDashboard = lazy(() => import("./pages/OperationsDashboard"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 const QRPrint = lazy(() => import("./pages/qr-print/QRPrint"));
 const UserRoutes = lazy(() => import("./user/UserRoutes"));
 
@@ -66,7 +67,8 @@ const AppRoutes: React.FC = () => {
           <Route path="/u/*" element={<PrivateRoute role="user"><UserRoutes /></PrivateRoute>} />
           
           <Route path="/print-qr" element={<QRPrint />} />
-          <Route path="/" element={<OperationsDashboard />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/dashboard" element={<OperationsDashboard />} />
           <Route path="/staff" element={<UserLogin />} />
           <Route path="/user-login" element={<Navigate to="/staff" replace />} />
 
