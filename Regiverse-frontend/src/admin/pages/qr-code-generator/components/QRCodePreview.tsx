@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Image from '../../../../components/AppImage';
-import Icon from 'components/AppIcon';
+import Icon from '../../../../components/AppIcon';
 import Button from '../../../../components/ui/Button';
 import { GeneratedQRCode } from '../types';
 
@@ -60,11 +60,10 @@ const QRCodePreview = ({ codes, onDownloadSingle, onDownloadAll }: QRCodePreview
             </div>
           </div>
           <Button
-            variant="default"
-            iconName="Download"
-            iconPosition="left"
             onClick={onDownloadAll}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-md hover:bg-primary/90 transition-colors duration-150"
           >
+            <Icon name="Download" size={18} />
             Download All
           </Button>
         </div>
@@ -151,22 +150,19 @@ const QRCodePreview = ({ codes, onDownloadSingle, onDownloadAll }: QRCodePreview
               </div>
               <div className="flex gap-3 p-4 border-t border-border">
                 <Button
-                  variant="outline"
                   onClick={handleCloseModal}
-                  className="flex-1"
+                  className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-border bg-background text-foreground font-medium rounded-md hover:bg-muted transition-colors duration-150"
                 >
                   Close
                 </Button>
                 <Button
-                  variant="default"
-                  iconName="Download"
-                  iconPosition="left"
                   onClick={() => {
                     onDownloadSingle(selectedCode);
                     handleCloseModal();
                   }}
-                  className="flex-1"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium rounded-md hover:bg-primary/90 transition-colors duration-150"
                 >
+                  <Icon name="Download" size={18} />
                   Download
                 </Button>
               </div>

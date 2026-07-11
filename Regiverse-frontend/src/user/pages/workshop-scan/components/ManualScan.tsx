@@ -53,3 +53,5 @@ const ManualScan: React.FC<Props> = ({ participants, onCheckIn }) => {
 };
 
 export default ManualScan;
+
+

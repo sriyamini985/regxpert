@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Icon from 'components/AppIcon';
+import Icon from '../../../../components/AppIcon';
 import Input from '../../../../components/ui/Input';
 import { Checkbox } from '../../../../components/ui/Checkbox';
 import Button from '../../../../components/ui/Button';
@@ -94,12 +94,11 @@ const ParticipantSelector = ({
           onChange={handleSelectAll}
         />
         <Button
-          variant="ghost"
-          size="sm"
-          iconName="X"
           onClick={() => onSelectionChange([])}
           disabled={selectedParticipants.length === 0}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-muted text-muted-foreground disabled:opacity-50 disabled:pointer-events-none transition-colors duration-150"
         >
+          <Icon name="X" size={14} />
           Clear Selection
         </Button>
       </div>
@@ -128,8 +127,8 @@ const ParticipantSelector = ({
               <div className="flex items-center gap-2">
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    participant.status === 'attended' ?'bg-success/10 text-success'
-                      : participant.status === 'absent' ?'bg-error/10 text-error' :'bg-warning/10 text-warning'
+                    participant.status === 'attended' ? 'bg-success/10 text-success'
+                      : participant.status === 'absent' ? 'bg-error/10 text-error' : 'bg-warning/10 text-warning'
                   }`}
                 >
                   {participant.status}

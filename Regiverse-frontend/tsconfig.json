@@ -1,14 +1,20 @@
 {
   "compilerOptions": {
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
     "target": "ESNext",
     "useDefineForClassFields": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
     "skipLibCheck": true,
-    
+    "paths": {
+      "pages/*": ["./src/pages/*"],
+      "components/*": ["./src/components/*"],
+      "auth/*": ["./src/auth/*"]
+    },
+
     /* Modernized Settings */
     "esModuleInterop": true,
-    "moduleResolution": "bundler",
     "ignoreDeprecations": "5.0",
     /* ------------------- */
 
@@ -18,9 +24,7 @@
     "module": "ESNext",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "baseUrl": "./src"
+    "noEmit": true
   },
   "include": ["src"],
   "exclude": [

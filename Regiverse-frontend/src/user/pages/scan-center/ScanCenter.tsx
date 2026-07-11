@@ -81,12 +81,12 @@ export default function ScanCenter() {
         staggerChildren: 0.08
       }
     }
-  };
+  } as const;
 
   const cardVariants = {
     hidden: { y: 20, opacity: 0 },
     show: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } }
-  };
+  } as const;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-4 font-sans">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import Breadcrumb from '../../components/ui/Breadcrumb';
-import LoadingBar from '../../components/ui/LoadingBar';
-import Icon from '../../components/AppIcon';
+import Breadcrumb from '../../../components/ui/Breadcrumb';
+import LoadingBar from '../../../components/ui/LoadingBar';
+import Icon from '../../../components/AppIcon';
 
 import GenerationOptions from './components/GenerationOptions';
 import ProgressTracker from './components/ProgressTracker';
@@ -17,7 +17,7 @@ import {
   GeneratedQRCode,
   BatchOperation,
 } from './types';
-import { subscribeToParticipants } from '../../services/participantService';
+import { subscribeToParticipants } from '../../../services/participantService';
 
 const mockTemplates: QRCodeTemplate[] = [
   {

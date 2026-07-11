@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import Icon from '../../../components/AppIcon';
-import Input from '../../../components/ui/Input';
-import { Checkbox } from '../../../components/ui/Checkbox';
-import Button from '../../../components/ui/Button';
-import Select from '../../../components/ui/Select';
+import Icon from '../../../../components/AppIcon';
+import Input from '../../../../components/ui/Input';
+import { Checkbox } from '../../../../components/ui/Checkbox';
+import Button from '../../../../components/ui/Button';
+import Select from '../../../../components/ui/Select';
+import React from 'react';
 import { Participant } from '../types';
 
 interface ParticipantSelectorProps {
@@ -75,13 +76,13 @@ const ParticipantSelector = ({
           type="search"
           placeholder="Search by name, email, or company..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
           className="w-full"
         />
         <Select
           options={statusOptions}
           value={statusFilter}
-          onChange={(value) => setStatusFilter(value as string)}
+          onChange={(value: string) => setStatusFilter(value)}
           placeholder="Filter by status"
         />
       </div>
@@ -94,12 +95,11 @@ const ParticipantSelector = ({
           onChange={handleSelectAll}
         />
         <Button
-          variant="ghost"
-          size="sm"
-          iconName="X"
           onClick={() => onSelectionChange([])}
           disabled={selectedParticipants.length === 0}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded hover:bg-muted text-muted-foreground disabled:opacity-50 disabled:pointer-events-none transition-colors duration-150"
         >
+          <Icon name="X" size={14} />
           Clear Selection
         </Button>
       </div>
@@ -128,8 +128,11 @@ const ParticipantSelector = ({
               <div className="flex items-center gap-2">
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    participant.status === 'attended' ?'bg-success/10 text-success'
-                      : participant.status === 'absent' ?'bg-error/10 text-error' :'bg-warning/10 text-warning'
+                    participant.status === 'attended' 
+                      ? 'bg-success/10 text-success'
+                      : participant.status === 'absent' 
+                      ? 'bg-error/10 text-error' 
+                      : 'bg-warning/10 text-warning'
                   }`}
                 >
                   {participant.status}

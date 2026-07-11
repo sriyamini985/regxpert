@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import Icon from '../../../components/AppIcon';
+import Icon from '../../../../components/AppIcon';
 import { GenerationProgress } from '../types';
 
 interface ProgressTrackerProps {

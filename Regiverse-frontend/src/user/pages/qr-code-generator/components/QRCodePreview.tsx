@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Image from '../../../components/AppImage';
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
+import Image from '../../../../components/AppImage';
+import Icon from '../../../../components/AppIcon';
+import Button from '../../../../components/ui/Button';
+import React from 'react';
 import { GeneratedQRCode } from '../types';
 
 interface QRCodePreviewProps {
@@ -60,11 +61,10 @@ const QRCodePreview = ({ codes, onDownloadSingle, onDownloadAll }: QRCodePreview
             </div>
           </div>
           <Button
-            variant="default"
-            iconName="Download"
-            iconPosition="left"
-            onClick={onDownloadAll}
+            onClick={() => onDownloadAll()}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-md hover:bg-muted text-foreground transition-colors duration-150"
           >
+            <Icon name="Download" size={16} />
             Download All
           </Button>
         </div>
@@ -88,7 +88,7 @@ const QRCodePreview = ({ codes, onDownloadSingle, onDownloadAll }: QRCodePreview
                 <p className="text-xs text-muted-foreground">ID: {code.participantId}</p>
               </div>
               <button
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   onDownloadSingle(code);
                 }}
@@ -151,22 +151,19 @@ const QRCodePreview = ({ codes, onDownloadSingle, onDownloadAll }: QRCodePreview
               </div>
               <div className="flex gap-3 p-4 border-t border-border">
                 <Button
-                  variant="outline"
                   onClick={handleCloseModal}
-                  className="flex-1"
+                  className="flex-1 px-4 py-2 border border-border rounded-md hover:bg-muted text-foreground transition-colors duration-150"
                 >
                   Close
                 </Button>
                 <Button
-                  variant="default"
-                  iconName="Download"
-                  iconPosition="left"
                   onClick={() => {
                     onDownloadSingle(selectedCode);
                     handleCloseModal();
                   }}
-                  className="flex-1"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors duration-150"
                 >
+                  <Icon name="Download" size={16} />
                   Download
                 </Button>
               </div>

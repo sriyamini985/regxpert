@@ -52,3 +52,4 @@ const ResultsTable: React.FC<Props> = ({ data, onCheckIn }) => {
 };
 
 export default ResultsTable;
+

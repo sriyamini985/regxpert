@@ -1,7 +1,14 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
+import React from 'react';
 
-const PrivateRoute = ({ children, role }: { children: JSX.Element; role: string }) => {
+// Use React.ReactElement instead of JSX.Element
+interface PrivateRouteProps {
+  children: React.ReactElement;
+  role: string;
+}
+
+const PrivateRoute = ({ children, role }: PrivateRouteProps) => {
   const { user } = useAuth();
 
   if (!user) {

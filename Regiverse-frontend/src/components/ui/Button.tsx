@@ -63,19 +63,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
 }, ref) => {
     const Comp = asChild ? Slot : "button";
 
-    // Icon size mapping based on button size
-    const iconSizeMap: Record<NonNullable<ButtonProps['size']>, number> = {
-        xs: 12,
-        sm: 14,
-        default: 16,
-        lg: 18,
-        xl: 20,
-        icon: 16,
+    const iconSizeMap: Record<string, number> = {
+        xs: 12, sm: 14, default: 16, lg: 18, xl: 20, icon: 16,
     };
 
     const calculatedIconSize = iconSize || iconSizeMap[size || 'default'] || 16;
 
-    // Loading spinner component
     const LoadingSpinner: React.FC = () => (
         <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -83,30 +76,23 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
         </svg>
     );
 
-    const renderIcon = (): React.ReactNode => {
+    const renderIcon = (childProps?: any): React.ReactNode => {
         if (!iconName) return null;
-        try {
-            return (
-                <Icon
-                    name={iconName}
-                    size={calculatedIconSize}
-                    className={cn(
-                        children && iconPosition === 'left' && "mr-2 group-hover:-translate-x-0.5 transition-transform duration-300",
-                        children && iconPosition === 'right' && "ml-2 group-hover:translate-x-0.5 transition-transform duration-300"
-                    )}
-                />
-            );
-        } catch {
-            return null;
-        }
+        return (
+            <Icon
+                name={iconName}
+                size={calculatedIconSize}
+                className={cn(
+                    (childProps?.children || children) && iconPosition === 'left' && "mr-2 group-hover:-translate-x-0.5 transition-transform duration-300",
+                    (childProps?.children || children) && iconPosition === 'right' && "ml-2 group-hover:translate-x-0.5 transition-transform duration-300"
+                )}
+            />
+        );
     };
 
     const renderFallbackButton = (): React.ReactElement => (
         <button
-            className={cn(
-                buttonVariants({ variant, size, className }),
-                fullWidth && "w-full"
-            )}
+            className={cn(buttonVariants({ variant, size, className }), fullWidth && "w-full")}
             ref={ref}
             disabled={disabled || loading}
             {...props}
@@ -118,39 +104,35 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
         </button>
     );
 
-    // When asChild is true, merge icons into the child element
     if (asChild) {
         try {
-            if (!children || React.Children.count(children) !== 1) {
-                return renderFallbackButton();
-            }
+            if (!children || React.Children.count(children) !== 1) return renderFallbackButton();
 
             const child = React.Children.only(children);
+            if (!React.isValidElement(child)) return renderFallbackButton();
 
-            if (!React.isValidElement(child)) {
-                return renderFallbackButton();
-            }
+            const childProps = child.props as any;
 
             const content = (
                 <>
                     {loading && <LoadingSpinner />}
-                    {iconName && iconPosition === 'left' && renderIcon()}
-                    {child.props?.children}
-                    {iconName && iconPosition === 'right' && renderIcon()}
+                    {iconName && iconPosition === 'left' && renderIcon(childProps)}
+                    {childProps.children}
+                    {iconName && iconPosition === 'right' && renderIcon(childProps)}
                 </>
             );
 
-            const clonedChild = React.cloneElement(child as React.ReactElement<any>, {
+            return React.cloneElement(child, {
                 className: cn(
                     buttonVariants({ variant, size, className }),
                     fullWidth && "w-full",
-                    child.props?.className
+                    childProps.className
                 ),
-                disabled: disabled || loading || child.props?.disabled,
+                disabled: disabled || loading || childProps.disabled,
                 children: content,
-            });
-
-            return <Comp ref={ref} {...props}>{clonedChild}</Comp>;
+                ref: ref,
+                ...props
+            } as any);
         } catch {
             return renderFallbackButton();
         }
@@ -158,10 +140,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
 
     return (
         <Comp
-            className={cn(
-                buttonVariants({ variant, size, className }),
-                fullWidth && "w-full"
-            )}
+            className={cn(buttonVariants({ variant, size, className }), fullWidth && "w-full")}
             ref={ref}
             disabled={disabled || loading}
             {...props}

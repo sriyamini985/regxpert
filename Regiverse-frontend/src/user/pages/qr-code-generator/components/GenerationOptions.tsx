@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import Select from '../../../components/ui/Select';
-
-import { Checkbox } from '../../../components/ui/Checkbox';
-import Button from '../../../components/ui/Button';
-import Icon from '../../../components/AppIcon';
+import Select from '../../../../components/ui/Select';
+import { Checkbox } from '../../../../components/ui/Checkbox';
+import Button from '../../../../components/ui/Button';
+import Icon from '../../../../components/AppIcon';
+import React from 'react';
 import { GenerationOptions as GenerationOptionsType, QRCodeTemplate } from '../types';
 
 interface GenerationOptionsProps {
@@ -36,17 +36,17 @@ const GenerationOptions = ({ templates, selectedTemplateId, onGenerate, isGenera
   ];
 
   const sizeOptions = [
-    { value: 200, label: 'Small (200x200)' },
-    { value: 300, label: 'Medium (300x300)' },
-    { value: 500, label: 'Large (500x500)' },
-    { value: 1000, label: 'Extra Large (1000x1000)' }
+    { value: '200', label: 'Small (200x200)' },
+    { value: '300', label: 'Medium (300x300)' },
+    { value: '500', label: 'Large (500x500)' },
+    { value: '1000', label: 'Extra Large (1000x1000)' }
   ];
 
   const batchSizeOptions = [
-    { value: 25, label: '25 codes per batch' },
-    { value: 50, label: '50 codes per batch' },
-    { value: 100, label: '100 codes per batch' },
-    { value: 250, label: '250 codes per batch' }
+    { value: '25', label: '25 codes per batch' },
+    { value: '50', label: '50 codes per batch' },
+    { value: '100', label: '100 codes per batch' },
+    { value: '250', label: '250 codes per batch' }
   ];
 
   const templateOptions = templates.map(template => ({
@@ -77,7 +77,7 @@ const GenerationOptions = ({ templates, selectedTemplateId, onGenerate, isGenera
           description="Choose the export format for QR codes"
           options={formatOptions}
           value={options.format}
-          onChange={(value) => setOptions({ ...options, format: value as 'png' | 'pdf' | 'zip' })}
+          onChange={(value: string) => setOptions({ ...options, format: value as 'png' | 'pdf' | 'zip' })}
           required
         />
 
@@ -85,8 +85,8 @@ const GenerationOptions = ({ templates, selectedTemplateId, onGenerate, isGenera
           label="QR Code Size"
           description="Select the dimensions for generated codes"
           options={sizeOptions}
-          value={options.size}
-          onChange={(value) => setOptions({ ...options, size: Number(value) })}
+          value={String(options.size)}
+          onChange={(value: string) => setOptions({ ...options, size: Number(value) })}
           required
         />
 
@@ -95,7 +95,7 @@ const GenerationOptions = ({ templates, selectedTemplateId, onGenerate, isGenera
           description="Choose a design template"
           options={templateOptions}
           value={options.templateId}
-          onChange={(value) => setOptions({ ...options, templateId: value as string })}
+          onChange={(value: string) => setOptions({ ...options, templateId: value })}
           required
         />
 
@@ -103,8 +103,8 @@ const GenerationOptions = ({ templates, selectedTemplateId, onGenerate, isGenera
           label="Batch Size"
           description="Number of codes to generate per batch"
           options={batchSizeOptions}
-          value={options.batchSize}
-          onChange={(value) => setOptions({ ...options, batchSize: Number(value) })}
+          value={String(options.batchSize)}
+          onChange={(value: string) => setOptions({ ...options, batchSize: Number(value) })}
           required
         />
       </div>
@@ -114,22 +114,18 @@ const GenerationOptions = ({ templates, selectedTemplateId, onGenerate, isGenera
           label="Include Participant Information"
           description="Add participant name and details to QR code"
           checked={options.includeParticipantInfo}
-          onChange={(e) => setOptions({ ...options, includeParticipantInfo: e.target.checked })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOptions({ ...options, includeParticipantInfo: e.target.checked })}
         />
       </div>
 
       <div className="flex items-center gap-3 pt-4">
         <Button
-          variant="default"
-          size="lg"
-          iconName="QrCode"
-          iconPosition="left"
           onClick={handleGenerate}
-          loading={isGenerating}
           disabled={isGenerating}
-          className="flex-1 sm:flex-none"
+          className="flex-1 sm:flex-none flex items-center justify-center gap-2"
         >
-          Generate QR Codes
+          <Icon name="QrCode" size={18} />
+          {isGenerating ? 'Generating...' : 'Generate QR Codes'}
         </Button>
         <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
           <Icon name="Info" size={16} />

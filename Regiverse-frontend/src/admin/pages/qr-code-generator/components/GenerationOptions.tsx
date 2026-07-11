@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import Select from '../../../../components/ui/Select';
-
 import { Checkbox } from '../../../../components/ui/Checkbox';
 import Button from '../../../../components/ui/Button';
-import Icon from 'components/AppIcon';
+import Icon from '../../../../components/AppIcon';
 import { GenerationOptions as GenerationOptionsType, QRCodeTemplate } from '../types';
 
 interface GenerationOptionsProps {
@@ -120,15 +119,15 @@ const GenerationOptions = ({ templates, selectedTemplateId, onGenerate, isGenera
 
       <div className="flex items-center gap-3 pt-4">
         <Button
-          variant="default"
-          size="lg"
-          iconName="QrCode"
-          iconPosition="left"
           onClick={handleGenerate}
-          loading={isGenerating}
           disabled={isGenerating}
-          className="flex-1 sm:flex-none"
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground font-semibold rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-150"
         >
+          {isGenerating ? (
+            <Icon name="Loader2" size={18} className="animate-spin" />
+          ) : (
+            <Icon name="QrCode" size={18} />
+          )}
           Generate QR Codes
         </Button>
         <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">

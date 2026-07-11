@@ -319,3 +319,4 @@ const Participant =
   mongoose.model("Participant", participantSchema);
 
 export default Participant;
+

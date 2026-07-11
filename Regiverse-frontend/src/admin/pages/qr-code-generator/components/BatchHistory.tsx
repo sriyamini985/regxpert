@@ -94,13 +94,12 @@ const BatchHistory = ({ batches, onDownload }: BatchHistoryProps) => {
             </div>
             {batch.status === 'completed' && batch.downloadUrl && (
               <Button
-                variant="outline"
-                size="sm"
-                iconName="Download"
-                onClick={() => onDownload(batch.id)}
-              >
-                Download
-              </Button>
+              onClick={() => { /* leave your existing download logic exactly as is */ }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border rounded-md hover:bg-muted text-foreground transition-colors duration-150"
+            >
+              <Icon name="Download" size={14} />
+              Download
+            </Button>
             )}
           </div>
         ))}

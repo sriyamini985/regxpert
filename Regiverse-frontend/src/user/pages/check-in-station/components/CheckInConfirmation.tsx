@@ -2,6 +2,7 @@ import Icon from 'components/AppIcon';
 import Image from 'components/AppImage';
 import Button from 'components/ui/Button';
 import type { CheckInResult } from '../types';
+import React from 'react';
 
 interface CheckInConfirmationProps {
   result: CheckInResult | null;
@@ -76,7 +77,8 @@ const CheckInConfirmation = ({ result, onClose }: CheckInConfirmationProps) => {
             </div>
           )}
 
-          <Button variant="default" onClick={onClose} fullWidth iconName="Check">
+          {/* Fixed: Removed the variant property that caused the TypeScript compiler error */}
+          <Button onClick={onClose} fullWidth iconName="Check">
             Continue
           </Button>
         </div>

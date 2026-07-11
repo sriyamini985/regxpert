@@ -13,7 +13,7 @@ const GlassSphere = ({ position, scale, speed = 1, color }: {
   const mesh = useRef<THREE.Mesh>(null!);
   const time = useRef(Math.random() * 100);
 
-  useFrame((_, delta) => {
+  useFrame((_, delta: number) => {
     if (mesh.current) {
       time.current += delta * speed;
       // Smooth sine-wave floating motion
@@ -50,7 +50,7 @@ const MorphingBlob = ({ position, scale, color }: {
   const mesh = useRef<THREE.Mesh>(null!);
   const time = useRef(Math.random() * 100);
 
-  useFrame((_, delta) => {
+  useFrame((_, delta: number) => {
     if (mesh.current) {
       time.current += delta;
       // Slow rotation for organic feel
@@ -63,7 +63,6 @@ const MorphingBlob = ({ position, scale, color }: {
     <Sphere ref={mesh} args={[1, 64, 64]} position={position} scale={scale}>
       <MeshDistortMaterial
         color={color}
-        attach="material"
         distort={0.4}
         speed={2}
         roughness={0.2}
@@ -82,26 +81,21 @@ const FloatingParticles = ({ count = 50 }: { count?: number }) => {
 
   const particles = useMemo(() => {
     const positions = new Float32Array(count * 3);
-    const scales = new Float32Array(count);
-
     for (let i = 0; i < count; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 20;
       positions[i * 3 + 1] = (Math.random() - 0.5) * 12;
       positions[i * 3 + 2] = (Math.random() - 0.5) * 10 - 5;
-      scales[i] = Math.random() * 0.5 + 0.5;
     }
-
-    return { positions, scales };
+    return { positions };
   }, [count]);
 
-  useFrame((_, delta) => {
+  useFrame((_, delta: number) => {
     if (mesh.current) {
       time.current += delta;
       const positions = mesh.current.geometry.attributes.position.array as Float32Array;
 
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
-        // Smooth floating motion
         positions[i3 + 1] += Math.sin(time.current * 0.5 + i * 0.1) * 0.002;
         positions[i3] += Math.cos(time.current * 0.3 + i * 0.1) * 0.001;
       }
@@ -115,9 +109,7 @@ const FloatingParticles = ({ count = 50 }: { count?: number }) => {
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={count}
-          array={particles.positions}
-          itemSize={3}
+          args={[particles.positions, 3]}
         />
       </bufferGeometry>
       <pointsMaterial
@@ -135,7 +127,7 @@ const FloatingParticles = ({ count = 50 }: { count?: number }) => {
 const LightRing = ({ position }: { position: [number, number, number] }) => {
   const mesh = useRef<THREE.Mesh>(null!);
 
-  useFrame((_, delta) => {
+  useFrame((_, delta: number) => {
     if (mesh.current) {
       mesh.current.rotation.z += delta * 0.05;
       mesh.current.rotation.x += delta * 0.02;
@@ -155,7 +147,6 @@ const AnimatedBackground = () => {
     primary: '#0066CC',
     secondary: '#06B6D4',
     accent: '#3B82F6',
-    muted: '#64748B'
   }), []);
 
   const glassSpheres = useMemo(() => [
@@ -187,26 +178,21 @@ const AnimatedBackground = () => {
         dpr={[1, 2]}
         gl={{ antialias: true, alpha: true }}
       >
-        {/* Lighting Setup */}
         <ambientLight intensity={0.6} />
         <directionalLight position={[10, 10, 5]} intensity={1} color="#ffffff" />
         <pointLight position={[-10, -10, -10]} intensity={0.5} color="#0066CC" />
         <pointLight position={[10, 5, 5]} intensity={0.3} color="#06B6D4" />
 
-        {/* Glass Spheres */}
         {glassSpheres.map((sphere, i) => (
           <GlassSphere key={`glass-${i}`} {...sphere} />
         ))}
 
-        {/* Morphing Blobs */}
         {morphingBlobs.map((blob, i) => (
           <MorphingBlob key={`blob-${i}`} {...blob} />
         ))}
 
-        {/* Floating Particles */}
         <FloatingParticles count={60} />
 
-        {/* Decorative Light Rings */}
         <LightRing position={[-3, 0, -7]} />
         <LightRing position={[4, -2, -8]} />
       </Canvas>

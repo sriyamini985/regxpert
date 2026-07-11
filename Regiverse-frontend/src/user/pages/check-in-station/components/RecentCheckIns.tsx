@@ -66,8 +66,6 @@ const RecentCheckIns = ({ checkIns, onUndo }: RecentCheckInsProps) => {
               </div>
               {checkIn.canUndo && (
                 <Button
-                  variant="ghost"
-                  size="sm"
                   onClick={() => onUndo(checkIn.id, checkIn.participantId)}
                   iconName="Undo2"
                   className="flex-shrink-0"
