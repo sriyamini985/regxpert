@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { Mail, Lock, Eye, EyeOff, Check, Loader2, ArrowRight, ArrowLeft } from "lucide-react";
+import { pingServer } from "../../contexts/AuthContext";
+import { Mail, Lock, Eye, EyeOff, Check, Loader2, ArrowLeft, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminLogin() {
@@ -17,6 +18,7 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [retryInfo, setRetryInfo] = useState<{ attempt: number; maxAttempts: number } | null>(null);
 
   // Forgot Password Modal State
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -39,6 +41,9 @@ export default function AdminLogin() {
       if (savedPassword) setPassword(savedPassword);
       setRememberMe(true);
     }
+
+    // Pre-warm the Render backend so it's ready when the user clicks Sign In
+    pingServer();
   }, []);
 
   // Autofocus email input on load
@@ -69,6 +74,7 @@ export default function AdminLogin() {
 
   const submit = async () => {
     setLoginError(null);
+    setRetryInfo(null);
     if (!email) {
       setLoginError("Please enter your email address.");
       return;
@@ -84,8 +90,11 @@ export default function AdminLogin() {
 
     setLoading(true);
     try {
-      const res = await login(email, password, "admin");
+      const res = await login(email, password, "admin", (info) => {
+        setRetryInfo(info);
+      });
       if (res.success) {
+        setRetryInfo(null);
         // Save to remember me if checked
         if (rememberMe) {
           localStorage.setItem("adminRememberedEmail", email);
@@ -106,10 +115,12 @@ export default function AdminLogin() {
           navigate("/");
         }
       } else {
+        setRetryInfo(null);
         setLoginError(res.error || "Invalid Credentials");
         setLoading(false);
       }
     } catch (err: any) {
+      setRetryInfo(null);
       setLoginError(err.message || "An unexpected error occurred.");
       setLoading(false);
     }
@@ -148,11 +159,34 @@ export default function AdminLogin() {
           <p className="text-slate-400 text-sm mt-1">Administrator Control Center</p>
         </div>
 
+        {/* Server warming-up retry notice */}
+        {retryInfo && (
+          <div className="bg-amber-500/10 border border-amber-500/20 text-amber-300 px-4 py-3 rounded-xl text-sm mb-6 flex items-start gap-2">
+            <RefreshCw className="w-4 h-4 mt-0.5 animate-spin flex-shrink-0" />
+            <div>
+              <span className="font-semibold block">Server is starting up…</span>
+              <span className="text-amber-400/70 text-xs">
+                Attempt {retryInfo.attempt + 1} of {retryInfo.maxAttempts} — please wait, this can take up to 30 seconds on first login.
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Global Error Notice */}
         {loginError && (
-          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-300 px-4 py-3 rounded-xl text-sm mb-6 flex items-center gap-2">
-            <span className="font-semibold text-rose-400">⚠️</span>
-            <span>{loginError}</span>
+          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-300 px-4 py-3 rounded-xl text-sm mb-6 flex items-start gap-2">
+            <span className="font-semibold text-rose-400 flex-shrink-0 mt-0.5">⚠</span>
+            <div>
+              <span>{loginError}</span>
+              {loginError.includes("server") || loginError.includes("reach") ? (
+                <button
+                  onClick={submit}
+                  className="block mt-1.5 text-rose-400 underline text-xs hover:text-rose-300 transition-colors"
+                >
+                  Try again
+                </button>
+              ) : null}
+            </div>
           </div>
         )}
 
@@ -242,7 +276,7 @@ export default function AdminLogin() {
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Signing In...</span>
+                <span>{retryInfo ? `Retrying… (${retryInfo.attempt + 1}/${retryInfo.maxAttempts})` : "Signing In…"}</span>
               </>
             ) : (
               <span>Sign In</span>

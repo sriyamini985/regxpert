@@ -93,4 +93,28 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 5001;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+
+  // ── Keep-alive self-ping for Render free-tier ──────────────────────────────
+  // Render spins down instances after 15 minutes of inactivity.
+  // We ping our own health endpoint every 14 minutes so the server stays warm.
+  const selfUrl =
+    process.env.RENDER_EXTERNAL_URL ||  // set automatically by Render
+    process.env.SELF_URL ||             // optional override in .env
+    null;
+
+  if (selfUrl && process.env.NODE_ENV !== "development") {
+    const KEEP_ALIVE_INTERVAL_MS = 14 * 60 * 1000; // 14 minutes
+    setInterval(async () => {
+      try {
+        const { default: fetch } = await import("node-fetch").catch(() => ({ default: globalThis.fetch }));
+        await fetch(`${selfUrl}/api/health`);
+        console.log(`[keep-alive] Pinged ${selfUrl}/api/health`);
+      } catch (err) {
+        console.warn("[keep-alive] Self-ping failed:", err?.message);
+      }
+    }, KEEP_ALIVE_INTERVAL_MS);
+    console.log(`[keep-alive] Active — will ping ${selfUrl} every 14 min`);
+  }
+});
