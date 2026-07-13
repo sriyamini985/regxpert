@@ -418,7 +418,7 @@ const HeroIllustration: React.FC = () => (
         <div style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 0 3px rgba(34,197,94,0.2)" }}/>
       </div>
       {/* Stat strip */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 0, borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "10px 14px", gap: 8 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "10px 14px", gap: 8 }}>
         {[["572","Registered","#3b82f6"],["318","Checked In","#22c55e"],["89","Pending","#f59e0b"],["245","Meals","#8b5cf6"]].map(([n,l,c])=>(
           <div key={l} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 8px 7px", border: "1px solid rgba(255,255,255,0.05)" }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: c as string, letterSpacing: -0.5, lineHeight: 1 }}>{n}</div>
@@ -1125,8 +1125,6 @@ const LandingPage: React.FC = () => {
                 );
               })}
             </div>
-          </div>
-        </section>
           </div>
         </section>
 
