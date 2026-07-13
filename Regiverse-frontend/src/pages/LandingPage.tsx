@@ -1224,11 +1224,22 @@ const LandingPage: React.FC = () => {
               </div>
               <div>
                 <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "#334155", marginBottom: 16 }}>Contact</p>
-                <a href="mailto:sriyamini659@gmail.com" style={{ display: "block", fontSize: 14, color: "#475569", textDecoration: "none", marginBottom: 8, transition: "color 0.15s" }}
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#e2e8f0", marginBottom: 2 }}>Harsha Vardhan Reddy</p>
+                <p style={{ fontSize: 12.5, color: "#6366f1", fontWeight: 600, marginBottom: 10 }}>Operations Manager</p>
+                <a href="tel:+919550082982" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, color: "#475569", textDecoration: "none", marginBottom: 6, transition: "color 0.15s" }}
                   onMouseOver={e => (e.currentTarget.style.color = "#93c5fd")}
                   onMouseOut={e => (e.currentTarget.style.color = "#475569")}
-                >sriyamini659@gmail.com</a>
-                <span style={{ fontSize: 14, color: "#475569" }}>Hyderabad, India</span>
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.13 1 .37 1.97.72 2.9a2 2 0 0 1-.45 2.11L7.91 9A16 16 0 0 0 15 16.09l.96-.96a2 2 0 0 1 2.11-.45c.93.35 1.9.59 2.9.72A2 2 0 0 1 22 16.92z"/></svg>
+                  +91 95500 82982
+                </a>
+                <a href="mailto:harshachinnu637@gmail.com" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, color: "#475569", textDecoration: "none", transition: "color 0.15s" }}
+                  onMouseOver={e => (e.currentTarget.style.color = "#93c5fd")}
+                  onMouseOut={e => (e.currentTarget.style.color = "#475569")}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  harshachinnu637@gmail.com
+                </a>
               </div>
             </div>
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 24, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
