@@ -178,23 +178,72 @@ const BENEFITS = [
   { num: "99.9%", label: "Uptime", sub: "during live events" },
 ];
 
-const WHY = [
+const BENTO_FEATURES = [
   {
-    title: "Real-Time Operations",
-    desc: "Every scan propagates live to all connected stations. No refresh needed, no data lag.",
+    num: "01",
+    title: "Rapid Event Setup",
+    desc: "Launch a fully branded conference portal within minutes.",
+    color: "#06b6d4",
+    glow: "rgba(6,182,212,0.15)",
+    iconBg: "rgba(6,182,212,0.06)",
+    svg: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+        <path d="M12 14v4M10 16h4" />
+      </svg>
+    )
   },
   {
-    title: "Secure by Design",
-    desc: "Role-based access, JWT authentication, and encrypted data at rest and in transit.",
+    num: "02",
+    title: "Real-Time QR Operations",
+    desc: "Check-in, kitbag, meals, workshops and certificates with one QR.",
+    color: "#10b981",
+    glow: "rgba(16,185,129,0.15)",
+    iconBg: "rgba(16,185,129,0.06)",
+    svg: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" />
+        <rect x="14" y="3" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" />
+        <rect x="7" y="7" width="2" height="2" />
+        <rect x="15" y="15" width="2" height="2" />
+      </svg>
+    )
   },
   {
-    title: "Offline-Resilient",
-    desc: "Stations continue to function during connectivity drops and sync automatically on reconnect.",
+    num: "03",
+    title: "Smart Communication",
+    desc: "Send Email and WhatsApp notifications to selected participants instantly.",
+    color: "#3b82f6",
+    glow: "rgba(59,130,246,0.15)",
+    iconBg: "rgba(59,130,246,0.06)",
+    svg: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        <path d="M8 10h8M8 14h6" />
+      </svg>
+    )
   },
   {
-    title: "Zero Training Needed",
-    desc: "Designed for event-day volunteers. One-screen workflows mean anyone can operate it.",
-  },
+    num: "04",
+    title: "Powerful Analytics",
+    desc: "Track registrations, attendance, payments and exports in real time.",
+    color: "#ec4899",
+    glow: "rgba(236,72,153,0.15)",
+    iconBg: "rgba(236,72,153,0.06)",
+    svg: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+        <path d="M3 20h18" />
+      </svg>
+    )
+  }
 ];
 
 const PAST_EVENTS = [
@@ -1129,9 +1178,11 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* ══════════ WHY ══════════ */}
+        {/* ══════════ WHY ══════════ */}
+        {/* ══════════ WHY CONFERENCE ORGANISERS CHOOSE REGXPERTS ══════════ */}
         <section id="why" style={{
-          background: "linear-gradient(170deg, #0a1628 0%, #0d1a3a 50%, #080f24 100%)",
-          padding: "110px 28px",
+          background: "linear-gradient(180deg, #0a1628 0%, #081321 100%)",
+          padding: "120px 28px",
           position: "relative",
           overflow: "hidden",
         }}>
@@ -1139,103 +1190,266 @@ const LandingPage: React.FC = () => {
           <div style={{
             position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
             backgroundImage: "radial-gradient(rgba(99,130,246,0.09) 1px, transparent 1px)",
-            backgroundSize: "30px 30px",
+            backgroundSize: "32px 32px",
           }} />
           {/* Center glow */}
           <div style={{
             position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-            width: 600, height: 600,
-            background: "radial-gradient(circle, rgba(139,92,246,0.07) 0%, transparent 70%)",
+            width: 700, height: 700,
+            background: "radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%)",
             borderRadius: "50%", pointerEvents: "none", zIndex: 0,
           }} />
-          {/* Decorative ring top-left */}
-          <svg style={{ position: "absolute", top: 30, left: 50, opacity: 0.06, zIndex: 0, pointerEvents: "none" }}
-            width="200" height="200" viewBox="0 0 200 200" fill="none">
-            <circle cx="100" cy="100" r="90" stroke="#818cf8" strokeWidth="1.5"/>
-            <circle cx="100" cy="100" r="65" stroke="#818cf8" strokeWidth="1"/>
-          </svg>
-          {/* Plus mark */}
-          <svg style={{ position: "absolute", bottom: "20%", right: "10%", opacity: 0.1, zIndex: 0, pointerEvents: "none" }}
-            width="24" height="24" viewBox="0 0 24 24">
-            <line x1="12" y1="0" x2="12" y2="24" stroke="#93c5fd" strokeWidth="1.5"/>
-            <line x1="0" y1="12" x2="24" y2="12" stroke="#93c5fd" strokeWidth="1.5"/>
-          </svg>
 
           <div style={{ maxWidth: 1160, margin: "0 auto", position: "relative", zIndex: 1 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "start" }} className="rx-why-grid">
-              {/* Left sticky text */}
+            <Reveal>
+              <div style={{ marginBottom: 70, textAlign: "center" }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase",
+                  color: "#6366f1", marginBottom: 14,
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                }}>
+                  <span style={{ display: "inline-block", width: 16, height: 2, background: "#6366f1", borderRadius: 2 }} />
+                  Why RegXperts
+                  <span style={{ display: "inline-block", width: 16, height: 2, background: "#6366f1", borderRadius: 2 }} />
+                </div>
+                <h2 style={{
+                  fontSize: "clamp(32px,4.5vw,46px)", fontWeight: 900, letterSpacing: -1.3, lineHeight: 1.1, marginBottom: 18,
+                  background: "linear-gradient(135deg, #fff 20%, #c7d2fe 70%, #818cf8 100%)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                }}>
+                  Why Conference Organizers Choose RegXperts
+                </h2>
+                <p style={{ fontSize: "clamp(15px,2vw,17px)", color: "rgba(148,163,184,0.75)", maxWidth: 660, margin: "0 auto", lineHeight: 1.7 }}>
+                  Built specifically for medical, academic and professional conferences. RegXperts simplifies every stage of event management with one integrated platform.
+                </p>
+              </div>
+            </Reveal>
+
+            {/* Bento Grid */}
+            <div className="rx-bento-grid">
+              {/* Large Left Card */}
               <Reveal>
-                <div style={{ position: "sticky", top: 100 }}>
-                  <div style={{
-                    fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase",
-                    color: "#6366f1", marginBottom: 14,
-                    display: "inline-flex", alignItems: "center", gap: 8,
-                  }}>
-                    <span style={{ display: "inline-block", width: 20, height: 2, background: "#6366f1", borderRadius: 2 }} />
-                    Why RegXpert
+                <div
+                  className="rx-bento-card-large"
+                  style={{
+                    background: "rgba(8,19,33,0.5)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 24,
+                    padding: "40px",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    position: "relative",
+                    overflow: "hidden",
+                    height: "100%",
+                    transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                  onMouseEnter={e => {
+                    const d = e.currentTarget as HTMLDivElement;
+                    d.style.transform = "translateY(-6px)";
+                    d.style.borderColor = "rgba(99,102,241,0.4)";
+                    d.style.boxShadow = "0 30px 60px -15px rgba(99,102,241,0.15)";
+                  }}
+                  onMouseLeave={e => {
+                    const d = e.currentTarget as HTMLDivElement;
+                    d.style.transform = "translateY(0)";
+                    d.style.borderColor = "rgba(255,255,255,0.06)";
+                    d.style.boxShadow = "none";
+                  }}
+                >
+                  <div>
+                    <h3 style={{
+                      fontSize: "clamp(20px,2.5vw,25px)", fontWeight: 800, color: "#fff",
+                      letterSpacing: -0.7, lineHeight: 1.25, marginBottom: 14,
+                      background: "linear-gradient(135deg, #fff 30%, #c7d2fe 100%)",
+                      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                    }}>
+                      One Platform. Complete Conference Management.
+                    </h3>
+                    <p style={{
+                      fontSize: 14, color: "rgba(148,163,184,0.75)",
+                      lineHeight: 1.7, margin: 0,
+                    }}>
+                      Manage registrations, payment verification, badge printing, QR operations, communication, certificates and analytics from one dashboard.
+                    </p>
                   </div>
-                  <h2 style={{
-                    fontSize: "clamp(26px,3.5vw,44px)", fontWeight: 800, letterSpacing: -1, lineHeight: 1.12, marginBottom: 20,
-                    background: "linear-gradient(135deg, #fff 0%, #c7d2fe 60%, #818cf8 100%)",
-                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+
+                  {/* Illustration mockup container */}
+                  <div className="rx-illus-container" style={{
+                    position: "relative",
+                    height: 240,
+                    marginTop: 36,
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.04)",
+                    borderRadius: 16,
+                    overflow: "hidden",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}>
-                    Built for the pace<br />of live events
-                  </h2>
-                  <p style={{ fontSize: 16, color: "rgba(148,163,184,0.8)", lineHeight: 1.75, maxWidth: 380 }}>
-                    Conference teams don't get second chances on event day. RegXpert is built for the pressure — fast, reliable, and dead simple to operate.
-                  </p>
-                  <div style={{ marginTop: 36, display: "flex", gap: 12, flexWrap: "wrap" }}>
-                    <button onClick={requestDemo} style={{
-                      background: "linear-gradient(135deg, #3b82f6, #6366f1)", color: "#fff", border: "none",
-                      borderRadius: 9, padding: "11px 22px", fontSize: 14, fontWeight: 600, cursor: "pointer",
-                      transition: "all 0.2s",
-                      boxShadow: "0 4px 20px rgba(99,102,241,0.35)",
-                    }}
-                      onMouseOver={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(99,102,241,0.5)"; }}
-                      onMouseOut={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(99,102,241,0.35)"; }}
-                    >Get a demo</button>
+                    {/* Background Glow */}
+                    <div style={{
+                      position: "absolute", width: 150, height: 150, borderRadius: "50%",
+                      background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)",
+                      top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+                      zIndex: 0,
+                    }} />
+
+                    {/* Mock Dashboard UI */}
+                    <div className="rx-mock-dashboard" style={{
+                      width: "85%",
+                      height: "75%",
+                      background: "rgba(10,25,47,0.85)",
+                      border: "1px solid rgba(59,130,246,0.2)",
+                      borderRadius: 12,
+                      padding: 12,
+                      zIndex: 1,
+                      position: "relative",
+                      boxShadow: "0 20px 40px rgba(0,0,0,0.5)",
+                      animation: "rx-float-bento 6s ease-in-out infinite",
+                    }}>
+                      {/* Mini Window Controls */}
+                      <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444" }} />
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b" }} />
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
+                      </div>
+
+                      {/* Grid of stats */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 6, padding: 8 }}>
+                          <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 0.5 }}>Active Scanners</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#10b981", marginTop: 2 }}>12 Live</div>
+                        </div>
+                        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 6, padding: 8 }}>
+                          <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 0.5 }}>Total Revenue</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#6366f1", marginTop: 2 }}>₹4.2L</div>
+                        </div>
+                      </div>
+
+                      {/* Mini Line Chart */}
+                      <div style={{ marginTop: 12, height: 36, position: "relative", display: "flex", alignItems: "flex-end", gap: 3 }}>
+                        {[20, 35, 25, 45, 60, 40, 75, 90].map((h, idx) => (
+                          <div key={idx} style={{
+                            flex: 1,
+                            height: `${h}%`,
+                            background: idx === 7 ? "linear-gradient(to top, #3b82f6, #06b6d4)" : "rgba(99,102,241,0.2)",
+                            borderRadius: "2px 2px 0 0",
+                            transition: "all 0.3s ease",
+                          }} />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Floating Badge Mock */}
+                    <div style={{
+                      position: "absolute",
+                      right: 15,
+                      bottom: 20,
+                      width: 100,
+                      background: "rgba(15,32,60,0.9)",
+                      border: "1px solid rgba(236,72,153,0.3)",
+                      borderRadius: 10,
+                      padding: 8,
+                      zIndex: 2,
+                      boxShadow: "0 10px 25px rgba(0,0,0,0.4)",
+                      animation: "rx-float-badge 5s ease-in-out infinite alternate",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                        <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#ec4899", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 6, color: "#fff", fontWeight: 700 }}>H</div>
+                        <span style={{ fontSize: 7, fontWeight: 600, color: "#fff" }}>Harsha</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "center", background: "#fff", padding: 3, borderRadius: 4 }}>
+                        <MiniQR size={26} fg="#081321" />
+                      </div>
+                    </div>
+
+                    {/* Floating Verification Notification */}
+                    <div style={{
+                      position: "absolute",
+                      left: 15,
+                      top: 30,
+                      background: "rgba(10,35,30,0.9)",
+                      border: "1px solid rgba(16,185,129,0.3)",
+                      borderRadius: 8,
+                      padding: "6px 10px",
+                      zIndex: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
+                      animation: "rx-float-verify 7s ease-in-out infinite alternate",
+                    }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
+                      <span style={{ fontSize: 8, fontWeight: 700, color: "#e2e8f0" }}>Delegate Approved</span>
+                    </div>
                   </div>
                 </div>
               </Reveal>
 
-              {/* Right cards */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {WHY.map((w, i) => (
-                  <Reveal key={w.title} delay={i * 100}>
-                    <div style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 14,
-                      padding: "26px 28px",
-                      backdropFilter: "blur(12px)",
-                      WebkitBackdropFilter: "blur(12px)",
-                      transition: "all 0.25s ease",
-                    }}
-                      onMouseOver={e => {
-                        const d = e.currentTarget as HTMLDivElement;
-                        d.style.boxShadow = "0 8px 32px rgba(99,102,241,0.2)";
-                        d.style.transform = "translateY(-2px)";
-                        d.style.borderColor = "rgba(99,102,241,0.4)";
-                        d.style.background = "rgba(99,102,241,0.08)";
+              {/* Right Cards Grid */}
+              <div className="rx-bento-right-grid">
+                {BENTO_FEATURES.map((feat, i) => (
+                  <Reveal key={feat.title} delay={i * 100}>
+                    <div
+                      style={{
+                        background: "rgba(8,19,33,0.5)",
+                        border: "1px solid rgba(255,255,255,0.06)",
+                        borderRadius: 20,
+                        padding: "28px",
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                        height: "100%",
+                        cursor: "default",
                       }}
-                      onMouseOut={e => {
+                      onMouseEnter={e => {
                         const d = e.currentTarget as HTMLDivElement;
+                        d.style.transform = "translateY(-6px) scale(1.015)";
+                        d.style.borderColor = feat.color;
+                        d.style.boxShadow = `0 20px 40px -10px ${feat.glow}`;
+                      }}
+                      onMouseLeave={e => {
+                        const d = e.currentTarget as HTMLDivElement;
+                        d.style.transform = "translateY(0) scale(1)";
+                        d.style.borderColor = "rgba(255,255,255,0.06)";
                         d.style.boxShadow = "none";
-                        d.style.transform = "none";
-                        d.style.borderColor = "rgba(255,255,255,0.08)";
-                        d.style.background = "rgba(255,255,255,0.04)";
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                        <div style={{
-                          width: 8, height: 8, borderRadius: "50%", background: "#6366f1",
-                          marginTop: 7, flexShrink: 0,
-                          boxShadow: "0 0 0 3px rgba(99,102,241,0.2)",
-                        }} />
-                        <div>
-                          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9", marginBottom: 6, letterSpacing: -0.1 }}>{w.title}</h3>
-                          <p style={{ fontSize: 14, color: "rgba(148,163,184,0.7)", lineHeight: 1.65 }}>{w.desc}</p>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                          {/* Icon */}
+                          <div className="rx-bento-icon-container" style={{
+                            width: 44, height: 44, borderRadius: 12,
+                            background: feat.iconBg, color: feat.color,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            transition: "all 0.3s ease",
+                            border: "1px solid rgba(255,255,255,0.04)",
+                          }}>
+                            {feat.svg}
+                          </div>
+                          {/* Step number */}
+                          <span style={{
+                            fontSize: 28, fontWeight: 900,
+                            background: `linear-gradient(135deg, ${feat.color} 30%, rgba(255,255,255,0.15) 100%)`,
+                            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                            fontFamily: "monospace", opacity: 0.8,
+                          }}>{feat.num}</span>
                         </div>
+
+                        <h3 style={{
+                          fontSize: 16.5, fontWeight: 800, color: "#fff",
+                          letterSpacing: -0.3, marginBottom: 8,
+                        }}>{feat.title}</h3>
+                        <p style={{
+                          fontSize: 13.5, color: "rgba(148,163,184,0.7)",
+                          lineHeight: 1.65, margin: 0,
+                        }}>{feat.desc}</p>
                       </div>
                     </div>
                   </Reveal>
@@ -1712,13 +1926,55 @@ const LandingPage: React.FC = () => {
             }
           }
 
+          /* Bento Grid Layout styles */
+          .rx-bento-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1.8fr;
+            gap: 32px;
+            align-items: stretch;
+          }
+          .rx-bento-right-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+          }
+          
+          /* Bento animations */
+          @keyframes rx-float-bento {
+            0%, 100% { transform: translateY(0px); }
+            50%       { transform: translateY(-8px); }
+          }
+          @keyframes rx-float-badge {
+            0%, 100% { transform: translateY(0px) rotate(2deg); }
+            50%       { transform: translateY(-6px) rotate(-1deg); }
+          }
+          @keyframes rx-float-verify {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50%       { transform: translateY(-4px) scale(1.02); }
+          }
+          .rx-bento-right-grid div:hover .rx-bento-icon-container {
+            transform: scale(1.1) rotate(-5deg);
+            background: rgba(255,255,255,0.06) !important;
+          }
+
+          @media (max-width: 1024px) {
+            .rx-bento-grid {
+              grid-template-columns: 1fr !important;
+            }
+          }
+          @media (max-width: 767px) {
+            .rx-bento-right-grid {
+              grid-template-columns: 1fr !important;
+              gap: 20px !important;
+            }
+          }
+
           /* Responsive General */
           @media (max-width: 900px) {
             .rx-nav-links  { display: none !important; }
             .rx-burger     { display: flex !important; }
             .rx-hero-grid  { grid-template-columns: 1fr !important; }
             .rx-hero-illus { display: none !important; }
-            .rx-why-grid   { grid-template-columns: 1fr !important; gap: 40px !important; }
             .rx-events-grid { grid-template-columns: 1fr !important; }
           }
           @media (max-width: 1024px) {
