@@ -797,43 +797,82 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* ══════════ FEATURES ══════════ */}
-        <section id="features" style={{ background: "#fff", padding: "100px 28px" }}>
-          <div style={{ maxWidth: 1160, margin: "0 auto" }}>
+        <section id="features" style={{
+          background: "linear-gradient(180deg, #060d1f 0%, #0a1628 100%)",
+          padding: "110px 28px",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          {/* Dot grid */}
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
+            backgroundImage: "radial-gradient(rgba(99,130,246,0.10) 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }} />
+          {/* Top-right glow */}
+          <div style={{
+            position: "absolute", top: -100, right: -100, width: 450, height: 450,
+            background: "radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 70%)",
+            borderRadius: "50%", pointerEvents: "none", zIndex: 0,
+          }} />
+          {/* Bottom-left glow */}
+          <div style={{
+            position: "absolute", bottom: -80, left: -60, width: 380, height: 380,
+            background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)",
+            borderRadius: "50%", pointerEvents: "none", zIndex: 0,
+          }} />
+
+          <div style={{ maxWidth: 1160, margin: "0 auto", position: "relative", zIndex: 1 }}>
             <Reveal>
               <div style={{ marginBottom: 64 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "#3b82f6", marginBottom: 14 }}>Platform</div>
-                <h2 style={{ fontSize: "clamp(28px,4vw,48px)", fontWeight: 800, letterSpacing: -1.2, color: "#0f172a", lineHeight: 1.1, marginBottom: 14 }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase",
+                  color: "#6366f1", marginBottom: 14,
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                }}>
+                  <span style={{ display: "inline-block", width: 20, height: 2, background: "#6366f1", borderRadius: 2 }} />
+                  Platform
+                </div>
+                <h2 style={{
+                  fontSize: "clamp(28px,4vw,48px)", fontWeight: 800, letterSpacing: -1.2, lineHeight: 1.1, marginBottom: 14,
+                  background: "linear-gradient(135deg, #fff 0%, #c7d2fe 60%, #818cf8 100%)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                }}>
                   One platform.<br />Every workflow.
                 </h2>
-                <p style={{ fontSize: 17, color: "#64748b", maxWidth: 480, lineHeight: 1.7 }}>
+                <p style={{ fontSize: 17, color: "rgba(148,163,184,0.8)", maxWidth: 480, lineHeight: 1.7 }}>
                   From day-one registration to the final report — RegXpert handles every step so nothing slips through.
                 </p>
               </div>
             </Reveal>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, background: "#e2e8f0", border: "1px solid #e2e8f0", borderRadius: 20, overflow: "hidden" }}>
+            <div style={{
+              display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 1, background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, overflow: "hidden",
+            }}>
               {FEATURES.map((f, i) => (
                 <Reveal key={f.title} delay={i * 60}>
                   <div
                     style={{
-                      background: "#fff", padding: "32px 30px",
-                      transition: "background 0.2s",
+                      background: "rgba(255,255,255,0.03)", padding: "32px 30px",
+                      transition: "background 0.25s",
                       position: "relative", overflow: "hidden", minHeight: 200,
                     }}
                     className="rx-feature-card"
-                    onMouseOver={e => { (e.currentTarget as HTMLDivElement).style.background = "#fafbff"; }}
-                    onMouseOut={e => { (e.currentTarget as HTMLDivElement).style.background = "#fff"; }}
+                    onMouseOver={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(99,102,241,0.08)"; }}
+                    onMouseOut={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)"; }}
                   >
                     <div style={{
                       width: 40, height: 40, borderRadius: 10,
-                      background: "#eff6ff", color: "#3b82f6",
+                      background: "rgba(99,102,241,0.15)", color: "#818cf8",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       marginBottom: 18, transition: "all 0.2s",
                     }} className="rx-feature-icon">
                       {f.svg}
                     </div>
-                    <h3 style={{ fontSize: 15.5, fontWeight: 700, color: "#0f172a", marginBottom: 8, letterSpacing: -0.2 }}>{f.title}</h3>
-                    <p style={{ fontSize: 14, color: "#64748b", lineHeight: 1.65 }}>{f.desc}</p>
+                    <h3 style={{ fontSize: 15.5, fontWeight: 700, color: "#f1f5f9", marginBottom: 8, letterSpacing: -0.2 }}>{f.title}</h3>
+                    <p style={{ fontSize: 14, color: "rgba(148,163,184,0.7)", lineHeight: 1.65 }}>{f.desc}</p>
                   </div>
                 </Reveal>
               ))}
@@ -842,27 +881,70 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* ══════════ WHY ══════════ */}
-        <section id="why" style={{ background: "#f8fafc", padding: "100px 28px", borderTop: "1px solid #f1f5f9" }}>
-          <div style={{ maxWidth: 1160, margin: "0 auto" }}>
+        <section id="why" style={{
+          background: "linear-gradient(170deg, #0a1628 0%, #0d1a3a 50%, #080f24 100%)",
+          padding: "110px 28px",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          {/* Dot grid */}
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
+            backgroundImage: "radial-gradient(rgba(99,130,246,0.09) 1px, transparent 1px)",
+            backgroundSize: "30px 30px",
+          }} />
+          {/* Center glow */}
+          <div style={{
+            position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+            width: 600, height: 600,
+            background: "radial-gradient(circle, rgba(139,92,246,0.07) 0%, transparent 70%)",
+            borderRadius: "50%", pointerEvents: "none", zIndex: 0,
+          }} />
+          {/* Decorative ring top-left */}
+          <svg style={{ position: "absolute", top: 30, left: 50, opacity: 0.06, zIndex: 0, pointerEvents: "none" }}
+            width="200" height="200" viewBox="0 0 200 200" fill="none">
+            <circle cx="100" cy="100" r="90" stroke="#818cf8" strokeWidth="1.5"/>
+            <circle cx="100" cy="100" r="65" stroke="#818cf8" strokeWidth="1"/>
+          </svg>
+          {/* Plus mark */}
+          <svg style={{ position: "absolute", bottom: "20%", right: "10%", opacity: 0.1, zIndex: 0, pointerEvents: "none" }}
+            width="24" height="24" viewBox="0 0 24 24">
+            <line x1="12" y1="0" x2="12" y2="24" stroke="#93c5fd" strokeWidth="1.5"/>
+            <line x1="0" y1="12" x2="24" y2="12" stroke="#93c5fd" strokeWidth="1.5"/>
+          </svg>
+
+          <div style={{ maxWidth: 1160, margin: "0 auto", position: "relative", zIndex: 1 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "start" }} className="rx-why-grid">
               {/* Left sticky text */}
               <Reveal>
                 <div style={{ position: "sticky", top: 100 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "#3b82f6", marginBottom: 14 }}>Why RegXpert</div>
-                  <h2 style={{ fontSize: "clamp(26px,3.5vw,44px)", fontWeight: 800, letterSpacing: -1, color: "#0f172a", lineHeight: 1.12, marginBottom: 20 }}>
+                  <div style={{
+                    fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase",
+                    color: "#6366f1", marginBottom: 14,
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                  }}>
+                    <span style={{ display: "inline-block", width: 20, height: 2, background: "#6366f1", borderRadius: 2 }} />
+                    Why RegXpert
+                  </div>
+                  <h2 style={{
+                    fontSize: "clamp(26px,3.5vw,44px)", fontWeight: 800, letterSpacing: -1, lineHeight: 1.12, marginBottom: 20,
+                    background: "linear-gradient(135deg, #fff 0%, #c7d2fe 60%, #818cf8 100%)",
+                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                  }}>
                     Built for the pace<br />of live events
                   </h2>
-                  <p style={{ fontSize: 16, color: "#64748b", lineHeight: 1.75, maxWidth: 380 }}>
+                  <p style={{ fontSize: 16, color: "rgba(148,163,184,0.8)", lineHeight: 1.75, maxWidth: 380 }}>
                     Conference teams don't get second chances on event day. RegXpert is built for the pressure — fast, reliable, and dead simple to operate.
                   </p>
                   <div style={{ marginTop: 36, display: "flex", gap: 12, flexWrap: "wrap" }}>
                     <button onClick={requestDemo} style={{
-                      background: "#0f172a", color: "#fff", border: "none",
+                      background: "linear-gradient(135deg, #3b82f6, #6366f1)", color: "#fff", border: "none",
                       borderRadius: 9, padding: "11px 22px", fontSize: 14, fontWeight: 600, cursor: "pointer",
                       transition: "all 0.2s",
+                      boxShadow: "0 4px 20px rgba(99,102,241,0.35)",
                     }}
-                      onMouseOver={e => { e.currentTarget.style.background = "#1e293b"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                      onMouseOut={e => { e.currentTarget.style.background = "#0f172a"; e.currentTarget.style.transform = "none"; }}
+                      onMouseOver={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(99,102,241,0.5)"; }}
+                      onMouseOut={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(99,102,241,0.35)"; }}
                     >Get a demo</button>
                   </div>
                 </div>
@@ -873,32 +955,38 @@ const LandingPage: React.FC = () => {
                 {WHY.map((w, i) => (
                   <Reveal key={w.title} delay={i * 100}>
                     <div style={{
-                      background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14,
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 14,
                       padding: "26px 28px",
+                      backdropFilter: "blur(12px)",
+                      WebkitBackdropFilter: "blur(12px)",
                       transition: "all 0.25s ease",
                     }}
                       onMouseOver={e => {
                         const d = e.currentTarget as HTMLDivElement;
-                        d.style.boxShadow = "0 8px 24px rgba(0,0,0,0.07)";
+                        d.style.boxShadow = "0 8px 32px rgba(99,102,241,0.2)";
                         d.style.transform = "translateY(-2px)";
-                        d.style.borderColor = "#bfdbfe";
+                        d.style.borderColor = "rgba(99,102,241,0.4)";
+                        d.style.background = "rgba(99,102,241,0.08)";
                       }}
                       onMouseOut={e => {
                         const d = e.currentTarget as HTMLDivElement;
                         d.style.boxShadow = "none";
                         d.style.transform = "none";
-                        d.style.borderColor = "#e2e8f0";
+                        d.style.borderColor = "rgba(255,255,255,0.08)";
+                        d.style.background = "rgba(255,255,255,0.04)";
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
                         <div style={{
-                          width: 8, height: 8, borderRadius: "50%", background: "#3b82f6",
+                          width: 8, height: 8, borderRadius: "50%", background: "#6366f1",
                           marginTop: 7, flexShrink: 0,
-                          boxShadow: "0 0 0 3px rgba(59,130,246,0.15)",
+                          boxShadow: "0 0 0 3px rgba(99,102,241,0.2)",
                         }} />
                         <div>
-                          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6, letterSpacing: -0.1 }}>{w.title}</h3>
-                          <p style={{ fontSize: 14, color: "#64748b", lineHeight: 1.65 }}>{w.desc}</p>
+                          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9", marginBottom: 6, letterSpacing: -0.1 }}>{w.title}</h3>
+                          <p style={{ fontSize: 14, color: "rgba(148,163,184,0.7)", lineHeight: 1.65 }}>{w.desc}</p>
                         </div>
                       </div>
                     </div>
