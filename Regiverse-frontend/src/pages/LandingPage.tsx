@@ -10,70 +10,165 @@ import { useNavigate } from "react-router-dom";
 // ─────────────────────────────────────────────
 // DATA
 // ─────────────────────────────────────────────
-const FEATURES = [
+const WORKFLOW_STEPS = [
   {
+    step: "01",
+    title: "Event Creation",
+    desc: "Create a conference, configure registration categories, pricing, sessions, committees and branding.",
+    status: "Setup",
+    color: "#6366f1",
+    glow: "rgba(99,102,241,0.2)",
+    iconBg: "rgba(99,102,241,0.06)",
+    iconBgActive: "rgba(99,102,241,0.2)",
     svg: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+        <path d="M12 14v4M10 16h4" />
       </svg>
-    ),
-    title: "Event Registration",
-    desc: "Smart forms, bulk Excel imports, and real-time duplicate detection. Get your participant list production-ready in minutes.",
+    )
   },
   {
+    step: "02",
+    title: "Online Registration",
+    desc: "Participants register online with duplicate detection, payment proof upload and automated confirmation.",
+    status: "Active",
+    color: "#06b6d4",
+    glow: "rgba(6,182,212,0.2)",
+    iconBg: "rgba(6,182,212,0.06)",
+    iconBgActive: "rgba(6,182,212,0.2)",
     svg: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-        <line x1="8" y1="21" x2="16" y2="21"/>
-        <line x1="12" y1="17" x2="12" y2="21"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="8.5" cy="7" r="4" />
+        <line x1="20" y1="8" x2="20" y2="14" />
+        <line x1="17" y1="11" x2="23" y2="11" />
       </svg>
-    ),
-    title: "Badge Printing",
-    desc: "Design category-specific badge templates. Print on demand — single or batch — with your own branding and QR codes.",
+    )
   },
   {
+    step: "03",
+    title: "Registration Verification",
+    desc: "Admin verifies payment, approves registrations and automatically updates participant status.",
+    status: "Automated",
+    color: "#10b981",
+    glow: "rgba(16,185,129,0.2)",
+    iconBg: "rgba(16,185,129,0.06)",
+    iconBgActive: "rgba(16,185,129,0.2)",
     svg: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-        <path d="M14 17h3v3m0-6h.01M17 14h.01"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <polyline points="9 11 11 13 15 9" />
       </svg>
-    ),
-    title: "QR Scanning",
-    desc: "Instant check-in, kitbag collection, meal tracking, and hall access — all via QR scan. Works on any device.",
+    )
   },
   {
+    step: "04",
+    title: "Badge Generation",
+    desc: "Generate personalized badges with QR codes and print individually or in bulk.",
+    status: "Ready",
+    color: "#8b5cf6",
+    glow: "rgba(139,92,246,0.2)",
+    iconBg: "rgba(139,92,246,0.06)",
+    iconBgActive: "rgba(139,92,246,0.2)",
     svg: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="20" x2="18" y2="10"/>
-        <line x1="12" y1="20" x2="12" y2="4"/>
-        <line x1="6" y1="20" x2="6" y2="14"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <circle cx="12" cy="10" r="3" />
+        <path d="M8 18h8" />
       </svg>
-    ),
+    )
+  },
+  {
+    step: "05",
+    title: "QR Check-in",
+    desc: "Fast QR scanning for check-in, kitbag distribution, food counters, workshop entry, hall entry and certificate verification.",
+    status: "Real-time",
+    color: "#ec4899",
+    glow: "rgba(236,72,153,0.2)",
+    iconBg: "rgba(236,72,153,0.06)",
+    iconBgActive: "rgba(236,72,153,0.2)",
+    svg: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" />
+        <rect x="14" y="3" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" />
+        <rect x="7" y="7" width="2" height="2" />
+        <rect x="15" y="15" width="2" height="2" />
+      </svg>
+    )
+  },
+  {
+    step: "06",
     title: "Live Dashboard",
-    desc: "Real-time attendance, food counters, and scan metrics update live across every station simultaneously.",
+    desc: "Monitor registrations, check-ins, meals, workshops and attendance in real time.",
+    status: "Live",
+    color: "#f59e0b",
+    glow: "rgba(245,158,11,0.2)",
+    iconBg: "rgba(245,158,11,0.06)",
+    iconBgActive: "rgba(245,158,11,0.2)",
+    svg: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+        <path d="M3 20h18" />
+      </svg>
+    )
   },
   {
-    svg: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17z"/>
-      </svg>
-    ),
+    step: "07",
     title: "Bulk Communication",
-    desc: "One-click personalised emails and WhatsApp messages to all participants. Track open and delivery rates.",
+    desc: "Send personalized Email, SMS and WhatsApp notifications instantly to selected participants.",
+    status: "Automated",
+    color: "#3b82f6",
+    glow: "rgba(59,130,246,0.2)",
+    iconBg: "rgba(59,130,246,0.06)",
+    iconBgActive: "rgba(59,130,246,0.2)",
+    svg: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        <path d="M8 10h8M8 14h6" />
+      </svg>
+    )
   },
   {
+    step: "08",
+    title: "Certificate Management",
+    desc: "Generate and distribute digital certificates automatically after event completion.",
+    status: "Automated",
+    color: "#14b8a6",
+    glow: "rgba(20,184,166,0.2)",
+    iconBg: "rgba(20,184,166,0.06)",
+    iconBgActive: "rgba(20,184,166,0.2)",
     svg: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
       </svg>
-    ),
-    title: "Reports & Analytics",
-    desc: "Export granular Excel reports. Every scan, every meal, every transaction — timestamped and attributed.",
+    )
   },
+  {
+    step: "09",
+    title: "Reports & Analytics",
+    desc: "Export participant reports, attendance reports, payment reports, food usage reports and complete event analytics.",
+    status: "Completed",
+    color: "#f43f5e",
+    glow: "rgba(244,63,94,0.2)",
+    iconBg: "rgba(244,63,94,0.06)",
+    iconBgActive: "rgba(244,63,94,0.2)",
+    svg: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
+      </svg>
+    )
+  }
 ];
 
 const BENEFITS = [
@@ -542,6 +637,47 @@ const LandingPage: React.FC = () => {
   const [scrollY, setScrollY] = useState(0);
   const [statsRef, statsInView] = useInView(0.3);
 
+  const [activeSteps, setActiveSteps] = useState<boolean[]>(new Array(9).fill(false));
+  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const observers = stepRefs.current.map((el, idx) => {
+      if (!el) return null;
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setActiveSteps(prev => {
+              const next = [...prev];
+              for (let i = 0; i <= idx; i++) next[i] = true;
+              for (let i = idx + 1; i < 9; i++) next[i] = false;
+              return next;
+            });
+          }
+        },
+        {
+          rootMargin: "-25% 0px -25% 0px",
+          threshold: 0.1,
+        }
+      );
+      observer.observe(el);
+      return observer;
+    });
+
+    return () => {
+      observers.forEach(obs => obs?.disconnect());
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY < 300) {
+        setActiveSteps(new Array(9).fill(false));
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   useEffect(() => {
     const fn = () => setScrollY(window.scrollY);
     window.addEventListener("scroll", fn, { passive: true });
@@ -797,162 +933,200 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* ══════════ FEATURES ══════════ */}
+        {/* ══════════ COMPLETE CONFERENCE LIFECYCLE ══════════ */}
         <section id="features" style={{
-          background: "linear-gradient(180deg, #060d1f 0%, #0a1628 100%)",
-          padding: "110px 28px",
+          background: "#081321",
+          padding: "120px 28px",
           position: "relative",
           overflow: "hidden",
         }}>
           {/* Dot grid */}
           <div style={{
             position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
-            backgroundImage: "radial-gradient(rgba(99,130,246,0.10) 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(rgba(99,130,246,0.08) 1px, transparent 1px)",
             backgroundSize: "32px 32px",
           }} />
-          {/* Top-right glow */}
+          
+          {/* Ambient Glow Orbs */}
           <div style={{
-            position: "absolute", top: -100, right: -100, width: 450, height: 450,
-            background: "radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 70%)",
-            borderRadius: "50%", pointerEvents: "none", zIndex: 0,
-          }} />
-          {/* Bottom-left glow */}
-          <div style={{
-            position: "absolute", bottom: -80, left: -60, width: 380, height: 380,
+            position: "absolute", top: -150, right: -100, width: 500, height: 500,
             background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)",
             borderRadius: "50%", pointerEvents: "none", zIndex: 0,
           }} />
+          <div style={{
+            position: "absolute", bottom: -150, left: -100, width: 500, height: 500,
+            background: "radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)",
+            borderRadius: "50%", pointerEvents: "none", zIndex: 0,
+          }} />
+
+          {/* Animated Particles */}
+          <div className="rx-particle-container" style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+            <div className="rx-particle" style={{ position: "absolute", top: "15%", left: "12%", width: 3, height: 3, borderRadius: "50%", background: "#6366f1", boxShadow: "0 0 10px #6366f1", animation: "rx-particle-float 8s infinite alternate" }} />
+            <div className="rx-particle" style={{ position: "absolute", top: "45%", right: "8%", width: 4, height: 4, borderRadius: "50%", background: "#06b6d4", boxShadow: "0 0 12px #06b6d4", animation: "rx-particle-float 12s infinite alternate-reverse" }} />
+            <div className="rx-particle" style={{ position: "absolute", bottom: "20%", left: "25%", width: 3, height: 3, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981", animation: "rx-particle-float 10s infinite alternate" }} />
+            <div className="rx-particle" style={{ position: "absolute", bottom: "35%", right: "30%", width: 3, height: 3, borderRadius: "50%", background: "#8b5cf6", boxShadow: "0 0 10px #8b5cf6", animation: "rx-particle-float 9s infinite alternate-reverse" }} />
+          </div>
 
           <div style={{ maxWidth: 1160, margin: "0 auto", position: "relative", zIndex: 1 }}>
             <Reveal>
-              <div style={{ marginBottom: 72, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 24 }}>
-                <div>
-                  <div style={{
-                    fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase",
-                    color: "#6366f1", marginBottom: 14,
-                    display: "inline-flex", alignItems: "center", gap: 8,
-                  }}>
-                    <span style={{ display: "inline-block", width: 20, height: 2, background: "#6366f1", borderRadius: 2 }} />
-                    Platform
-                  </div>
-                  <h2 style={{
-                    fontSize: "clamp(28px,4vw,48px)", fontWeight: 800, letterSpacing: -1.2, lineHeight: 1.1, marginBottom: 14,
-                    background: "linear-gradient(135deg, #fff 0%, #c7d2fe 60%, #818cf8 100%)",
-                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                  }}>
-                    One platform.<br />Every workflow.
-                  </h2>
+              <div style={{ marginBottom: 80, textAlign: "center" }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase",
+                  color: "#6366f1", marginBottom: 14,
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                }}>
+                  <span style={{ display: "inline-block", width: 16, height: 2, background: "#6366f1", borderRadius: 2 }} />
+                  Workflow Lifecycle
+                  <span style={{ display: "inline-block", width: 16, height: 2, background: "#6366f1", borderRadius: 2 }} />
                 </div>
-                <p style={{ fontSize: 16, color: "rgba(148,163,184,0.75)", maxWidth: 340, lineHeight: 1.75 }}>
-                  From day-one registration to the final report — RegXpert handles every step so nothing slips through.
+                <h2 style={{
+                  fontSize: "clamp(32px,5vw,50px)", fontWeight: 900, letterSpacing: -1.5, lineHeight: 1.1, marginBottom: 18,
+                  background: "linear-gradient(135deg, #fff 20%, #c7d2fe 70%, #818cf8 100%)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                }}>
+                  Complete Conference Lifecycle
+                </h2>
+                <p style={{ fontSize: "clamp(15px,2vw,18px)", color: "rgba(148,163,184,0.8)", maxWidth: 680, margin: "0 auto", lineHeight: 1.7 }}>
+                  From the first registration to the final analytics report — RegXperts manages every step of your conference seamlessly.
                 </p>
               </div>
             </Reveal>
 
-            {/* Feature cards — 3 columns bento grid */}
-            <div style={{
+            {/* Lifecycle steps container */}
+            <div className="rx-lifecycle-grid" style={{
               display: "grid",
               gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 20,
-            }} className="rx-features-inner">
-              {FEATURES.map((f, i) => {
-                const accents = [
-                  "linear-gradient(90deg,#6366f1,#8b5cf6)",
-                  "linear-gradient(90deg,#3b82f6,#06b6d4)",
-                  "linear-gradient(90deg,#10b981,#3b82f6)",
-                  "linear-gradient(90deg,#f59e0b,#ef4444)",
-                  "linear-gradient(90deg,#ec4899,#8b5cf6)",
-                  "linear-gradient(90deg,#06b6d4,#6366f1)",
-                ];
-                const glows = [
-                  "rgba(99,102,241,0.25)",
-                  "rgba(59,130,246,0.25)",
-                  "rgba(16,185,129,0.2)",
-                  "rgba(245,158,11,0.2)",
-                  "rgba(236,72,153,0.2)",
-                  "rgba(6,182,212,0.2)",
-                ];
-                const iconColors = ["#818cf8","#60a5fa","#34d399","#fbbf24","#f472b6","#22d3ee"];
-                const iconBgs = [
-                  "rgba(99,102,241,0.15)","rgba(59,130,246,0.15)","rgba(16,185,129,0.15)",
-                  "rgba(245,158,11,0.15)","rgba(236,72,153,0.15)","rgba(6,182,212,0.15)",
-                ];
+              gap: "32px",
+              position: "relative",
+            }}>
+              {WORKFLOW_STEPS.map((step, i) => {
+                const isActive = activeSteps[i];
                 return (
-                  <Reveal key={f.title} delay={i * 80}>
+                  <div
+                    key={step.step}
+                    ref={el => stepRefs.current[i] = el}
+                    className={`rx-step-card-wrapper rx-step-${i + 1} ${isActive ? "active" : ""}`}
+                    style={{
+                      position: "relative",
+                      transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                    }}
+                  >
+                    {/* Connector lines (rendered as dynamic elements) */}
+                    <div className="rx-connector rx-conn-right" style={{
+                      background: isActive ? step.color : "rgba(255,255,255,0.06)",
+                      boxShadow: isActive ? `0 0 8px 1px ${step.color}` : "none",
+                    }} />
+                    <div className="rx-connector rx-conn-left" style={{
+                      background: isActive ? step.color : "rgba(255,255,255,0.06)",
+                      boxShadow: isActive ? `0 0 8px 1px ${step.color}` : "none",
+                    }} />
+                    <div className="rx-connector rx-conn-down" style={{
+                      background: isActive ? step.color : "rgba(255,255,255,0.06)",
+                      boxShadow: isActive ? `0 0 8px 1px ${step.color}` : "none",
+                    }} />
+                    <div className="rx-connector rx-conn-mobile" style={{
+                      background: isActive ? step.color : "rgba(255,255,255,0.06)",
+                      boxShadow: isActive ? `0 0 8px 1px ${step.color}` : "none",
+                    }} />
+
+                    {/* Card container */}
                     <div
-                      className="rx-feat-card"
+                      className="rx-lifecycle-card"
                       style={{
-                        background: "rgba(13,22,50,0.7)",
-                        border: "1px solid rgba(255,255,255,0.07)",
+                        background: isActive ? "rgba(10,25,48,0.75)" : "rgba(8,19,33,0.5)",
+                        border: isActive ? `1px solid ${step.color}66` : "1px solid rgba(255,255,255,0.06)",
                         borderRadius: 20,
-                        overflow: "hidden",
+                        padding: "32px 28px",
                         backdropFilter: "blur(20px)",
                         WebkitBackdropFilter: "blur(20px)",
-                        transition: "transform 0.35s cubic-bezier(.22,.68,0,1.2), box-shadow 0.35s ease, border-color 0.35s ease",
+                        transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                        boxShadow: isActive ? `0 20px 40px -10px ${step.glow}` : "0 4px 30px rgba(0,0,0,0.1)",
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
                         cursor: "default",
-                        animation: `rx-card-enter 0.5s ease both`,
-                        animationDelay: `${i * 80}ms`,
                       }}
                       onMouseEnter={e => {
                         const d = e.currentTarget as HTMLDivElement;
-                        d.style.transform = "translateY(-8px) scale(1.02)";
-                        d.style.boxShadow = `0 24px 60px ${glows[i]}, 0 0 0 1px rgba(255,255,255,0.1)`;
-                        d.style.borderColor = "rgba(255,255,255,0.14)";
+                        d.style.transform = "translateY(-6px) scale(1.015)";
+                        d.style.borderColor = step.color;
+                        d.style.boxShadow = `0 24px 50px -10px ${step.glow}, 0 0 0 1px ${step.color}33`;
                       }}
                       onMouseLeave={e => {
                         const d = e.currentTarget as HTMLDivElement;
                         d.style.transform = "translateY(0) scale(1)";
-                        d.style.boxShadow = "none";
-                        d.style.borderColor = "rgba(255,255,255,0.07)";
+                        d.style.borderColor = isActive ? `${step.color}66` : "rgba(255,255,255,0.06)";
+                        d.style.boxShadow = isActive ? `0 20px 40px -10px ${step.glow}` : "0 4px 30px rgba(0,0,0,0.1)";
                       }}
                     >
-                      {/* Gradient accent bar */}
-                      <div style={{ height: 3, background: accents[i], borderRadius: "0" }} />
+                      <div>
+                        {/* Top Info Row (Step Number + Status Badge) */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+                          <span className="rx-step-num" style={{
+                            fontSize: 40, fontWeight: 900,
+                            background: `linear-gradient(135deg, ${step.color} 30%, #ffffff 100%)`,
+                            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                            lineHeight: 1, fontFamily: "'Inter', sans-serif",
+                            opacity: isActive ? 1 : 0.25,
+                            transition: "opacity 0.4s ease",
+                          }}>{step.step}</span>
 
-                      <div style={{ padding: "28px 28px 30px" }}>
-                        {/* Number + icon row */}
-                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 22 }}>
-                          <div style={{
-                            width: 48, height: 48, borderRadius: 14,
-                            background: iconBgs[i], color: iconColors[i],
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            transition: "transform 0.3s ease, background 0.3s ease",
-                            boxShadow: `0 0 20px ${iconBgs[i]}`,
-                          }} className="rx-feat-icon">
-                            {React.cloneElement(f.svg as React.ReactElement, { width: 22, height: 22 })}
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.03)", padding: "4px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
+                            {isActive && <span className="rx-pulse-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: step.color, boxShadow: `0 0 8px ${step.color}` }} />}
+                            <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.2, color: isActive ? step.color : "rgba(148,163,184,0.4)" }}>
+                              {step.status}
+                            </span>
                           </div>
-                          <span style={{
-                            fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.12)",
-                            letterSpacing: 1, fontFamily: "monospace",
-                          }}>0{i + 1}</span>
+                        </div>
+
+                        {/* Icon Container */}
+                        <div className="rx-step-icon-container" style={{
+                          width: 52, height: 52, borderRadius: 16,
+                          background: isActive ? step.iconBgActive : step.iconBg,
+                          color: isActive ? step.color : "rgba(255,255,255,0.3)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          marginBottom: 20,
+                          transition: "all 0.4s ease",
+                          border: isActive ? `1px solid ${step.color}33` : "1px solid rgba(255,255,255,0.04)",
+                          boxShadow: isActive ? `0 0 20px -5px ${step.color}` : "none",
+                        }}>
+                          {step.svg}
                         </div>
 
                         {/* Title */}
                         <h3 style={{
-                          fontSize: 17, fontWeight: 800, color: "#f1f5f9",
-                          letterSpacing: -0.4, marginBottom: 10, lineHeight: 1.25,
-                        }}>{f.title}</h3>
+                          fontSize: 18, fontWeight: 800, color: isActive ? "#fff" : "#e2e8f0",
+                          letterSpacing: -0.4, marginBottom: 12, lineHeight: 1.25,
+                          transition: "color 0.3s ease"
+                        }}>{step.title}</h3>
 
                         {/* Description */}
                         <p style={{
-                          fontSize: 13.5, color: "rgba(148,163,184,0.7)",
+                          fontSize: 13.5, color: isActive ? "rgba(148,163,184,0.9)" : "rgba(148,163,184,0.6)",
                           lineHeight: 1.7, margin: 0,
-                        }}>{f.desc}</p>
+                          transition: "color 0.3s ease"
+                        }}>{step.desc}</p>
+                      </div>
 
-                        {/* Bottom learn-more arrow */}
-                        <div style={{
-                          marginTop: 22, display: "flex", alignItems: "center", gap: 6,
-                          fontSize: 12.5, fontWeight: 600, color: iconColors[i],
-                          opacity: 0.8,
-                        }}>
-                          <span>Explore feature</span>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                        </div>
+                      {/* Explore Module Button */}
+                      <div className="rx-explore-btn" style={{
+                        marginTop: 26, display: "flex", alignItems: "center", gap: 6,
+                        fontSize: 13, fontWeight: 600, color: step.color,
+                        opacity: isActive ? 1 : 0.6,
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                      }}>
+                        <span style={{ position: "relative" }}>Explore Module</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "transform 0.3s ease" }} className="rx-arrow-icon"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                       </div>
                     </div>
-                  </Reveal>
+                  </div>
                 );
               })}
             </div>
+          </div>
+        </section>
           </div>
         </section>
 
@@ -1366,19 +1540,181 @@ const LandingPage: React.FC = () => {
             100% { top: calc(100% - 8px); opacity: 0; }
           }
 
-          .rx-feature-card:hover .rx-feature-icon {
-            background: rgba(99,102,241,0.3) !important;
-            transform: scale(1.1) rotate(-4deg);
+          /* Lifecycle Timeline Styles */
+          .rx-connector {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            display: none;
+            border-radius: 4px;
           }
-          .rx-feat-card:hover .rx-feat-icon {
-            transform: scale(1.15) rotate(-6deg);
+          
+          /* Pulsing active status dot animation */
+          @keyframes rx-pulse {
+            0% { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 0 0 currentColor; }
+            50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 8px 2px currentColor; }
+            100% { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 0 0 currentColor; }
           }
-          @keyframes rx-card-enter {
-            from { opacity: 0; transform: translateY(30px) scale(0.96); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
+          .rx-pulse-dot {
+            animation: rx-pulse 2s infinite ease-in-out;
           }
 
-          /* Responsive */
+          /* Particle floating animation */
+          @keyframes rx-particle-float {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+            50% { transform: translate(15px, -15px) scale(1.2); opacity: 0.8; }
+            100% { transform: translate(-10px, 10px) scale(0.9); opacity: 0.4; }
+          }
+
+          /* Hover effects */
+          .rx-lifecycle-card:hover .rx-arrow-icon {
+            transform: translateX(4px);
+          }
+          .rx-lifecycle-card:hover .rx-step-icon-container {
+            transform: scale(1.1) rotate(-5deg);
+            background: rgba(255,255,255,0.06) !important;
+          }
+
+          /* Desktop Grid Serpentine Placement and Connectors */
+          @media (min-width: 1025px) {
+            .rx-lifecycle-grid {
+              grid-template-columns: repeat(3, 1fr) !important;
+              gap: 40px !important;
+            }
+            .rx-step-1 { grid-column: 1; grid-row: 1; }
+            .rx-step-2 { grid-column: 2; grid-row: 1; }
+            .rx-step-3 { grid-column: 3; grid-row: 1; }
+            .rx-step-4 { grid-column: 3; grid-row: 2; }
+            .rx-step-5 { grid-column: 2; grid-row: 2; }
+            .rx-step-6 { grid-column: 1; grid-row: 2; }
+            .rx-step-7 { grid-column: 1; grid-row: 3; }
+            .rx-step-8 { grid-column: 2; grid-row: 3; }
+            .rx-step-9 { grid-column: 3; grid-row: 3; }
+
+            /* Connector Right */
+            .rx-step-1 .rx-conn-right,
+            .rx-step-2 .rx-conn-right,
+            .rx-step-7 .rx-conn-right,
+            .rx-step-8 .rx-conn-right {
+              display: block;
+              top: 50%;
+              left: 100%;
+              width: 40px;
+              height: 2px;
+              transform: translateY(-50%);
+            }
+
+            /* Connector Left */
+            .rx-step-4 .rx-conn-left,
+            .rx-step-5 .rx-conn-left {
+              display: block;
+              top: 50%;
+              right: 100%;
+              width: 40px;
+              height: 2px;
+              transform: translateY(-50%);
+            }
+
+            /* Connector Down */
+            .rx-step-3 .rx-conn-down,
+            .rx-step-6 .rx-conn-down {
+              display: block;
+              left: 50%;
+              top: 100%;
+              width: 2px;
+              height: 40px;
+              transform: translateX(-50%);
+            }
+          }
+
+          /* Tablet Serpentine Placement and Connectors */
+          @media (min-width: 768px) and (max-width: 1024px) {
+            .rx-lifecycle-grid {
+              grid-template-columns: repeat(2, 1fr) !important;
+              gap: 32px !important;
+            }
+            .rx-step-1 { grid-column: 1; grid-row: 1; }
+            .rx-step-2 { grid-column: 2; grid-row: 1; }
+            .rx-step-3 { grid-column: 2; grid-row: 2; }
+            .rx-step-4 { grid-column: 1; grid-row: 2; }
+            .rx-step-5 { grid-column: 1; grid-row: 3; }
+            .rx-step-6 { grid-column: 2; grid-row: 3; }
+            .rx-step-7 { grid-column: 2; grid-row: 4; }
+            .rx-step-8 { grid-column: 1; grid-row: 4; }
+            .rx-step-9 { grid-column: 1; grid-row: 5; }
+
+            /* Connector Right */
+            .rx-step-1 .rx-conn-right,
+            .rx-step-5 .rx-conn-right {
+              display: block;
+              top: 50%;
+              left: 100%;
+              width: 32px;
+              height: 2px;
+              transform: translateY(-50%);
+            }
+
+            /* Connector Left */
+            .rx-step-3 .rx-conn-left,
+            .rx-step-7 .rx-conn-left {
+              display: block;
+              top: 50%;
+              right: 100%;
+              width: 32px;
+              height: 2px;
+              transform: translateY(-50%);
+            }
+
+            /* Connector Down */
+            .rx-step-2 .rx-conn-down,
+            .rx-step-4 .rx-conn-down,
+            .rx-step-6 .rx-conn-down,
+            .rx-step-8 .rx-conn-down {
+              display: block;
+              left: 50%;
+              top: 100%;
+              width: 2px;
+              height: 32px;
+              transform: translateX(-50%);
+            }
+          }
+
+          /* Mobile Vertical Timeline */
+          @media (max-width: 767px) {
+            .rx-lifecycle-grid {
+              grid-template-columns: 1fr !important;
+              gap: 36px !important;
+              padding-left: 24px;
+            }
+            .rx-step-card-wrapper .rx-conn-mobile {
+              display: block;
+              left: -20px;
+              top: 48px;
+              width: 2px;
+            }
+            .rx-step-card-wrapper:not(.rx-step-9) .rx-conn-mobile {
+              bottom: -52px;
+            }
+            .rx-step-9 .rx-conn-mobile {
+              height: 0px;
+            }
+            .rx-connector::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              background: inherit;
+              box-shadow: inherit;
+              border: 2px solid #081321;
+            }
+          }
+
+          /* Responsive General */
           @media (max-width: 900px) {
             .rx-nav-links  { display: none !important; }
             .rx-burger     { display: flex !important; }
@@ -1386,8 +1722,6 @@ const LandingPage: React.FC = () => {
             .rx-hero-illus { display: none !important; }
             .rx-why-grid   { grid-template-columns: 1fr !important; gap: 40px !important; }
             .rx-events-grid { grid-template-columns: 1fr !important; }
-            #rx-root section[id="features"] .rx-features-inner,
-            #rx-root .rx-events-grid { grid-template-columns: 1fr !important; }
           }
           @media (max-width: 1024px) {
             .rx-events-grid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -1397,24 +1731,6 @@ const LandingPage: React.FC = () => {
           }
           @media (min-width: 901px) {
             .rx-burger { display: none !important; }
-          }
-
-          /* Feature grid responsive */
-          #features .rx-features-inner { display: grid; grid-template-columns: repeat(3,1fr); }
-          @media (max-width: 900px) {
-            #features .rx-features-inner { grid-template-columns: 1fr !important; }
-          }
-
-          /* Ensure feature grid is always 3 cols on desktop */
-          @media (max-width: 900px) {
-            #rx-root section[id="features"] > div > div:last-child {
-              grid-template-columns: 1fr !important;
-            }
-          }
-          @media (max-width: 700px) {
-            #rx-root section[id="features"] > div > div:last-child {
-              grid-template-columns: 1fr !important;
-            }
           }
         `}</style>
       </div>
