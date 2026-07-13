@@ -910,17 +910,90 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* ══════════ PAST EVENTS ══════════ */}
-        <section id="events" style={{ background: "#fff", padding: "100px 28px", borderTop: "1px solid #f1f5f9" }}>
-          <div style={{ maxWidth: 1160, margin: "0 auto" }}>
+        <section id="events" style={{
+          background: "linear-gradient(160deg, #060d1f 0%, #0d1a3a 50%, #060d1f 100%)",
+          padding: "110px 28px",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+
+          {/* Decorative background elements */}
+          {/* Dot grid */}
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
+            backgroundImage: "radial-gradient(rgba(99,130,246,0.13) 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }} />
+
+          {/* Ambient glow orbs */}
+          <div style={{
+            position: "absolute", top: "-80px", left: "-80px",
+            width: 480, height: 480,
+            background: "radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)",
+            borderRadius: "50%", pointerEvents: "none", zIndex: 0,
+          }} />
+          <div style={{
+            position: "absolute", bottom: "-60px", right: "-60px",
+            width: 520, height: 520,
+            background: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)",
+            borderRadius: "50%", pointerEvents: "none", zIndex: 0,
+          }} />
+          <div style={{
+            position: "absolute", top: "40%", left: "50%", transform: "translateX(-50%)",
+            width: 700, height: 300,
+            background: "radial-gradient(ellipse, rgba(139,92,246,0.08) 0%, transparent 70%)",
+            borderRadius: "50%", pointerEvents: "none", zIndex: 0,
+          }} />
+
+          {/* Decorative ring — top right */}
+          <svg style={{ position: "absolute", top: 40, right: 60, opacity: 0.07, zIndex: 0, pointerEvents: "none" }}
+            width="220" height="220" viewBox="0 0 220 220" fill="none">
+            <circle cx="110" cy="110" r="100" stroke="#818cf8" strokeWidth="1.5"/>
+            <circle cx="110" cy="110" r="75" stroke="#818cf8" strokeWidth="1"/>
+            <circle cx="110" cy="110" r="50" stroke="#818cf8" strokeWidth="0.8"/>
+          </svg>
+
+          {/* Decorative ring — bottom left */}
+          <svg style={{ position: "absolute", bottom: 30, left: 40, opacity: 0.06, zIndex: 0, pointerEvents: "none" }}
+            width="180" height="180" viewBox="0 0 180 180" fill="none">
+            <circle cx="90" cy="90" r="80" stroke="#60a5fa" strokeWidth="1.5"/>
+            <circle cx="90" cy="90" r="55" stroke="#60a5fa" strokeWidth="1"/>
+          </svg>
+
+          {/* Decorative cross/plus marks */}
+          <svg style={{ position: "absolute", top: "20%", right: "18%", opacity: 0.12, zIndex: 0, pointerEvents: "none" }}
+            width="24" height="24" viewBox="0 0 24 24">
+            <line x1="12" y1="0" x2="12" y2="24" stroke="#93c5fd" strokeWidth="1.5"/>
+            <line x1="0" y1="12" x2="24" y2="12" stroke="#93c5fd" strokeWidth="1.5"/>
+          </svg>
+          <svg style={{ position: "absolute", bottom: "25%", left: "12%", opacity: 0.1, zIndex: 0, pointerEvents: "none" }}
+            width="24" height="24" viewBox="0 0 24 24">
+            <line x1="12" y1="0" x2="12" y2="24" stroke="#a5b4fc" strokeWidth="1.5"/>
+            <line x1="0" y1="12" x2="24" y2="12" stroke="#a5b4fc" strokeWidth="1.5"/>
+          </svg>
+
+          <div style={{ maxWidth: 1160, margin: "0 auto", position: "relative", zIndex: 1 }}>
             <Reveal>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 56, flexWrap: "wrap", gap: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 60, flexWrap: "wrap", gap: 20 }}>
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: "#3b82f6", marginBottom: 14 }}>Track Record</div>
-                  <h2 style={{ fontSize: "clamp(26px,3.5vw,44px)", fontWeight: 800, letterSpacing: -1, color: "#0f172a", lineHeight: 1.1 }}>
+                  <div style={{
+                    fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase",
+                    color: "#6366f1", marginBottom: 14,
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                  }}>
+                    <span style={{ display: "inline-block", width: 20, height: 2, background: "#6366f1", borderRadius: 2 }} />
+                    Track Record
+                  </div>
+                  <h2 style={{
+                    fontSize: "clamp(28px,3.5vw,46px)", fontWeight: 800,
+                    letterSpacing: -1.5, lineHeight: 1.1,
+                    background: "linear-gradient(135deg, #fff 0%, #c7d2fe 60%, #818cf8 100%)",
+                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                  }}>
                     Events we've powered
                   </h2>
                 </div>
-                <p style={{ fontSize: 15, color: "#94a3b8", maxWidth: 280, lineHeight: 1.6 }}>
+                <p style={{ fontSize: 15, color: "rgba(148,163,184,0.85)", maxWidth: 280, lineHeight: 1.7 }}>
                   Trusted by medical, academic, and industry conference teams across India.
                 </p>
               </div>
@@ -930,36 +1003,42 @@ const LandingPage: React.FC = () => {
               {PAST_EVENTS.map((ev, i) => (
                 <Reveal key={ev.name} delay={i * 120}>
                   <div style={{
-                    border: "1px solid #e2e8f0", borderRadius: 18, overflow: "hidden",
-                    background: "#fff", transition: "all 0.3s ease",
+                    border: `1px solid rgba(255,255,255,0.08)`,
+                    borderRadius: 20, overflow: "hidden",
+                    background: "rgba(255,255,255,0.04)",
+                    backdropFilter: "blur(16px)",
+                    WebkitBackdropFilter: "blur(16px)",
+                    transition: "all 0.3s ease",
                   }}
                     onMouseOver={e => {
                       const d = e.currentTarget as HTMLDivElement;
-                      d.style.boxShadow = "0 16px 40px rgba(0,0,0,0.09)";
-                      d.style.transform = "translateY(-4px)";
+                      d.style.boxShadow = `0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px ${ev.color}50`;
+                      d.style.transform = "translateY(-6px)";
+                      d.style.background = "rgba(255,255,255,0.07)";
                     }}
                     onMouseOut={e => {
                       const d = e.currentTarget as HTMLDivElement;
                       d.style.boxShadow = "none";
                       d.style.transform = "none";
+                      d.style.background = "rgba(255,255,255,0.04)";
                     }}
                   >
                     {/* Colored top bar */}
-                    <div style={{ height: 5, background: `linear-gradient(90deg, ${ev.color}, ${ev.color}aa)` }} />
-                    <div style={{ padding: "28px 28px 28px" }}>
+                    <div style={{ height: 4, background: `linear-gradient(90deg, ${ev.color}, ${ev.color}66)` }} />
+                    <div style={{ padding: "26px 26px 26px" }}>
                       {/* Participant count badge */}
                       <div style={{
                         display: "inline-flex", alignItems: "center", gap: 6,
-                        background: ev.participants === 0 ? `${ev.color}15` : "#f8fafc",
-                        border: `1px solid ${ev.participants === 0 ? ev.color + "40" : "#e2e8f0"}`,
+                        background: `${ev.color}20`,
+                        border: `1px solid ${ev.color}40`,
                         borderRadius: 100, padding: "4px 12px",
                         fontSize: 12.5, fontWeight: 600,
-                        color: ev.participants === 0 ? ev.color : "#64748b",
-                        marginBottom: 20,
+                        color: ev.participants === 0 ? ev.color : `${ev.color}ee`,
+                        marginBottom: 18,
                       }}>
                         {ev.participants === 0 ? (
                           <>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
                             Upcoming
                           </>
                         ) : (
@@ -971,14 +1050,14 @@ const LandingPage: React.FC = () => {
                           </>
                         )}
                       </div>
-                      <h3 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", letterSpacing: -0.5, marginBottom: 6 }}>{ev.name}</h3>
-                      <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.5, marginBottom: 20 }}>{ev.org}</p>
+                      <h3 style={{ fontSize: 21, fontWeight: 800, color: "#f8fafc", letterSpacing: -0.4, marginBottom: 6 }}>{ev.name}</h3>
+                      <p style={{ fontSize: 13, color: "rgba(148,163,184,0.7)", lineHeight: 1.55, marginBottom: 20 }}>{ev.org}</p>
                       <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "#64748b" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "rgba(148,163,184,0.8)" }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                           {ev.location}
                         </span>
-                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "#64748b" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "rgba(148,163,184,0.8)" }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                           {ev.date}
                         </span>
