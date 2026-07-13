@@ -104,28 +104,52 @@ const WHY = [
 
 const PAST_EVENTS = [
   {
-    name: "ISVIR 2026",
-    org: "Indian Society for Vascular & Interventional Radiology",
-    location: "Hyderabad",
-    date: "July 2026",
-    participants: 572,
-    color: "#2563eb",
+    name: "TNSCON 2026",
+    org: "Thyroid & Neck Surgery Conference",
+    location: "Khammam",
+    date: "Mar 6, 7 & 8",
+    participants: 620,
+    color: "#0891b2",
   },
   {
-    name: "TYPSCON 2026",
-    org: "Thyroid, Parathyroid & Salivary Gland Conference",
-    location: "Mumbai",
-    date: "June 2026",
-    participants: 1240,
+    name: "CVSI Hands-On Workshop",
+    org: "Cardiovascular Society of India",
+    location: "Veterinary Hospital, Hyderabad",
+    date: "Apr 1 & 2",
+    participants: 185,
+    color: "#059669",
+  },
+  {
+    name: "NEMC",
+    org: "National ENT & Medical Conference",
+    location: "Bagalkote",
+    date: "Apr 2, 3 & 4",
+    participants: 430,
     color: "#7c3aed",
   },
   {
-    name: "MedConf 2025",
-    org: "National Medical Education Summit",
-    location: "Bengaluru",
-    date: "December 2025",
-    participants: 890,
-    color: "#0891b2",
+    name: "TNS Masterclass",
+    org: "Thyroid & Neck Surgery Masterclass",
+    location: "Gandhi Hospitals",
+    date: "May 9 & 10",
+    participants: 210,
+    color: "#ea580c",
+  },
+  {
+    name: "Dia Dhi Telusu Ga",
+    org: "Diabetes Awareness & Education Programme",
+    location: "AIG Hospitals, Hyderabad",
+    date: "Coming Soon",
+    participants: 0,
+    color: "#db2777",
+  },
+  {
+    name: "ISVIR 2026",
+    org: "Indian Society for Vascular & Interventional Radiology",
+    location: "Vizag",
+    date: "Jul 2, 3 & 4",
+    participants: 572,
+    color: "#2563eb",
   },
 ];
 
@@ -902,7 +926,7 @@ const LandingPage: React.FC = () => {
               </div>
             </Reveal>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }} className="rx-events-grid">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }} className="rx-events-grid">
               {PAST_EVENTS.map((ev, i) => (
                 <Reveal key={ev.name} delay={i * 120}>
                   <div style={{
@@ -926,14 +950,26 @@ const LandingPage: React.FC = () => {
                       {/* Participant count badge */}
                       <div style={{
                         display: "inline-flex", alignItems: "center", gap: 6,
-                        background: "#f8fafc", border: "1px solid #e2e8f0",
+                        background: ev.participants === 0 ? `${ev.color}15` : "#f8fafc",
+                        border: `1px solid ${ev.participants === 0 ? ev.color + "40" : "#e2e8f0"}`,
                         borderRadius: 100, padding: "4px 12px",
-                        fontSize: 12.5, fontWeight: 600, color: "#64748b", marginBottom: 20,
+                        fontSize: 12.5, fontWeight: 600,
+                        color: ev.participants === 0 ? ev.color : "#64748b",
+                        marginBottom: 20,
                       }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                        {ev.participants.toLocaleString()} participants
+                        {ev.participants === 0 ? (
+                          <>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
+                            Upcoming
+                          </>
+                        ) : (
+                          <>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            {ev.participants.toLocaleString()} participants
+                          </>
+                        )}
                       </div>
                       <h3 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", letterSpacing: -0.5, marginBottom: 6 }}>{ev.name}</h3>
                       <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.5, marginBottom: 20 }}>{ev.org}</p>
