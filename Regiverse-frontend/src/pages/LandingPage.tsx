@@ -824,58 +824,134 @@ const LandingPage: React.FC = () => {
 
           <div style={{ maxWidth: 1160, margin: "0 auto", position: "relative", zIndex: 1 }}>
             <Reveal>
-              <div style={{ marginBottom: 64 }}>
-                <div style={{
-                  fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase",
-                  color: "#6366f1", marginBottom: 14,
-                  display: "inline-flex", alignItems: "center", gap: 8,
-                }}>
-                  <span style={{ display: "inline-block", width: 20, height: 2, background: "#6366f1", borderRadius: 2 }} />
-                  Platform
+              <div style={{ marginBottom: 72, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 24 }}>
+                <div>
+                  <div style={{
+                    fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase",
+                    color: "#6366f1", marginBottom: 14,
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                  }}>
+                    <span style={{ display: "inline-block", width: 20, height: 2, background: "#6366f1", borderRadius: 2 }} />
+                    Platform
+                  </div>
+                  <h2 style={{
+                    fontSize: "clamp(28px,4vw,48px)", fontWeight: 800, letterSpacing: -1.2, lineHeight: 1.1, marginBottom: 14,
+                    background: "linear-gradient(135deg, #fff 0%, #c7d2fe 60%, #818cf8 100%)",
+                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                  }}>
+                    One platform.<br />Every workflow.
+                  </h2>
                 </div>
-                <h2 style={{
-                  fontSize: "clamp(28px,4vw,48px)", fontWeight: 800, letterSpacing: -1.2, lineHeight: 1.1, marginBottom: 14,
-                  background: "linear-gradient(135deg, #fff 0%, #c7d2fe 60%, #818cf8 100%)",
-                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                }}>
-                  One platform.<br />Every workflow.
-                </h2>
-                <p style={{ fontSize: 17, color: "rgba(148,163,184,0.8)", maxWidth: 480, lineHeight: 1.7 }}>
+                <p style={{ fontSize: 16, color: "rgba(148,163,184,0.75)", maxWidth: 340, lineHeight: 1.75 }}>
                   From day-one registration to the final report — RegXpert handles every step so nothing slips through.
                 </p>
               </div>
             </Reveal>
 
+            {/* Feature cards — 3 columns bento grid */}
             <div style={{
-              display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 1, background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, overflow: "hidden",
-            }}>
-              {FEATURES.map((f, i) => (
-                <Reveal key={f.title} delay={i * 60}>
-                  <div
-                    style={{
-                      background: "rgba(255,255,255,0.03)", padding: "32px 30px",
-                      transition: "background 0.25s",
-                      position: "relative", overflow: "hidden", minHeight: 200,
-                    }}
-                    className="rx-feature-card"
-                    onMouseOver={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(99,102,241,0.08)"; }}
-                    onMouseOut={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)"; }}
-                  >
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 10,
-                      background: "rgba(99,102,241,0.15)", color: "#818cf8",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      marginBottom: 18, transition: "all 0.2s",
-                    }} className="rx-feature-icon">
-                      {f.svg}
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 20,
+            }} className="rx-features-inner">
+              {FEATURES.map((f, i) => {
+                const accents = [
+                  "linear-gradient(90deg,#6366f1,#8b5cf6)",
+                  "linear-gradient(90deg,#3b82f6,#06b6d4)",
+                  "linear-gradient(90deg,#10b981,#3b82f6)",
+                  "linear-gradient(90deg,#f59e0b,#ef4444)",
+                  "linear-gradient(90deg,#ec4899,#8b5cf6)",
+                  "linear-gradient(90deg,#06b6d4,#6366f1)",
+                ];
+                const glows = [
+                  "rgba(99,102,241,0.25)",
+                  "rgba(59,130,246,0.25)",
+                  "rgba(16,185,129,0.2)",
+                  "rgba(245,158,11,0.2)",
+                  "rgba(236,72,153,0.2)",
+                  "rgba(6,182,212,0.2)",
+                ];
+                const iconColors = ["#818cf8","#60a5fa","#34d399","#fbbf24","#f472b6","#22d3ee"];
+                const iconBgs = [
+                  "rgba(99,102,241,0.15)","rgba(59,130,246,0.15)","rgba(16,185,129,0.15)",
+                  "rgba(245,158,11,0.15)","rgba(236,72,153,0.15)","rgba(6,182,212,0.15)",
+                ];
+                return (
+                  <Reveal key={f.title} delay={i * 80}>
+                    <div
+                      className="rx-feat-card"
+                      style={{
+                        background: "rgba(13,22,50,0.7)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        borderRadius: 20,
+                        overflow: "hidden",
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        transition: "transform 0.35s cubic-bezier(.22,.68,0,1.2), box-shadow 0.35s ease, border-color 0.35s ease",
+                        cursor: "default",
+                        animation: `rx-card-enter 0.5s ease both`,
+                        animationDelay: `${i * 80}ms`,
+                      }}
+                      onMouseEnter={e => {
+                        const d = e.currentTarget as HTMLDivElement;
+                        d.style.transform = "translateY(-8px) scale(1.02)";
+                        d.style.boxShadow = `0 24px 60px ${glows[i]}, 0 0 0 1px rgba(255,255,255,0.1)`;
+                        d.style.borderColor = "rgba(255,255,255,0.14)";
+                      }}
+                      onMouseLeave={e => {
+                        const d = e.currentTarget as HTMLDivElement;
+                        d.style.transform = "translateY(0) scale(1)";
+                        d.style.boxShadow = "none";
+                        d.style.borderColor = "rgba(255,255,255,0.07)";
+                      }}
+                    >
+                      {/* Gradient accent bar */}
+                      <div style={{ height: 3, background: accents[i], borderRadius: "0" }} />
+
+                      <div style={{ padding: "28px 28px 30px" }}>
+                        {/* Number + icon row */}
+                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 22 }}>
+                          <div style={{
+                            width: 48, height: 48, borderRadius: 14,
+                            background: iconBgs[i], color: iconColors[i],
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            transition: "transform 0.3s ease, background 0.3s ease",
+                            boxShadow: `0 0 20px ${iconBgs[i]}`,
+                          }} className="rx-feat-icon">
+                            {React.cloneElement(f.svg as React.ReactElement, { width: 22, height: 22 })}
+                          </div>
+                          <span style={{
+                            fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.12)",
+                            letterSpacing: 1, fontFamily: "monospace",
+                          }}>0{i + 1}</span>
+                        </div>
+
+                        {/* Title */}
+                        <h3 style={{
+                          fontSize: 17, fontWeight: 800, color: "#f1f5f9",
+                          letterSpacing: -0.4, marginBottom: 10, lineHeight: 1.25,
+                        }}>{f.title}</h3>
+
+                        {/* Description */}
+                        <p style={{
+                          fontSize: 13.5, color: "rgba(148,163,184,0.7)",
+                          lineHeight: 1.7, margin: 0,
+                        }}>{f.desc}</p>
+
+                        {/* Bottom learn-more arrow */}
+                        <div style={{
+                          marginTop: 22, display: "flex", alignItems: "center", gap: 6,
+                          fontSize: 12.5, fontWeight: 600, color: iconColors[i],
+                          opacity: 0.8,
+                        }}>
+                          <span>Explore feature</span>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </div>
+                      </div>
                     </div>
-                    <h3 style={{ fontSize: 15.5, fontWeight: 700, color: "#f1f5f9", marginBottom: 8, letterSpacing: -0.2 }}>{f.title}</h3>
-                    <p style={{ fontSize: 14, color: "rgba(148,163,184,0.7)", lineHeight: 1.65 }}>{f.desc}</p>
-                  </div>
-                </Reveal>
-              ))}
+                  </Reveal>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -1291,8 +1367,15 @@ const LandingPage: React.FC = () => {
           }
 
           .rx-feature-card:hover .rx-feature-icon {
-            background: #dbeafe !important;
-            transform: scale(1.08);
+            background: rgba(99,102,241,0.3) !important;
+            transform: scale(1.1) rotate(-4deg);
+          }
+          .rx-feat-card:hover .rx-feat-icon {
+            transform: scale(1.15) rotate(-6deg);
+          }
+          @keyframes rx-card-enter {
+            from { opacity: 0; transform: translateY(30px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
           }
 
           /* Responsive */
