@@ -351,24 +351,50 @@ const Reveal: React.FC<{ children: React.ReactNode; delay?: number; y?: number; 
   );
 };
 
+const STAT_ICONS = [
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+];
+const STAT_COLORS = ["#22c55e", "#3b82f6", "#8b5cf6", "#f59e0b"];
+
 const StatCard: React.FC<{ num: string; label: string; sub: string; inView: boolean; i: number }> = ({ num, label, sub, inView, i }) => {
   const isNum = /^\d+/.test(num);
   const numericPart = parseInt(num.replace(/\D/g, ""), 10) || 0;
   const suffix = num.replace(/[\d]/g, "");
   const counted = useCountUp(numericPart, inView);
+  const color = STAT_COLORS[i % STAT_COLORS.length];
   return (
-    <div style={{
+    <div className="rx-stat-card" style={{
       opacity: inView ? 1 : 0,
       transform: inView ? "translateY(0)" : "translateY(20px)",
-      transition: `opacity 0.6s ease ${i * 120 + 200}ms, transform 0.6s ease ${i * 120 + 200}ms`,
-      textAlign: "center", padding: "0 24px",
-      borderRight: i < 3 ? "1px solid rgba(255,255,255,0.08)" : "none",
+      transition: `opacity 0.6s cubic-bezier(.16,1,.3,1) ${i * 120 + 200}ms, transform 0.6s cubic-bezier(.16,1,.3,1) ${i * 120 + 200}ms`,
+      flex: "1 1 90px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 0,
+      padding: "18px 12px 16px",
+      position: "relative",
+      overflow: "hidden",
     }}>
-      <div style={{ fontSize: "clamp(28px,4vw,42px)", fontWeight: 800, color: "#fff", letterSpacing: -1, lineHeight: 1 }}>
+      {/* Top accent bar */}
+      <div style={{ position: "absolute", top: 0, left: "20%", right: "20%", height: 2, background: `linear-gradient(90deg, transparent, ${color}, transparent)`, borderRadius: 1 }} />
+      {/* Icon */}
+      <div style={{
+        width: 30, height: 30, borderRadius: 8,
+        background: `rgba(${color === "#22c55e" ? "34,197,94" : color === "#3b82f6" ? "59,130,246" : color === "#8b5cf6" ? "139,92,246" : "245,158,11"},0.12)`,
+        border: `1px solid rgba(${color === "#22c55e" ? "34,197,94" : color === "#3b82f6" ? "59,130,246" : color === "#8b5cf6" ? "139,92,246" : "245,158,11"},0.22)`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color, marginBottom: 10, flexShrink: 0,
+      }}>{STAT_ICONS[i % 4]}</div>
+      {/* Number */}
+      <div style={{ fontSize: "clamp(22px,3.5vw,34px)", fontWeight: 900, color: "#fff", letterSpacing: -1, lineHeight: 1 }}>
         {isNum ? `${counted}${suffix}` : num}
       </div>
-      <div style={{ fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.75)", marginTop: 6 }}>{label}</div>
-      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{sub}</div>
+      <div style={{ fontSize: 12.5, fontWeight: 600, color: "rgba(255,255,255,0.65)", marginTop: 5, textAlign: "center", lineHeight: 1.3 }}>{label}</div>
+      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", marginTop: 3, textAlign: "center" }}>{sub}</div>
     </div>
   );
 };
@@ -433,7 +459,21 @@ const MiniBarChart: React.FC<{ color?: string }> = ({ color = "#3b82f6" }) => {
 // HERO ILLUSTRATION
 // ─────────────────────────────────────────────
 const HeroIllustration: React.FC = () => (
-  <div style={{ position: "relative", width: 520, height: 580, margin: "0 auto" }}>
+  <div style={{ position: "relative", width: 540, height: 600, margin: "0 auto" }}>
+
+    {/* ── Deep blue radial glow behind dashboard ── */}
+    <div style={{
+      position: "absolute", width: 380, height: 380, borderRadius: "50%",
+      background: "radial-gradient(circle, rgba(59,130,246,0.28) 0%, rgba(99,102,241,0.12) 45%, transparent 72%)",
+      top: 60, left: 50, zIndex: 0, pointerEvents: "none",
+      filter: "blur(2px)",
+    }}/>
+    {/* ── Secondary violet orb ── */}
+    <div style={{
+      position: "absolute", width: 200, height: 200, borderRadius: "50%",
+      background: "radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%)",
+      top: 300, right: 20, zIndex: 0, pointerEvents: "none",
+    }}/>
 
     {/* ── Ambient glow orbs behind cards ── */}
     <div style={{
@@ -447,15 +487,42 @@ const HeroIllustration: React.FC = () => (
       top: 280, right: 40, zIndex: 0, pointerEvents: "none",
     }}/>
 
+    {/* ── Workflow connector: dashboard→badge ── */}
+    <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 5, pointerEvents: "none", overflow: "visible" }}>
+      <defs>
+        <linearGradient id="rx-conn-grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="rgba(59,130,246,0.0)"/>
+          <stop offset="50%" stopColor="rgba(59,130,246,0.5)"/>
+          <stop offset="100%" stopColor="rgba(139,92,246,0.0)"/>
+        </linearGradient>
+        <linearGradient id="rx-conn-grad2" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="rgba(99,102,241,0.0)"/>
+          <stop offset="50%" stopColor="rgba(99,102,241,0.45)"/>
+          <stop offset="100%" stopColor="rgba(34,197,94,0.0)"/>
+        </linearGradient>
+        <linearGradient id="rx-conn-grad3" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="rgba(34,197,94,0.0)"/>
+          <stop offset="50%" stopColor="rgba(34,197,94,0.4)"/>
+          <stop offset="100%" stopColor="rgba(59,130,246,0.0)"/>
+        </linearGradient>
+      </defs>
+      {/* Dashboard → Badge connector */}
+      <path d="M 390 108 Q 450 108 452 50" stroke="url(#rx-conn-grad1)" strokeWidth="1.2" fill="none" strokeDasharray="4 3"/>
+      {/* QR Scanner → Check-in notification */}
+      <path d="M 448 260 Q 448 330 210 340" stroke="url(#rx-conn-grad3)" strokeWidth="1.2" fill="none" strokeDasharray="4 3"/>
+      {/* Dashboard → Live stats */}
+      <path d="M 200 490 Q 160 520 140 560" stroke="url(#rx-conn-grad2)" strokeWidth="1.2" fill="none" strokeDasharray="4 3"/>
+    </svg>
+
     {/* ══ 1. MAIN DASHBOARD CARD ══ */}
     <div style={{
-      position: "absolute", top: 92, left: 32, width: 358, zIndex: 10,
-      background: "linear-gradient(145deg, rgba(8,18,46,0.96) 0%, rgba(13,28,68,0.92) 100%)",
-      border: "1px solid rgba(59,130,246,0.28)",
-      borderRadius: 16, overflow: "hidden",
-      backdropFilter: "blur(20px)",
-      boxShadow: "0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 40px rgba(59,130,246,0.12)",
-      transform: "perspective(1100px) rotateY(-5deg) rotateX(2deg)",
+      position: "absolute", top: 88, left: 26, width: 372, zIndex: 10,
+      background: "linear-gradient(145deg, rgba(6,15,42,0.97) 0%, rgba(11,24,62,0.94) 100%)",
+      border: "1px solid rgba(59,130,246,0.32)",
+      borderRadius: 18, overflow: "hidden",
+      backdropFilter: "blur(24px)",
+      boxShadow: "0 32px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.05) inset, 0 0 60px rgba(59,130,246,0.16)",
+      transform: "perspective(1200px) rotateY(-4deg) rotateX(2deg)",
       animation: "rx-illus-float-slow 10s ease-in-out infinite",
     }}>
       {/* Dashboard header */}
@@ -509,10 +576,10 @@ const HeroIllustration: React.FC = () => (
 
     {/* ══ 2. CONFERENCE BADGE CARD ══ */}
     <div style={{
-      position: "absolute", top: 12, right: 8, width: 144, zIndex: 20,
+      position: "absolute", top: 10, right: 4, width: 138, zIndex: 20,
       background: "#ffffff",
-      borderRadius: 12,
-      boxShadow: "0 8px 32px rgba(0,0,0,0.3), 0 2px 8px rgba(59,130,246,0.15)",
+      borderRadius: 14,
+      boxShadow: "0 12px 40px rgba(0,0,0,0.38), 0 2px 10px rgba(59,130,246,0.2), 0 0 0 1px rgba(59,130,246,0.08)",
       overflow: "hidden",
       animation: "rx-illus-float-a 6.5s ease-in-out infinite",
     }}>
@@ -536,12 +603,12 @@ const HeroIllustration: React.FC = () => (
 
     {/* ══ 3. ANALYTICS MINI CARD ══ */}
     <div style={{
-      position: "absolute", top: 22, left: 4, width: 156, zIndex: 20,
-      background: "linear-gradient(145deg, rgba(8,18,46,0.95), rgba(13,28,68,0.9))",
-      border: "1px solid rgba(99,102,241,0.3)",
-      borderRadius: 12, padding: "12px 14px",
-      backdropFilter: "blur(12px)",
-      boxShadow: "0 8px 28px rgba(0,0,0,0.4)",
+      position: "absolute", top: 20, left: 2, width: 152, zIndex: 20,
+      background: "linear-gradient(145deg, rgba(6,15,42,0.97), rgba(11,24,62,0.93))",
+      border: "1px solid rgba(99,102,241,0.35)",
+      borderRadius: 14, padding: "12px 14px",
+      backdropFilter: "blur(16px)",
+      boxShadow: "0 12px 36px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset",
       animation: "rx-illus-float-b 8s ease-in-out infinite",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -557,11 +624,11 @@ const HeroIllustration: React.FC = () => (
 
     {/* ══ 4. PHONE QR SCANNER ══ */}
     <div style={{
-      position: "absolute", top: 200, right: 2, width: 106, height: 198, zIndex: 20,
-      background: "linear-gradient(180deg, rgba(5,10,25,0.98), rgba(8,16,40,0.96))",
-      border: "2px solid rgba(255,255,255,0.1)",
-      borderRadius: 22,
-      boxShadow: "0 16px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset",
+      position: "absolute", top: 196, right: 0, width: 102, height: 194, zIndex: 20,
+      background: "linear-gradient(180deg, rgba(4,8,22,0.99), rgba(6,14,38,0.97))",
+      border: "1.5px solid rgba(255,255,255,0.12)",
+      borderRadius: 24,
+      boxShadow: "0 20px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 20px rgba(59,130,246,0.1)",
       overflow: "hidden",
       animation: "rx-illus-float-c 7.5s ease-in-out infinite",
     }}>
@@ -608,12 +675,12 @@ const HeroIllustration: React.FC = () => (
 
     {/* ══ 5. NOTIFICATION PILL — Check-in ══ */}
     <div style={{
-      position: "absolute", top: 330, left: 8, zIndex: 25,
-      background: "rgba(8,18,46,0.92)",
-      border: "1px solid rgba(34,197,94,0.3)",
-      borderRadius: 100, padding: "9px 14px",
-      backdropFilter: "blur(12px)",
-      boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
+      position: "absolute", top: 328, left: 6, zIndex: 25,
+      background: "rgba(5,14,38,0.94)",
+      border: "1px solid rgba(34,197,94,0.35)",
+      borderRadius: 100, padding: "8px 13px",
+      backdropFilter: "blur(16px)",
+      boxShadow: "0 6px 24px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 12px rgba(34,197,94,0.12)",
       display: "flex", alignItems: "center", gap: 8,
       animation: "rx-illus-float-a 7s ease-in-out infinite 1.2s",
       whiteSpace: "nowrap",
@@ -629,12 +696,12 @@ const HeroIllustration: React.FC = () => (
 
     {/* ══ 6. LIVE STATS CARD ══ */}
     <div style={{
-      position: "absolute", bottom: 48, left: 28, width: 168, zIndex: 20,
-      background: "linear-gradient(145deg, rgba(8,18,46,0.95), rgba(13,28,68,0.9))",
-      border: "1px solid rgba(59,130,246,0.25)",
-      borderRadius: 12, padding: "12px 14px",
-      backdropFilter: "blur(12px)",
-      boxShadow: "0 8px 28px rgba(0,0,0,0.4)",
+      position: "absolute", bottom: 44, left: 24, width: 166, zIndex: 20,
+      background: "linear-gradient(145deg, rgba(6,15,42,0.97), rgba(11,24,62,0.93))",
+      border: "1px solid rgba(59,130,246,0.28)",
+      borderRadius: 14, padding: "12px 14px",
+      backdropFilter: "blur(16px)",
+      boxShadow: "0 12px 36px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset",
       animation: "rx-illus-float-b 9s ease-in-out infinite 2s",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
@@ -654,12 +721,12 @@ const HeroIllustration: React.FC = () => (
 
     {/* ══ 7. EMAIL NOTIFICATION CARD ══ */}
     <div style={{
-      position: "absolute", bottom: 36, right: 10, width: 160, zIndex: 20,
-      background: "linear-gradient(145deg, rgba(8,18,46,0.95), rgba(13,28,68,0.9))",
-      border: "1px solid rgba(139,92,246,0.25)",
-      borderRadius: 12, padding: "10px 12px",
-      backdropFilter: "blur(12px)",
-      boxShadow: "0 8px 28px rgba(0,0,0,0.4)",
+      position: "absolute", bottom: 32, right: 8, width: 156, zIndex: 20,
+      background: "linear-gradient(145deg, rgba(6,15,42,0.97), rgba(11,24,62,0.93))",
+      border: "1px solid rgba(139,92,246,0.3)",
+      borderRadius: 14, padding: "10px 12px",
+      backdropFilter: "blur(16px)",
+      boxShadow: "0 12px 36px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 16px rgba(139,92,246,0.1)",
       animation: "rx-illus-float-c 6.5s ease-in-out infinite 0.8s",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
@@ -756,64 +823,82 @@ const LandingPage: React.FC = () => {
         {/* ══════════ NAV ══════════ */}
         <nav style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 900,
-          transition: "all 0.35s ease",
-          background: navScrolled ? "rgba(255,255,255,0.94)" : "transparent",
-          backdropFilter: navScrolled ? "blur(16px) saturate(180%)" : "none",
-          borderBottom: navScrolled ? "1px solid rgba(0,0,0,0.06)" : "1px solid transparent",
-          boxShadow: navScrolled ? "0 1px 0 rgba(0,0,0,0.04)" : "none",
+          padding: navScrolled ? "6px 20px" : "10px 20px",
+          transition: "padding 0.35s cubic-bezier(.16,1,.3,1)",
         }}>
-          <div style={{ maxWidth: 1160, margin: "0 auto", padding: "0 28px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {/* Glass pill container */}
+          <div style={{
+            maxWidth: 1160, margin: "0 auto",
+            background: navScrolled
+              ? "rgba(4,10,28,0.88)"
+              : "rgba(4,10,28,0.55)",
+            backdropFilter: "blur(20px) saturate(160%)",
+            WebkitBackdropFilter: "blur(20px) saturate(160%)",
+            border: navScrolled
+              ? "1px solid rgba(59,130,246,0.2)"
+              : "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 14,
+            boxShadow: navScrolled
+              ? "0 4px 24px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.03) inset"
+              : "0 2px 16px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.03) inset",
+            transition: "all 0.35s cubic-bezier(.16,1,.3,1)",
+            height: 56,
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "0 20px",
+          }}>
             {/* Logo */}
             <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 9, padding: 0 }}>
               <div style={{
-                width: 32, height: 32, borderRadius: 8,
+                width: 30, height: 30, borderRadius: 8,
                 background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontWeight: 900, fontSize: 15, color: "#fff",
-                boxShadow: "0 0 0 1px rgba(255,255,255,0.15) inset, 0 2px 6px rgba(59,130,246,0.4)",
+                fontWeight: 900, fontSize: 14, color: "#fff",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.18) inset, 0 2px 8px rgba(59,130,246,0.45)",
+                flexShrink: 0,
               }}>R</div>
-              <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: -0.4, color: navScrolled ? "#0f172a" : "#fff" }}>
-                Reg<span style={{ color: navScrolled ? "#3b82f6" : "#93c5fd" }}>Xpert</span>
+              <span style={{ fontSize: 15.5, fontWeight: 800, letterSpacing: -0.4, color: "#fff" }}>
+                Reg<span style={{ color: "#60a5fa" }}>Xpert</span>
               </span>
             </button>
 
             {/* Desktop links */}
-            <div className="rx-nav-links" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div className="rx-nav-links" style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {[["Features", "features"], ["Why Us", "why"], ["Events", "events"]].map(([l, id]) => (
                 <button key={id} onClick={() => scrollTo(id)} style={{
                   background: "none", border: "none", cursor: "pointer",
-                  fontSize: 14, fontWeight: 500,
-                  color: navScrolled ? "#64748b" : "rgba(255,255,255,0.75)",
-                  padding: "6px 12px", borderRadius: 6, transition: "all 0.15s",
+                  fontSize: 13.5, fontWeight: 500,
+                  color: "rgba(255,255,255,0.65)",
+                  padding: "6px 11px", borderRadius: 8, transition: "all 0.15s",
                 }}
-                  onMouseOver={e => { e.currentTarget.style.color = navScrolled ? "#0f172a" : "#fff"; e.currentTarget.style.background = navScrolled ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.08)"; }}
-                  onMouseOut={e => { e.currentTarget.style.color = navScrolled ? "#64748b" : "rgba(255,255,255,0.75)"; e.currentTarget.style.background = "transparent"; }}
+                  onMouseOver={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.07)"; }}
+                  onMouseOut={e => { e.currentTarget.style.color = "rgba(255,255,255,0.65)"; e.currentTarget.style.background = "transparent"; }}
                 >{l}</button>
               ))}
-              <div style={{ width: 1, height: 16, background: navScrolled ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.15)", margin: "0 6px" }} />
+              <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.12)", margin: "0 6px" }} />
               <button onClick={() => navigate("/admin-login")} style={{
                 background: "none", border: "none", cursor: "pointer",
-                fontSize: 14, fontWeight: 500,
-                color: navScrolled ? "#64748b" : "rgba(255,255,255,0.75)",
-                padding: "6px 12px", borderRadius: 6, transition: "all 0.15s",
+                fontSize: 13.5, fontWeight: 500,
+                color: "rgba(255,255,255,0.65)",
+                padding: "6px 11px", borderRadius: 8, transition: "all 0.15s",
               }}
-                onMouseOver={e => { e.currentTarget.style.color = navScrolled ? "#0f172a" : "#fff"; }}
-                onMouseOut={e => { e.currentTarget.style.color = navScrolled ? "#64748b" : "rgba(255,255,255,0.75)"; }}
+                onMouseOver={e => { e.currentTarget.style.color = "#fff"; }}
+                onMouseOut={e => { e.currentTarget.style.color = "rgba(255,255,255,0.65)"; }}
               >Log in</button>
               <button onClick={requestDemo} style={{
-                background: "#3b82f6", color: "#fff", border: "none",
-                borderRadius: 8, padding: "8px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer",
+                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                color: "#fff", border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 9, padding: "7px 16px", fontSize: 13.5, fontWeight: 600, cursor: "pointer",
                 transition: "all 0.2s", letterSpacing: -0.1,
-                boxShadow: "0 1px 3px rgba(59,130,246,0.4)",
+                boxShadow: "0 2px 8px rgba(59,130,246,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset",
               }}
-                onMouseOver={e => { e.currentTarget.style.background = "#2563eb"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(59,130,246,0.45)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                onMouseOut={e => { e.currentTarget.style.background = "#3b82f6"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(59,130,246,0.4)"; e.currentTarget.style.transform = "none"; }}
+                onMouseOver={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(59,130,246,0.5), 0 0 0 1px rgba(255,255,255,0.15) inset"; }}
+                onMouseOut={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(59,130,246,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset"; }}
               >Request Demo</button>
             </div>
 
             {/* Mobile burger */}
             <button className="rx-burger" onClick={() => setMenuOpen(!menuOpen)} style={{ display: "none", background: "none", border: "none", cursor: "pointer", padding: 6 }}>
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke={navScrolled ? "#0f172a" : "#fff"} strokeWidth="2" strokeLinecap="round">
+              <svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round">
                 {menuOpen ? (<><line x1="4" y1="4" x2="18" y2="18"/><line x1="18" y1="4" x2="4" y2="18"/></>) : (<><line x1="3" y1="6" x2="19" y2="6"/><line x1="3" y1="11" x2="19" y2="11"/><line x1="3" y1="16" x2="19" y2="16"/></>)}
               </svg>
             </button>
@@ -821,16 +906,22 @@ const LandingPage: React.FC = () => {
 
           {/* Mobile menu */}
           {menuOpen && (
-            <div style={{ background: "#fff", borderTop: "1px solid #f1f5f9", padding: "12px 20px 20px" }}>
+            <div style={{
+              maxWidth: 1160, margin: "8px auto 0",
+              background: "rgba(4,10,28,0.95)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 12, padding: "12px 16px 16px"
+            }}>
               {[["Features", "features"], ["Why Us", "why"], ["Events", "events"]].map(([l, id]) => (
                 <button key={id} onClick={() => scrollTo(id)} style={{
                   display: "block", width: "100%", textAlign: "left", background: "none", border: "none",
-                  fontSize: 15, fontWeight: 500, color: "#374151", padding: "11px 4px", cursor: "pointer",
-                  borderBottom: "1px solid #f8fafc",
+                  fontSize: 15, fontWeight: 500, color: "rgba(255,255,255,0.75)", padding: "11px 4px", cursor: "pointer",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
                 }}>{l}</button>
               ))}
               <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-                <button onClick={() => navigate("/admin-login")} style={{ flex: 1, padding: "10px", fontSize: 14, fontWeight: 600, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, cursor: "pointer", color: "#374151" }}>Log in</button>
+                <button onClick={() => navigate("/admin-login")} style={{ flex: 1, padding: "10px", fontSize: 14, fontWeight: 600, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, cursor: "pointer", color: "rgba(255,255,255,0.8)" }}>Log in</button>
                 <button onClick={requestDemo} style={{ flex: 1, padding: "10px", fontSize: 14, fontWeight: 600, background: "#3b82f6", border: "none", borderRadius: 8, cursor: "pointer", color: "#fff" }}>Request Demo</button>
               </div>
             </div>
@@ -838,71 +929,92 @@ const LandingPage: React.FC = () => {
         </nav>
 
         {/* ══════════ HERO ══════════ */}
-        <section id="hero" style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden", background: "#060d1f" }}>
+        <section id="hero" style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden", background: "#050c1e" }}>
 
           {/* Layered background */}
           <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-            {/* Deep radial base */}
-            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 120% 80% at 60% -10%, #1e3a8a 0%, transparent 60%)" }} />
-            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 60% at -10% 60%, #1e1b4b 0%, transparent 60%)" }} />
-            {/* Orb 1 */}
+            {/* Base mesh gradient — richer navy-to-indigo */}
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, #050c1e 0%, #071530 45%, #060e28 100%)" }} />
+            {/* Deep radial — top right */}
+            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 130% 90% at 68% -5%, rgba(30,58,138,0.75) 0%, transparent 58%)" }} />
+            {/* Deep radial — bottom left */}
+            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 70% 55% at -5% 70%, rgba(30,27,75,0.65) 0%, transparent 55%)" }} />
+            {/* Blue corona orb behind illustration */}
             <div style={{
-              position: "absolute", width: 600, height: 600, borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%)",
-              top: "5%", right: "-8%",
-              animation: "rx-float 8s ease-in-out infinite",
+              position: "absolute", width: 680, height: 680, borderRadius: "50%",
+              background: "radial-gradient(circle, rgba(59,130,246,0.2) 0%, rgba(99,102,241,0.08) 50%, transparent 72%)",
+              top: "2%", right: "-12%",
+              animation: "rx-float 9s ease-in-out infinite",
+              filter: "blur(1px)",
             }} />
-            {/* Orb 2 */}
+            {/* Indigo orb — bottom left */}
             <div style={{
-              position: "absolute", width: 400, height: 400, borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(99,102,241,0.14) 0%, transparent 70%)",
-              bottom: "10%", left: "5%",
-              animation: "rx-float 11s ease-in-out infinite reverse",
+              position: "absolute", width: 440, height: 440, borderRadius: "50%",
+              background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)",
+              bottom: "8%", left: "3%",
+              animation: "rx-float 12s ease-in-out infinite reverse",
             }} />
-            {/* Subtle dot grid */}
+            {/* Cyan accent orb */}
+            <div style={{
+              position: "absolute", width: 260, height: 260, borderRadius: "50%",
+              background: "radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)",
+              top: "55%", left: "45%",
+              animation: "rx-float 14s ease-in-out infinite 3s",
+            }} />
+            {/* Premium dot grid — finer pitch */}
             <div style={{
               position: "absolute", inset: 0,
-              backgroundImage: "radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px)",
-              backgroundSize: "32px 32px",
-              maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%)",
+              backgroundImage: "radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+              maskImage: "radial-gradient(ellipse 90% 85% at 55% 45%, black 15%, transparent 100%)",
             }} />
-            {/* Horizontal glow line */}
+            {/* Horizontal glow separator */}
             <div style={{
-              position: "absolute", left: 0, right: 0, top: "55%",
-              height: 1, background: "linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.25) 25%, rgba(99,102,241,0.35) 50%, rgba(59,130,246,0.25) 75%, transparent 100%)",
-              transform: "translateY(-50%)",
+              position: "absolute", left: 0, right: 0, top: "58%",
+              height: 1,
+              background: "linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.18) 20%, rgba(99,102,241,0.32) 50%, rgba(59,130,246,0.18) 80%, transparent 100%)",
             }} />
+            {/* Top vignette */}
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 200, background: "linear-gradient(to bottom, rgba(5,12,30,0.5) 0%, transparent 100%)" }} />
           </div>
 
           {/* Hero content — 2-col grid */}
-          <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "0 28px", width: "100%", minHeight: "100vh", display: "flex", alignItems: "center" }}>
-            <div className="rx-hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, alignItems: "center", width: "100%", paddingTop: 80, paddingBottom: 60 }}>
+          <div style={{ position: "relative", zIndex: 1, maxWidth: 1220, margin: "0 auto", padding: "0 32px", width: "100%", minHeight: "100vh", display: "flex", alignItems: "center" }}>
+            <div className="rx-hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.05fr", gap: 48, alignItems: "center", width: "100%", paddingTop: 96, paddingBottom: 72 }}>
 
               {/* LEFT — text */}
               <div>
                 {/* Pill badge */}
                 <div style={{
-                  display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 28,
-                  background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.25)",
-                  borderRadius: 100, padding: "6px 14px",
-                  backdropFilter: "blur(8px)",
+                  display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 32,
+                  background: "rgba(59,130,246,0.1)",
+                  border: "1px solid rgba(59,130,246,0.28)",
+                  borderRadius: 100, padding: "6px 16px 6px 10px",
+                  backdropFilter: "blur(10px)",
                   animation: "rx-fadein 0.8s ease forwards",
                   opacity: 0, animationDelay: "0.1s",
+                  boxShadow: "0 0 0 1px rgba(255,255,255,0.04) inset",
                 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", display: "inline-block", boxShadow: "0 0 0 3px rgba(34,197,94,0.25)" }} />
-                  <span style={{ fontSize: 12.5, fontWeight: 600, color: "#93c5fd", letterSpacing: 0.2 }}>Live at ISVIR 2026 · Conference Platform</span>
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    width: 18, height: 18, borderRadius: "50%",
+                    background: "rgba(34,197,94,0.18)", border: "1px solid rgba(34,197,94,0.35)",
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", display: "inline-block", boxShadow: "0 0 0 2px rgba(34,197,94,0.3)" }} />
+                  </span>
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: "#93c5fd", letterSpacing: 0.1 }}>Live at ISVIR 2026 · Conference Platform</span>
                 </div>
 
                 {/* Headline */}
                 <h1 style={{
-                  fontSize: "clamp(36px, 5vw, 66px)", fontWeight: 900, lineHeight: 1.04,
-                  letterSpacing: "-2px", color: "#fff", marginBottom: 22,
+                  fontSize: "clamp(38px, 5.2vw, 68px)", fontWeight: 900, lineHeight: 1.03,
+                  letterSpacing: "-2.5px", color: "#fff", marginBottom: 24,
                   animation: "rx-slidein 0.9s cubic-bezier(.16,1,.3,1) forwards",
                   opacity: 0, animationDelay: "0.2s",
                 }}>
                   Conference<br />
                   <span style={{
-                    background: "linear-gradient(135deg, #60a5fa 0%, #818cf8 50%, #a78bfa 100%)",
+                    background: "linear-gradient(135deg, #60a5fa 0%, #818cf8 48%, #a78bfa 100%)",
                     WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
                   }}>management,</span>
@@ -911,8 +1023,9 @@ const LandingPage: React.FC = () => {
 
                 {/* Description */}
                 <p style={{
-                  fontSize: "clamp(15px, 1.6vw, 18px)", color: "rgba(255,255,255,0.52)", lineHeight: 1.75,
-                  maxWidth: 440, marginBottom: 36,
+                  fontSize: "clamp(15px, 1.6vw, 17.5px)",
+                  color: "rgba(255,255,255,0.48)", lineHeight: 1.8,
+                  maxWidth: 430, marginBottom: 38,
                   animation: "rx-fadein 1s ease forwards", opacity: 0, animationDelay: "0.4s",
                 }}>
                   RegXpert handles registration, badge printing, QR scanning,
@@ -925,41 +1038,49 @@ const LandingPage: React.FC = () => {
                   animation: "rx-fadein 1s ease forwards", opacity: 0, animationDelay: "0.55s",
                 }}>
                   <button onClick={requestDemo} id="hero-demo-btn" style={{
-                    background: "#3b82f6", color: "#fff", border: "none",
-                    borderRadius: 10, padding: "13px 26px", fontSize: 15, fontWeight: 700,
+                    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                    color: "#fff", border: "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: 11, padding: "13px 28px", fontSize: 15, fontWeight: 700,
                     cursor: "pointer", letterSpacing: -0.2,
-                    boxShadow: "0 0 0 1px rgba(255,255,255,0.1) inset, 0 4px 20px rgba(59,130,246,0.45)",
-                    transition: "all 0.2s",
+                    boxShadow: "0 0 0 1px rgba(255,255,255,0.12) inset, 0 4px 24px rgba(59,130,246,0.48)",
+                    transition: "all 0.22s cubic-bezier(.16,1,.3,1)",
                     display: "flex", alignItems: "center", gap: 8,
                   }}
-                    onMouseOver={e => { e.currentTarget.style.background = "#2563eb"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 0 0 1px rgba(255,255,255,0.15) inset, 0 8px 28px rgba(59,130,246,0.55)"; }}
-                    onMouseOut={e => { e.currentTarget.style.background = "#3b82f6"; e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 0 0 1px rgba(255,255,255,0.1) inset, 0 4px 20px rgba(59,130,246,0.45)"; }}
+                    onMouseOver={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 0 0 1px rgba(255,255,255,0.18) inset, 0 10px 32px rgba(59,130,246,0.58)"; }}
+                    onMouseOut={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 0 0 1px rgba(255,255,255,0.12) inset, 0 4px 24px rgba(59,130,246,0.48)"; }}
                   >Request a demo
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                   </button>
                   <button onClick={() => navigate("/admin-login")} id="hero-login-btn" style={{
-                    background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.8)",
-                    border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10,
+                    background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.78)",
+                    border: "1px solid rgba(255,255,255,0.1)", borderRadius: 11,
                     padding: "13px 26px", fontSize: 15, fontWeight: 600, cursor: "pointer",
-                    transition: "all 0.2s", backdropFilter: "blur(8px)",
+                    transition: "all 0.22s cubic-bezier(.16,1,.3,1)", backdropFilter: "blur(10px)",
                   }}
-                    onMouseOver={e => { e.currentTarget.style.background = "rgba(255,255,255,0.09)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)"; e.currentTarget.style.color = "#fff"; }}
-                    onMouseOut={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "rgba(255,255,255,0.8)"; }}
+                    onMouseOver={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "#fff"; }}
+                    onMouseOut={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "rgba(255,255,255,0.78)"; }}
                   >Log in to portal</button>
                 </div>
 
-                {/* Stats strip */}
+                {/* Stats strip — glassmorphism cards */}
                 <div ref={statsRef} style={{
-                  display: "flex", flexWrap: "wrap", gap: 0, marginTop: 48,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: 0,
+                  marginTop: 52,
                   background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: 14, overflow: "hidden",
-                  backdropFilter: "blur(12px)",
-                  maxWidth: 420,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 16, overflow: "hidden",
+                  backdropFilter: "blur(16px)",
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.03) inset",
+                  maxWidth: 440,
                   animation: "rx-fadein 1s ease forwards", opacity: 0, animationDelay: "0.7s",
                 }}>
                   {BENEFITS.map((b, i) => (
-                    <div key={b.label} style={{ flex: "1 1 90px", padding: "16px 14px", textAlign: "center", borderRight: i < 3 ? "1px solid rgba(255,255,255,0.07)" : "none" }}>
+                    <div key={b.label} style={{
+                      borderRight: i < 3 ? "1px solid rgba(255,255,255,0.07)" : "none",
+                      position: "relative",
+                    }}>
                       <StatCard num={b.num} label={b.label} sub={b.sub} inView={statsInView} i={i} />
                     </div>
                   ))}
@@ -977,8 +1098,8 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Bottom fade */}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 120, background: "linear-gradient(to bottom, transparent, #fff)", zIndex: 1, pointerEvents: "none" }} />
+          {/* Bottom fade — to features dark bg */}
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 140, background: "linear-gradient(to bottom, transparent, #081321)", zIndex: 1, pointerEvents: "none" }} />
         </section>
 
         {/* ══════════ FEATURES ══════════ */}
@@ -1476,66 +1597,69 @@ const LandingPage: React.FC = () => {
               </div>
             </Reveal>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }} className="rx-events-grid">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 26 }} className="rx-events-grid">
               {PAST_EVENTS.map((ev, i) => (
                 <Reveal key={ev.name} delay={i * 120}>
                   <div style={{
-                    border: `1px solid rgba(255,255,255,0.08)`,
+                    border: `1px solid rgba(255,255,255,0.07)`,
                     borderRadius: 20, overflow: "hidden",
-                    background: "rgba(255,255,255,0.04)",
-                    backdropFilter: "blur(16px)",
-                    WebkitBackdropFilter: "blur(16px)",
-                    transition: "all 0.3s ease",
+                    background: "rgba(6,15,38,0.6)",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
+                    transition: "all 0.35s cubic-bezier(.16,1,.3,1)",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
                   }}
                     onMouseOver={e => {
                       const d = e.currentTarget as HTMLDivElement;
-                      d.style.boxShadow = `0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px ${ev.color}50`;
-                      d.style.transform = "translateY(-6px)";
-                      d.style.background = "rgba(255,255,255,0.07)";
+                      d.style.boxShadow = `0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px ${ev.color}40`;
+                      d.style.transform = "translateY(-7px)";
+                      d.style.borderColor = `${ev.color}30`;
+                      d.style.background = "rgba(8,20,50,0.75)";
                     }}
                     onMouseOut={e => {
                       const d = e.currentTarget as HTMLDivElement;
-                      d.style.boxShadow = "none";
+                      d.style.boxShadow = "0 4px 24px rgba(0,0,0,0.2)";
                       d.style.transform = "none";
-                      d.style.background = "rgba(255,255,255,0.04)";
+                      d.style.borderColor = "rgba(255,255,255,0.07)";
+                      d.style.background = "rgba(6,15,38,0.6)";
                     }}
                   >
                     {/* Colored top bar */}
-                    <div style={{ height: 4, background: `linear-gradient(90deg, ${ev.color}, ${ev.color}66)` }} />
-                    <div style={{ padding: "26px 26px 26px" }}>
+                    <div style={{ height: 3, background: `linear-gradient(90deg, ${ev.color}, ${ev.color}55, transparent)` }} />
+                    <div style={{ padding: "26px" }}>
                       {/* Participant count badge */}
                       <div style={{
                         display: "inline-flex", alignItems: "center", gap: 6,
-                        background: `${ev.color}20`,
-                        border: `1px solid ${ev.color}40`,
+                        background: `${ev.color}18`,
+                        border: `1px solid ${ev.color}38`,
                         borderRadius: 100, padding: "4px 12px",
-                        fontSize: 12.5, fontWeight: 600,
-                        color: ev.participants === 0 ? ev.color : `${ev.color}ee`,
+                        fontSize: 12, fontWeight: 600,
+                        color: ev.participants === 0 ? ev.color : `${ev.color}dd`,
                         marginBottom: 18,
                       }}>
                         {ev.participants === 0 ? (
                           <>
-                            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
+                            <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
                             Upcoming
                           </>
                         ) : (
                           <>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                             </svg>
                             {ev.participants.toLocaleString()} participants
                           </>
                         )}
                       </div>
-                      <h3 style={{ fontSize: 21, fontWeight: 800, color: "#f8fafc", letterSpacing: -0.4, marginBottom: 6 }}>{ev.name}</h3>
-                      <p style={{ fontSize: 13, color: "rgba(148,163,184,0.7)", lineHeight: 1.55, marginBottom: 20 }}>{ev.org}</p>
-                      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "rgba(148,163,184,0.8)" }}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                      <h3 style={{ fontSize: 20, fontWeight: 800, color: "#f1f5f9", letterSpacing: -0.4, marginBottom: 6, lineHeight: 1.25 }}>{ev.name}</h3>
+                      <p style={{ fontSize: 13, color: "rgba(148,163,184,0.65)", lineHeight: 1.55, marginBottom: 20 }}>{ev.org}</p>
+                      <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "rgba(148,163,184,0.7)" }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                           {ev.location}
                         </span>
-                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: "rgba(148,163,184,0.8)" }}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "rgba(148,163,184,0.7)" }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                           {ev.date}
                         </span>
                       </div>
@@ -1548,43 +1672,70 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* ══════════ CTA ══════════ */}
-        <section style={{ padding: "100px 28px", background: "#060d1f", position: "relative", overflow: "hidden" }}>
+        <section style={{ padding: "110px 28px 120px", background: "linear-gradient(180deg, #060d1f 0%, #050c1e 100%)", position: "relative", overflow: "hidden" }}>
+          {/* Top fade from events section */}
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, background: "linear-gradient(to bottom, #060d1f, transparent)", zIndex: 0, pointerEvents: "none" }} />
           <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-            <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%)", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }} />
+            {/* Central corona */}
+            <div style={{ position: "absolute", width: 640, height: 640, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.14) 0%, rgba(99,102,241,0.06) 45%, transparent 70%)", top: "50%", left: "50%", transform: "translate(-50%,-50%)", filter: "blur(1px)" }} />
+            {/* Accent corner orbs */}
+            <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)", top: "-80px", right: "-60px" }} />
+            <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%)", bottom: "-60px", left: "-60px" }} />
+            {/* Fine dot grid */}
             <div style={{
               position: "absolute", inset: 0,
-              backgroundImage: "radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
+              backgroundImage: "radial-gradient(rgba(255,255,255,0.028) 1px, transparent 1px)",
               backgroundSize: "28px 28px",
+              maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%)",
             }} />
           </div>
-          <div style={{ position: "relative", zIndex: 1, maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
+          <div style={{ position: "relative", zIndex: 1, maxWidth: 660, margin: "0 auto", textAlign: "center" }}>
             <Reveal>
-              <h2 style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 900, color: "#fff", letterSpacing: -1.5, lineHeight: 1.08, marginBottom: 18 }}>
-                Ready to simplify your<br />next conference?
+              {/* Eyebrow */}
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 28,
+                background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.25)",
+                borderRadius: 100, padding: "5px 16px 5px 10px",
+                backdropFilter: "blur(10px)",
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", display: "inline-block", boxShadow: "0 0 0 3px rgba(34,197,94,0.2)" }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#93c5fd", letterSpacing: 0.2 }}>Free demo available · No commitment</span>
+              </div>
+              <h2 style={{
+                fontSize: "clamp(30px,4.5vw,54px)", fontWeight: 900, color: "#fff",
+                letterSpacing: "-2px", lineHeight: 1.06, marginBottom: 20,
+              }}>
+                Ready to simplify your<br />
+                <span style={{
+                  background: "linear-gradient(135deg, #60a5fa 0%, #818cf8 50%, #a78bfa 100%)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                }}>next conference?</span>
               </h2>
-              <p style={{ fontSize: 17, color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginBottom: 40 }}>
+              <p style={{ fontSize: 16.5, color: "rgba(255,255,255,0.42)", lineHeight: 1.75, marginBottom: 44, maxWidth: 520, margin: "0 auto 44px" }}>
                 Request a free demo and see how RegXpert transforms event management from registration to the final report.
               </p>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
                 <button onClick={requestDemo} id="cta-demo-btn" style={{
-                  background: "#3b82f6", color: "#fff", border: "none", borderRadius: 10,
-                  padding: "13px 28px", fontSize: 15, fontWeight: 700, cursor: "pointer",
-                  boxShadow: "0 4px 24px rgba(59,130,246,0.5)",
-                  transition: "all 0.2s", display: "flex", alignItems: "center", gap: 8,
+                  background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                  color: "#fff", border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: 11, padding: "14px 30px", fontSize: 15, fontWeight: 700, cursor: "pointer",
+                  boxShadow: "0 4px 24px rgba(59,130,246,0.48), 0 0 0 1px rgba(255,255,255,0.1) inset",
+                  transition: "all 0.22s cubic-bezier(.16,1,.3,1)",
+                  display: "flex", alignItems: "center", gap: 8,
                 }}
-                  onMouseOver={e => { e.currentTarget.style.background = "#2563eb"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(59,130,246,0.6)"; }}
-                  onMouseOut={e => { e.currentTarget.style.background = "#3b82f6"; e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(59,130,246,0.5)"; }}
+                  onMouseOver={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 36px rgba(59,130,246,0.58), 0 0 0 1px rgba(255,255,255,0.15) inset"; }}
+                  onMouseOut={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(59,130,246,0.48), 0 0 0 1px rgba(255,255,255,0.1) inset"; }}
                 >Request a demo
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </button>
                 <button onClick={() => navigate("/admin-login")} id="cta-login-btn" style={{
-                  background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)",
-                  border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
-                  padding: "13px 28px", fontSize: 15, fontWeight: 600, cursor: "pointer",
-                  transition: "all 0.2s", backdropFilter: "blur(8px)",
+                  background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.72)",
+                  border: "1px solid rgba(255,255,255,0.1)", borderRadius: 11,
+                  padding: "14px 28px", fontSize: 15, fontWeight: 600, cursor: "pointer",
+                  transition: "all 0.22s cubic-bezier(.16,1,.3,1)", backdropFilter: "blur(10px)",
                 }}
-                  onMouseOver={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
-                  onMouseOut={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+                  onMouseOver={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
+                  onMouseOut={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(255,255,255,0.72)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >Log in to portal</button>
               </div>
             </Reveal>
@@ -1592,39 +1743,46 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* ══════════ FOOTER ══════════ */}
-        <footer id="contact" style={{ background: "#030711", borderTop: "1px solid rgba(255,255,255,0.05)", padding: "48px 28px 32px" }}>
+        <footer id="contact" style={{ background: "#030810", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "52px 28px 36px" }}>
           <div style={{ maxWidth: 1160, margin: "0 auto" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 48, marginBottom: 40 }} className="rx-footer-grid">
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 48, marginBottom: 44 }} className="rx-footer-grid">
               <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 7, background: "linear-gradient(135deg, #3b82f6, #1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, color: "#fff" }}>R</div>
-                  <span style={{ fontSize: 15, fontWeight: 800, color: "#fff", letterSpacing: -0.3 }}>Reg<span style={{ color: "#60a5fa" }}>Xpert</span></span>
+                <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 16 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8,
+                    background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: 900, fontSize: 14, color: "#fff",
+                    boxShadow: "0 0 0 1px rgba(255,255,255,0.15) inset, 0 2px 8px rgba(59,130,246,0.4)",
+                    flexShrink: 0,
+                  }}>R</div>
+                  <span style={{ fontSize: 15.5, fontWeight: 800, color: "#fff", letterSpacing: -0.4 }}>Reg<span style={{ color: "#60a5fa" }}>Xpert</span></span>
                 </div>
-                <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.7, maxWidth: 260 }}>Professional conference management for medical, academic, and industry events across India.</p>
+                <p style={{ fontSize: 13.5, color: "#4b5e78", lineHeight: 1.75, maxWidth: 260 }}>Professional conference management for medical, academic, and industry events across India.</p>
               </div>
               <div>
-                <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "#334155", marginBottom: 16 }}>Navigate</p>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", color: "#2d3f58", marginBottom: 18 }}>Navigate</p>
                 {[["Features", "features"], ["Why Us", "why"], ["Events", "events"]].map(([l, id]) => (
-                  <button key={id} onClick={() => scrollTo(id)} style={{ display: "block", background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "#475569", padding: "5px 0", textAlign: "left", transition: "color 0.15s" }}
+                  <button key={id} onClick={() => scrollTo(id)} style={{ display: "block", background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "#4b5e78", padding: "6px 0", textAlign: "left", transition: "color 0.15s" }}
                     onMouseOver={e => (e.currentTarget.style.color = "#93c5fd")}
-                    onMouseOut={e => (e.currentTarget.style.color = "#475569")}
+                    onMouseOut={e => (e.currentTarget.style.color = "#4b5e78")}
                   >{l}</button>
                 ))}
               </div>
               <div>
-                <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "#334155", marginBottom: 16 }}>Contact</p>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", color: "#2d3f58", marginBottom: 18 }}>Contact</p>
                 <p style={{ fontSize: 14, fontWeight: 700, color: "#e2e8f0", marginBottom: 2 }}>Harsha Vardhan Reddy</p>
-                <p style={{ fontSize: 12.5, color: "#6366f1", fontWeight: 600, marginBottom: 10 }}>Operations Manager</p>
-                <a href="tel:+919550082982" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, color: "#475569", textDecoration: "none", marginBottom: 6, transition: "color 0.15s" }}
+                <p style={{ fontSize: 12.5, color: "#6366f1", fontWeight: 600, marginBottom: 12 }}>Operations Manager</p>
+                <a href="tel:+919550082982" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#4b5e78", textDecoration: "none", marginBottom: 8, transition: "color 0.15s" }}
                   onMouseOver={e => (e.currentTarget.style.color = "#93c5fd")}
-                  onMouseOut={e => (e.currentTarget.style.color = "#475569")}
+                  onMouseOut={e => (e.currentTarget.style.color = "#4b5e78")}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.13 1 .37 1.97.72 2.9a2 2 0 0 1-.45 2.11L7.91 9A16 16 0 0 0 15 16.09l.96-.96a2 2 0 0 1 2.11-.45c.93.35 1.9.59 2.9.72A2 2 0 0 1 22 16.92z"/></svg>
                   +91 95500 82982
                 </a>
-                <a href="mailto:harshachinnu637@gmail.com" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13.5, color: "#475569", textDecoration: "none", transition: "color 0.15s" }}
+                <a href="mailto:harshachinnu637@gmail.com" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#4b5e78", textDecoration: "none", transition: "color 0.15s" }}
                   onMouseOver={e => (e.currentTarget.style.color = "#93c5fd")}
-                  onMouseOut={e => (e.currentTarget.style.color = "#475569")}
+                  onMouseOut={e => (e.currentTarget.style.color = "#4b5e78")}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                   harshachinnu637@gmail.com
@@ -1632,8 +1790,8 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 24, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-              <span style={{ fontSize: 13, color: "#334155" }}>© 2026 RegXpert. All rights reserved.</span>
-              <span style={{ fontSize: 13, color: "#334155" }}>Built for conference organisers</span>
+              <span style={{ fontSize: 12.5, color: "#2d3f58" }}>© 2026 RegXpert. All rights reserved.</span>
+              <span style={{ fontSize: 12.5, color: "#2d3f58" }}>Built for conference organisers</span>
             </div>
           </div>
         </footer>
@@ -1647,36 +1805,53 @@ const LandingPage: React.FC = () => {
             to   { opacity: 1; }
           }
           @keyframes rx-slidein {
-            from { opacity: 0; transform: translateY(28px); }
+            from { opacity: 0; transform: translateY(32px); }
             to   { opacity: 1; transform: translateY(0); }
           }
           @keyframes rx-float {
             0%, 100% { transform: translate(0, 0) scale(1); }
-            33%       { transform: translate(18px, -22px) scale(1.04); }
-            66%       { transform: translate(-12px, 14px) scale(0.97); }
+            33%       { transform: translate(20px, -24px) scale(1.04); }
+            66%       { transform: translate(-14px, 16px) scale(0.97); }
+          }
+
+          /* Stat card hover */
+          .rx-stat-card {
+            transition: background 0.25s ease;
+          }
+          .rx-stat-card:hover {
+            background: rgba(255,255,255,0.04);
           }
 
           /* Illustration float animations */
           @keyframes rx-illus-float-slow {
-            0%, 100% { transform: perspective(1100px) rotateY(-5deg) rotateX(2deg) translateY(0px); }
-            50%       { transform: perspective(1100px) rotateY(-5deg) rotateX(2deg) translateY(-10px); }
+            0%, 100% { transform: perspective(1200px) rotateY(-4deg) rotateX(2deg) translateY(0px); }
+            50%       { transform: perspective(1200px) rotateY(-4deg) rotateX(2deg) translateY(-12px); }
           }
           @keyframes rx-illus-float-a {
-            0%, 100% { transform: translateY(0px); }
-            50%       { transform: translateY(-11px); }
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50%       { transform: translateY(-10px) rotate(0.5deg); }
           }
           @keyframes rx-illus-float-b {
             0%, 100% { transform: translateY(0px); }
-            50%       { transform: translateY(-8px); }
+            50%       { transform: translateY(-9px); }
           }
           @keyframes rx-illus-float-c {
-            0%, 100% { transform: translateY(0px); }
-            50%       { transform: translateY(-14px); }
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50%       { transform: translateY(-13px) rotate(-0.5deg); }
           }
           @keyframes rx-scanline {
             0%   { top: 8px;  opacity: 1; }
             80%  { opacity: 1; }
             100% { top: calc(100% - 8px); opacity: 0; }
+          }
+
+          /* Workflow connector SVG dash animation */
+          @keyframes rx-dash-flow {
+            0%   { stroke-dashoffset: 40; }
+            100% { stroke-dashoffset: 0; }
+          }
+          .rx-hero-grid svg path {
+            animation: rx-dash-flow 3s linear infinite;
           }
 
           /* Lifecycle Timeline Styles */
