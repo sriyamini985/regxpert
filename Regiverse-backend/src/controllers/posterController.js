@@ -148,7 +148,19 @@ export const getPosters = async (req, res) => {
 export const adminGetPosters = async (req, res) => {
   try {
     const { conferenceId } = req.params;
-    const posters = await Poster.find({ conferenceId }).sort({ posterNumber: 1 });
+    let confId = conferenceId;
+    const targetConf = await Conference.findOne({
+      $or: [
+        { _id: mongoose.isValidObjectId(conferenceId) ? conferenceId : null },
+        { slug: conferenceId }
+      ].filter(Boolean)
+    });
+
+    if (targetConf) {
+      confId = targetConf._id.toString();
+    }
+
+    const posters = await Poster.find({ conferenceId: confId }).sort({ posterNumber: 1 });
     return res.status(200).json(posters);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -171,6 +183,18 @@ export const adminCreatePoster = async (req, res) => {
 
     if (!posterNumber || !title || !presenterName || !conferenceId) {
       return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    let confId = conferenceId;
+    const targetConf = await Conference.findOne({
+      $or: [
+        { _id: mongoose.isValidObjectId(conferenceId) ? conferenceId : null },
+        { slug: conferenceId }
+      ].filter(Boolean)
+    });
+
+    if (targetConf) {
+      confId = targetConf._id.toString();
     }
 
     const files = req.files || {};
@@ -202,7 +226,7 @@ export const adminCreatePoster = async (req, res) => {
       category: category || "",
       imageUrl,
       thumbnailUrl,
-      conferenceId
+      conferenceId: confId
     });
 
     await newPoster.save();
@@ -296,9 +320,21 @@ export const adminBulkUploadPosters = async (req, res) => {
       return res.status(400).json({ error: "Missing conferenceId or invalid posters array." });
     }
 
+    let confId = conferenceId;
+    const targetConf = await Conference.findOne({
+      $or: [
+        { _id: mongoose.isValidObjectId(conferenceId) ? conferenceId : null },
+        { slug: conferenceId }
+      ].filter(Boolean)
+    });
+
+    if (targetConf) {
+      confId = targetConf._id.toString();
+    }
+
     const docs = posters.map(p => ({
       ...p,
-      conferenceId,
+      conferenceId: confId,
       coPresenters: p.coPresenters || "",
       institution: p.institution || "",
       department: p.department || "",
