@@ -1279,7 +1279,7 @@ const LandingPage: React.FC = () => {
                   {/* Illustration mockup container */}
                   <div className="rx-illus-container" style={{
                     position: "relative",
-                    height: 240,
+                    height: 280,
                     marginTop: 36,
                     background: "rgba(255,255,255,0.02)",
                     border: "1px solid rgba(255,255,255,0.04)",
@@ -1291,100 +1291,27 @@ const LandingPage: React.FC = () => {
                   }}>
                     {/* Background Glow */}
                     <div style={{
-                      position: "absolute", width: 150, height: 150, borderRadius: "50%",
-                      background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)",
+                      position: "absolute", width: 180, height: 180, borderRadius: "50%",
+                      background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)",
                       top: "50%", left: "50%", transform: "translate(-50%, -50%)",
                       zIndex: 0,
                     }} />
 
-                    {/* Mock Dashboard UI */}
-                    <div className="rx-mock-dashboard" style={{
-                      width: "85%",
-                      height: "75%",
-                      background: "rgba(10,25,47,0.85)",
-                      border: "1px solid rgba(59,130,246,0.2)",
-                      borderRadius: 12,
-                      padding: 12,
-                      zIndex: 1,
-                      position: "relative",
-                      boxShadow: "0 20px 40px rgba(0,0,0,0.5)",
-                      animation: "rx-float-bento 6s ease-in-out infinite",
-                    }}>
-                      {/* Mini Window Controls */}
-                      <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444" }} />
-                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b" }} />
-                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
-                      </div>
-
-                      {/* Grid of stats */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 6, padding: 8 }}>
-                          <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 0.5 }}>Active Scanners</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: "#10b981", marginTop: 2 }}>12 Live</div>
-                        </div>
-                        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 6, padding: 8 }}>
-                          <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 0.5 }}>Total Revenue</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: "#6366f1", marginTop: 2 }}>₹4.2L</div>
-                        </div>
-                      </div>
-
-                      {/* Mini Line Chart */}
-                      <div style={{ marginTop: 12, height: 36, position: "relative", display: "flex", alignItems: "flex-end", gap: 3 }}>
-                        {[20, 35, 25, 45, 60, 40, 75, 90].map((h, idx) => (
-                          <div key={idx} style={{
-                            flex: 1,
-                            height: `${h}%`,
-                            background: idx === 7 ? "linear-gradient(to top, #3b82f6, #06b6d4)" : "rgba(99,102,241,0.2)",
-                            borderRadius: "2px 2px 0 0",
-                            transition: "all 0.3s ease",
-                          }} />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Floating Badge Mock */}
-                    <div style={{
-                      position: "absolute",
-                      right: 15,
-                      bottom: 20,
-                      width: 100,
-                      background: "rgba(15,32,60,0.9)",
-                      border: "1px solid rgba(236,72,153,0.3)",
-                      borderRadius: 10,
-                      padding: 8,
-                      zIndex: 2,
-                      boxShadow: "0 10px 25px rgba(0,0,0,0.4)",
-                      animation: "rx-float-badge 5s ease-in-out infinite alternate",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                        <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#ec4899", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 6, color: "#fff", fontWeight: 700 }}>H</div>
-                        <span style={{ fontSize: 7, fontWeight: 600, color: "#fff" }}>Harsha</span>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "center", background: "#fff", padding: 3, borderRadius: 4 }}>
-                        <MiniQR size={26} fg="#081321" />
-                      </div>
-                    </div>
-
-                    {/* Floating Verification Notification */}
-                    <div style={{
-                      position: "absolute",
-                      left: 15,
-                      top: 30,
-                      background: "rgba(10,35,30,0.9)",
-                      border: "1px solid rgba(16,185,129,0.3)",
-                      borderRadius: 8,
-                      padding: "6px 10px",
-                      zIndex: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
-                      animation: "rx-float-verify 7s ease-in-out infinite alternate",
-                    }}>
-                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
-                      <span style={{ fontSize: 8, fontWeight: 700, color: "#e2e8f0" }}>Delegate Approved</span>
-                    </div>
+                    {/* Ecosystem Image Mockup */}
+                    <img 
+                      src="/assets/images/regxperts-ecosystem.png" 
+                      alt="RegXperts Ecosystem" 
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        zIndex: 1,
+                        position: "relative",
+                        borderRadius: 14,
+                        boxShadow: "0 20px 40px rgba(0,0,0,0.5)",
+                        animation: "rx-float-bento 6s ease-in-out infinite",
+                      }}
+                    />
                   </div>
                 </div>
               </Reveal>
