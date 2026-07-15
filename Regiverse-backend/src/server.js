@@ -8,6 +8,7 @@ import { Server } from "socket.io";
 import { initSocket } from "./socket.js";
 import connectDB from "./config/db.js";
 
+import fs from "fs";
 import participantRoutes from "./routes/participants.js";
 import conferenceRoutes from "./routes/conferenceRoutes.js";
 import bulkEmailRoutes from "./routes/bulkEmailRoutes.js";
@@ -15,6 +16,7 @@ import bulkWhatsappRoutes from "./routes/bulkWhatsappRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import badgeTemplateRoutes from "./routes/badgeTemplateRoutes.js";
+import posterRoutes from "./routes/posterRoutes.js";
 
 dotenv.config({ path: path.resolve("./.env") });
 dns.setDefaultResultOrder("ipv4first");
@@ -79,6 +81,20 @@ app.use("/api/bulk-whatsapp", bulkWhatsappRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/badge-templates", badgeTemplateRoutes);
+app.use("/api/posters", posterRoutes);
+
+// Ensure directories exist on startup
+try {
+  const dirs = ["./uploads", "./uploads/posters", "./uploads/thumbnails"];
+  dirs.forEach(d => {
+    const p = path.resolve(d);
+    if (!fs.existsSync(p)) {
+      fs.mkdirSync(p, { recursive: true });
+    }
+  });
+} catch (e) {
+  console.error("Failed to create upload directories:", e.message);
+}
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });

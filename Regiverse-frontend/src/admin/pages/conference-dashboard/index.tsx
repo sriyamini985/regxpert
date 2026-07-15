@@ -10,6 +10,7 @@ const modules = [
   { title: "Bulk Email", route: "bulk-email", desc: "SMTP-powered mass communication engine.", icon: "✉️", color: "bg-purple-500" },
   { title: "Bulk WhatsApp", route: "bulk-whatsapp", desc: "Direct API integration for mobile notifications.", icon: "💬", color: "bg-green-500" },
   { title: "Badge Designer", route: "badge-templates", desc: "Drag & drop visual badge template mapping engine.", icon: "🏷️", color: "bg-indigo-600" },
+  { title: "Poster Manager", route: "posters", desc: "Scientific presentations uploader and media portal.", icon: "📑", color: "bg-blue-600" },
 ];
 
 const ConferenceDashboard = () => {
