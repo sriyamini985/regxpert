@@ -50,6 +50,7 @@ export default function PosterManagement() {
 
   // Tabbed Bulk Upload States
   const [bulkTab, setBulkTab] = useState<"excel" | "csv">("excel");
+  const [excelFile, setExcelFile] = useState<File | null>(null);
   const [parsedExcelRows, setParsedExcelRows] = useState<any[]>([]);
   const [selectedJpegs, setSelectedJpegs] = useState<File[]>([]);
   const [matchedPosters, setMatchedPosters] = useState<any[]>([]);
@@ -236,6 +237,7 @@ export default function PosterManagement() {
     setSubmitting(false);
     setUploadProgress(null);
     setIsBulkModalOpen(false);
+    setExcelFile(null);
     setParsedExcelRows([]);
     setSelectedJpegs([]);
     setMatchedPosters([]);
@@ -811,6 +813,7 @@ export default function PosterManagement() {
                 <button
                   onClick={() => {
                     setIsBulkModalOpen(false);
+                    setExcelFile(null);
                     setParsedExcelRows([]);
                     setSelectedJpegs([]);
                     setMatchedPosters([]);
@@ -980,6 +983,7 @@ export default function PosterManagement() {
                           type="button"
                           onClick={() => {
                             setIsBulkModalOpen(false);
+                            setExcelFile(null);
                             setParsedExcelRows([]);
                             setSelectedJpegs([]);
                             setMatchedPosters([]);
