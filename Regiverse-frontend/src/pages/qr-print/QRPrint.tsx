@@ -51,6 +51,7 @@ interface RootPayload {
   operatorEmail?: string;
   nextBadgePayload?: any;
   photoFit?: string;
+  conferenceSlug?: string;
 }
 
 const getCategoryColor = (category: string) => {
@@ -185,7 +186,30 @@ const getParticipantPhoto = (p: any): string => {
 
   // Convert to string and trim
   let srcUrl = String(rawPhoto).trim();
-  if (!srcUrl) return "";
+  const lowerUrl = srcUrl.toLowerCase();
+  if (
+    !srcUrl ||
+    lowerUrl === "n/a" ||
+    lowerUrl === "na" ||
+    lowerUrl === "-" ||
+    lowerUrl === "null" ||
+    lowerUrl === "undefined" ||
+    lowerUrl === "no image" ||
+    lowerUrl === "no-image" ||
+    lowerUrl === "no photo" ||
+    lowerUrl === "no-photo" ||
+    lowerUrl === "no" ||
+    lowerUrl === "none"
+  ) {
+    return "";
+  }
+
+  // Convert Google Drive preview/sharing links to direct download links
+  const driveRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)|docs\.google\.com\/(?:file\/d\/|open\?id=))([a-zA-Z0-9_-]{25,})/;
+  const match = srcUrl.match(driveRegex);
+  if (match && match[1]) {
+    srcUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
+  }
 
   // If it's already a full URL, return it
   if (srcUrl.startsWith("http://") || srcUrl.startsWith("https://") || srcUrl.startsWith("data:image")) {
@@ -255,6 +279,81 @@ const QRPrint = () => {
   })();
 
   const [activePayload, setActivePayload] = useState<RootPayload | null>(initialPayload);
+  const [templates, setTemplates] = useState<any[]>([]);
+
+  useEffect(() => {
+    const slug = activePayload?.conferenceSlug;
+    if (!slug) return;
+    
+    fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5001"}/api/badge-templates/conference/${slug}`)
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error("Failed to load templates");
+      })
+      .then(data => {
+        setTemplates(data);
+        // Convert template background images to base64 for reliable printing
+        if (Array.isArray(data) && data.length > 0) {
+          setTemplatesConverting(true);
+          const newMap: {[url: string]: string} = {};
+          const promises = data
+            .filter((t: any) => t.backgroundImage)
+            .map(async (t: any) => {
+              const imgUrl = t.backgroundImage.startsWith("http") ? t.backgroundImage : `${import.meta.env.VITE_API_URL || "http://localhost:5001"}/${t.backgroundImage}`;
+              try {
+                const response = await fetch(imgUrl);
+                if (response.ok) {
+                  const blob = await response.blob();
+                  const b64 = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                  });
+                  newMap[t.backgroundImage] = b64;
+                }
+              } catch (e) {
+                console.warn("Could not preload template background:", imgUrl, e);
+              }
+            });
+          Promise.all(promises).then(() => {
+            setBase64Templates(newMap);
+            setTemplatesConverting(false);
+          });
+        }
+      })
+      .catch(err => console.error(err));
+  }, [activePayload]);
+
+  const getTemplateForBadge = (badge: any) => {
+    const categoryName = (badge.category || badge.destination || "").trim().toLowerCase();
+    
+    // Find matching template (case insensitive)
+    const match = templates.find(t => t.category?.trim().toLowerCase() === categoryName && t.category?.trim().toLowerCase() !== "default");
+    if (match) return { template: match, isDefaultFallback: false };
+
+    // Fallback to default template
+    const defaultTemplate = templates.find(t => t.isDefault || t.category?.trim().toLowerCase() === "default");
+    if (defaultTemplate) {
+      return { template: defaultTemplate, isDefaultFallback: true };
+    }
+
+    return null;
+  };
+
+  const getPreviewFieldValue = (badge: any, type: string, label: string) => {
+    switch (type) {
+      case "name": return badge.name || "PARTICIPANT NAME";
+      case "regId": return badge.regId || badge.participantId || badge._id;
+      case "category": return badge.category || badge.destination || "DELEGATE";
+      case "city": return badge.state || badge.city || badge.dynamicData?.City || "";
+      case "state": return badge.state || "";
+      case "organization": return badge.dynamicData?.Organization || "HOSPITAL / ORG";
+      case "designation": return badge.dynamicData?.Designation || "DESIGNATION";
+      case "customText": return label;
+      default: return label;
+    }
+  };
   const [badgeSize, setBadgeSize] = useState<string>(() => {
     const localVal = localStorage.getItem("regxpert_badge_size");
     if (localVal) return localVal;
@@ -283,6 +382,24 @@ const QRPrint = () => {
       : (activePayload?.badges && (activePayload.badges as any)[0]?.topSpacing !== undefined) 
         ? (activePayload.badges as any)[0].topSpacing 
         : 20;
+  });
+
+  const [regIdFontSize, setRegIdFontSize] = useState<number>(() => {
+    const saved = localStorage.getItem(`regxpert_regid_font_size_${badgeSize}`);
+    if (saved) return Number(saved);
+    return parseInt(BADGE_SIZES[badgeSize]?.fontSizeRegId || "7");
+  });
+
+  const [cityFontSize, setCityFontSize] = useState<number>(() => {
+    const saved = localStorage.getItem(`regxpert_city_font_size_${badgeSize}`);
+    if (saved) return Number(saved);
+    return parseFloat(BADGE_SIZES[badgeSize]?.fontSizeOrg || "7.5");
+  });
+
+  const [imgWidth, setImgWidth] = useState<number>(() => {
+    const saved = localStorage.getItem(`regxpert_img_width_${badgeSize}`);
+    if (saved) return Number(saved);
+    return BADGE_SIZES[badgeSize]?.photoWidthMm || 20;
   });
 
   const [photoFit, setPhotoFit] = useState<string>(() => {
@@ -315,6 +432,8 @@ const QRPrint = () => {
     const saved = localStorage.getItem("regxpert_print_city");
     return saved !== null ? JSON.parse(saved) : (activePayload?.printCity ?? true);
   });
+
+  const [failedImageUrls, setFailedImageUrls] = useState<string[]>([]);
 
   useEffect(() => {
     localStorage.setItem("regxpert_badge_size", badgeSize);
@@ -372,12 +491,50 @@ const QRPrint = () => {
     }
   }, [qrCodeSize, badgeSize]);
 
+  useEffect(() => {
+    const saved = localStorage.getItem(`regxpert_regid_font_size_${badgeSize}`);
+    const defaultFS = parseInt(BADGE_SIZES[badgeSize]?.fontSizeRegId || "7");
+    setRegIdFontSize(saved ? Number(saved) : defaultFS);
+  }, [badgeSize]);
+
+  useEffect(() => {
+    if (regIdFontSize > 0) {
+      localStorage.setItem(`regxpert_regid_font_size_${badgeSize}`, String(regIdFontSize));
+    }
+  }, [regIdFontSize, badgeSize]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`regxpert_city_font_size_${badgeSize}`);
+    const defaultFS = parseFloat(BADGE_SIZES[badgeSize]?.fontSizeOrg || "7.5");
+    setCityFontSize(saved ? Number(saved) : defaultFS);
+  }, [badgeSize]);
+
+  useEffect(() => {
+    if (cityFontSize > 0) {
+      localStorage.setItem(`regxpert_city_font_size_${badgeSize}`, String(cityFontSize));
+    }
+  }, [cityFontSize, badgeSize]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`regxpert_img_width_${badgeSize}`);
+    const defaultFS = BADGE_SIZES[badgeSize]?.photoWidthMm || 20;
+    setImgWidth(saved ? Number(saved) : defaultFS);
+  }, [badgeSize]);
+
+  useEffect(() => {
+    if (imgWidth > 0) {
+      localStorage.setItem(`regxpert_img_width_${badgeSize}`, String(imgWidth));
+    }
+  }, [imgWidth, badgeSize]);
+
   const [isPrinted, setIsPrinted] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [converting, setConverting] = useState(true);
   const [pdfProgress, setPdfProgress] = useState<number | null>(null);
   const [base64Photos, setBase64Photos] = useState<{[url: string]: string}>({});
+  const [base64Templates, setBase64Templates] = useState<{[url: string]: string}>({});
+  const [templatesConverting, setTemplatesConverting] = useState(false);
   const [photoStats, setPhotoStats] = useState<{
     total: number;
     loaded: number;
@@ -600,6 +757,7 @@ const QRPrint = () => {
   useEffect(() => {
     if (badges.length === 0) return;
     if (converting) return; // Wait for base64 conversion!
+    if (templatesConverting) return; // Wait for template background conversion!
     if (imagesLoaded) return;
 
     const triggerPrint = () => {
@@ -651,7 +809,7 @@ const QRPrint = () => {
     });
 
     return () => clearTimeout(fallbackTimer);
-  }, [activePayload, imagesLoaded, converting]);
+  }, [activePayload, imagesLoaded, converting, templatesConverting]);
 
   // 3. Listen to print finish events to trigger success overlay options
   useEffect(() => {
@@ -740,36 +898,38 @@ const QRPrint = () => {
 
         const container = badgeContainers[i] as HTMLElement;
 
-        // Clone the container to apply clean print styles without borders/shadows
-        const clone = container.cloneNode(true) as HTMLElement;
-        clone.style.margin = "0";
-        clone.style.borderRadius = "0";
-        clone.style.border = "none";
-        clone.style.boxShadow = "none";
-        clone.style.position = "absolute";
-        clone.style.top = "0";
-        clone.style.left = "0";
-        clone.style.zIndex = "-9999";
-        clone.style.opacity = "0.01";
-        clone.style.pointerEvents = "none";
-        clone.style.width = `${dim.widthMm}mm`;
-        clone.style.height = `${dim.heightMm}mm`;
-        document.body.appendChild(clone);
+        // Save original styles
+        const originalShadow = container.style.boxShadow;
+        const originalBorder = container.style.border;
+        const originalBorderRadius = container.style.borderRadius;
+        const originalMargin = container.style.margin;
+        const originalTransform = container.style.transform;
 
-        // Capture this single badge container to canvas
-        const canvas = await (window as any).html2canvas(clone, {
+        // Apply clean print styles temporarily
+        container.style.boxShadow = "none";
+        container.style.border = "none";
+        container.style.borderRadius = "0";
+        container.style.margin = "0";
+        container.style.transform = "none";
+
+        // Capture this single badge container to canvas directly
+        const canvas = await (window as any).html2canvas(container, {
           scale: 2,
           useCORS: true,
           allowTaint: false,
           backgroundColor: "#ffffff",
           logging: false,
-          imageTimeout: 100
+          imageTimeout: 15000
         });
 
-        // Remove the clone from DOM
-        document.body.removeChild(clone);
+        // Restore original styles
+        container.style.boxShadow = originalShadow;
+        container.style.border = originalBorder;
+        container.style.borderRadius = originalBorderRadius;
+        container.style.margin = originalMargin;
+        container.style.transform = originalTransform;
 
-        const imgData = canvas.toDataURL("image/png");
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
         // Add image to PDF page
         if (i > 0) {
@@ -779,7 +939,7 @@ const QRPrint = () => {
         // Add image starting at top-left corner (0,0) fitting the exact dimensions
         pdf.addImage(
           imgData,
-          "PNG",
+          "JPEG",
           0,
           0,
           badgeSize === "A5" ? 148 : badgeSize === "A6" ? 105 : dim.widthMm,
@@ -843,6 +1003,10 @@ const QRPrint = () => {
             position: relative;
           }
 
+          .badge-print-page {
+            display: contents;
+          }
+
           @media print {
             .no-print { display: none !important; }
             
@@ -885,10 +1049,28 @@ const QRPrint = () => {
               margin: 0 !important; 
             }
 
-            .badge-container {
-              position: relative !important;
+            .badge-print-page {
+              display: block !important;
+              page-break-after: always !important;
+              break-after: page !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
               width: ${BADGE_SIZES[badgeSize]?.widthMm || 54}mm !important;
               height: ${BADGE_SIZES[badgeSize]?.heightMm || 86}mm !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: visible !important;
+            }
+
+            .badge-print-page:last-child {
+              page-break-after: avoid !important;
+              break-after: avoid !important;
+            }
+
+            .badge-container {
+              position: relative !important;
+              width: 100% !important;
+              height: 100% !important;
               margin: 0 !important;
               padding-top: ${topSpacing}mm !important;
               padding-left: 0 !important;
@@ -898,17 +1080,13 @@ const QRPrint = () => {
               border: none !important;
               box-shadow: none !important;
               border-radius: 0 !important;
-              page-break-after: always !important;
-              page-break-inside: avoid !important;
               display: flex !important;
               flex-direction: column !important;
               justify-content: flex-start !important;
               align-items: center !important;
               background: white !important;
               gap: ${BADGE_SIZES[badgeSize]?.gap || "1.5mm"} !important;
-            }
-            .badge-container:last-child {
-              page-break-after: avoid !important;
+              overflow: hidden !important;
             }
           }
         `}
@@ -936,28 +1114,27 @@ const QRPrint = () => {
             <div className="bg-slate-800/50 border border-slate-800/80 rounded-2xl p-5 mb-6">
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3.5">Attendee Profile</h3>
               <div className="space-y-3.5">
-                <div>
-                  <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider">Full Name</span>
-                  <span className="text-sm font-bold text-white truncate block">{primaryBadge.name || "Unknown"}</span>
-                </div>
-                
                 <div className="grid grid-cols-2 gap-3.5">
+                  <div>
+                    <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider">Full Name</span>
+                    <span className="text-sm font-bold text-white truncate block">{primaryBadge.name || "Unknown"}</span>
+                  </div>
                   <div>
                     <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider">Reg ID</span>
                     <span className="text-xs font-mono font-bold text-blue-400 block">{primaryBadge.regId || "N/A"}</span>
                   </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3.5">
                   <div>
                     <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider">Category</span>
                     <span className="text-xs font-bold text-white truncate block">{primaryCategory || "Delegate"}</span>
                   </div>
-                </div>
-
-                {primaryBadge.state && (
                   <div>
                     <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider">Location / City</span>
-                    <span className="text-xs text-white block truncate">{primaryBadge.state}</span>
+                    <span className="text-xs text-white block truncate">{primaryBadge.state || "N/A"}</span>
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
@@ -1060,6 +1237,51 @@ const QRPrint = () => {
                   max="100"
                   value={qrCodeSize}
                   onChange={(e) => setQrCodeSize(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reg ID Font Size</label>
+                  <span className="text-xs font-bold text-blue-400 font-mono">{regIdFontSize}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="4"
+                  max="35"
+                  value={regIdFontSize}
+                  onChange={(e) => setRegIdFontSize(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">City Font Size</label>
+                  <span className="text-xs font-bold text-blue-400 font-mono">{cityFontSize}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="4"
+                  max="35"
+                  value={cityFontSize}
+                  onChange={(e) => setCityFontSize(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Photo Size (Img)</label>
+                  <span className="text-xs font-bold text-blue-400 font-mono">{imgWidth}mm</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="120"
+                  value={imgWidth}
+                  onChange={(e) => setImgWidth(Number(e.target.value))}
                   className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
                 />
               </div>
@@ -1178,8 +1400,47 @@ const QRPrint = () => {
               const badgeColor = getCategoryColor(badgeDestination);
               const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
 
+              const templateResult = getTemplateForBadge(badge);
+
+              const template = templateResult?.template;
+              const bgImageUrl = template?.backgroundImage;
+              const bgImageSrc = bgImageUrl
+                ? (base64Templates[bgImageUrl] || (bgImageUrl.startsWith("http") ? bgImageUrl : `${API_URL}/${bgImageUrl}`))
+                : null;
+
               return (
-                <div key={index} className="badge-container">
+                <div key={index} className="badge-print-page">
+                  <div 
+                    className="badge-container"
+                  style={{
+                    position: "relative",
+                    overflow: "hidden",
+                    width: template ? `${template.canvasWidthMm}mm` : undefined,
+                    height: template ? `${template.canvasHeightMm}mm` : undefined,
+                    border: template ? "none" : undefined,
+                    boxShadow: template ? "none" : undefined,
+                    borderRadius: template ? "0" : undefined
+                  }}
+                >
+                  {bgImageSrc && (
+                    <img
+                      src={bgImageSrc}
+                      alt=""
+                      aria-hidden="true"
+                      crossOrigin={bgImageSrc.startsWith("data:") ? undefined : "anonymous"}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "fill",
+                        zIndex: 0,
+                        display: "block",
+                        imageRendering: "high-quality"
+                      }}
+                    />
+                  )}
                   
                   {/* B. Middle Section: Attendee Profile */}
                   <div style={{
@@ -1195,46 +1456,30 @@ const QRPrint = () => {
                     gap: `calc(${dim.gap} * 0.6)`
                   }}>
                     {/* 1. Portrait Photo Frame with viewfinder corners */}
-                    {showPhoto && (
+                    {showPhoto && photoUrl && !failedImageUrls.includes(photoUrl) && (
                       <div style={{
-                        position: "relative",
-                        width: `${dim.photoWidthMm}mm`,
-                        height: `${dim.photoHeightMm}mm`,
-                        background: "#f8fafc",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "4px",
+                        width: `${imgWidth}mm`,
+                        height: `${Math.round(imgWidth * (dim.photoHeightMm / dim.photoWidthMm))}mm`,
+                        border: "1px solid #7f7f7f",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        overflow: "hidden",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-                        padding: "1.5px"
+                        overflow: "hidden"
                       }}>
-                        {/* Viewfinder Corner Accents */}
-                        <div style={{ position: "absolute", top: 0, left: 0, width: "5px", height: "5px", borderTop: `1.5px solid ${badgeColor}`, borderLeft: `1.5px solid ${badgeColor}` }} />
-                        <div style={{ position: "absolute", top: 0, right: 0, width: "5px", height: "5px", borderTop: `1.5px solid ${badgeColor}`, borderRight: `1.5px solid ${badgeColor}` }} />
-                        <div style={{ position: "absolute", bottom: 0, left: 0, width: "5px", height: "5px", borderBottom: `1.5px solid ${badgeColor}`, borderLeft: `1.5px solid ${badgeColor}` }} />
-                        <div style={{ position: "absolute", bottom: 0, right: 0, width: "5px", height: "5px", borderBottom: `1.5px solid ${badgeColor}`, borderRight: `1.5px solid ${badgeColor}` }} />
-
-                        {photoUrl ? (
-                          <img 
-                            src={getBadgePhotoUrl(photoUrl, base64Photos)} 
-                            alt="Participant" 
-                            crossOrigin={getBadgePhotoUrl(photoUrl, base64Photos).startsWith("data:") ? undefined : "anonymous"}
-                            style={{ 
-                              width: "100%", 
-                              height: "100%", 
-                              objectFit: photoFit === "contain" ? "contain" : "cover", 
-                              objectPosition: photoFit === "contain" ? "center" : "top", 
-                              borderRadius: "2px",
-                              backgroundColor: photoFit === "contain" ? "#f8fafc" : "transparent"
-                            }} 
-                          />
-                        ) : (
-                          <svg style={{ width: "9mm", height: "9mm", color: "#cbd5e1" }} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
-                          </svg>
-                        )}
+                        <img 
+                          src={getBadgePhotoUrl(photoUrl, base64Photos)} 
+                          alt="Participant" 
+                          onError={() => setFailedImageUrls(prev => [...prev, photoUrl])}
+                          crossOrigin={getBadgePhotoUrl(photoUrl, base64Photos).startsWith("data:") ? undefined : "anonymous"}
+                          style={{ 
+                            width: "100%", 
+                            height: "100%", 
+                            objectFit: photoFit === "contain" ? "contain" : "cover", 
+                            objectPosition: photoFit === "contain" ? "center" : "top", 
+                            borderRadius: "2px",
+                            backgroundColor: photoFit === "contain" ? "#f8fafc" : "transparent"
+                          }} 
+                        />
                       </div>
                     )}
 
@@ -1245,7 +1490,8 @@ const QRPrint = () => {
                         fontWeight: 800, 
                         color: "#0f172a", 
                         margin: 0, 
-                        lineHeight: 1.15,
+                        lineHeight: 1.3,
+                        paddingBottom: "4px",
                         textTransform: "uppercase",
                         textAlign: "center",
                         width: "100%",
@@ -1282,7 +1528,7 @@ const QRPrint = () => {
                     {/* 4. City / Location Details */}
                     {showCity && badgeState && (
                       <p style={{
-                        fontSize: dim.fontSizeOrg,
+                        fontSize: `${cityFontSize}px`,
                         fontWeight: 600,
                         color: "#64748b",
                         margin: 0,
@@ -1303,7 +1549,7 @@ const QRPrint = () => {
                     zIndex: 1,
                     width: "80%",
                     height: "1px",
-                    background: "linear-gradient(to right, transparent, #e2e8f0, transparent)",
+                    backgroundColor: "#e2e8f0",
                     margin: "0.5mm 0"
                   }} />
 
@@ -1349,41 +1595,28 @@ const QRPrint = () => {
                           justifyContent: "center"
                         }}>
                           <p style={{ 
-                            fontSize: dim.fontSizeRegId, 
-                            fontWeight: 700, 
-                            color: "#475569", 
+                            fontSize: `${regIdFontSize}px`, 
+                            fontWeight: 800, 
+                            color: "#000000", 
                             margin: 0,
                             letterSpacing: "0.2px",
                             fontFamily: "system-ui, -apple-system, sans-serif"
                           }}>
-                            <span style={{ color: "#0f172a", fontWeight: 800 }}>{badgeRegId}</span>
+                            {(() => {
+                              const cleanId = (badgeRegId || "").replace(/^(reg\s*id|regid|id)\s*[-\s:]*/i, "");
+                              const cat = String(badgeDestination || "").toLowerCase();
+                              const isIndustryPartner = cat.includes("industry partner") || cat.includes("industry-partner") || cat.includes("exhibitor") || cat.includes("sponsor");
+                              return isIndustryPartner ? <span>{cleanId}</span> : <span>ID : {cleanId}</span>;
+                            })()}
                           </p>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* D. Category Ribbon - Colored Solid Band at the Bottom */}
-                  {badgeDestination && (
-                    <div style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      width: "100%",
-                      background: badgeColor,
-                      color: "#ffffff",
-                      fontWeight: 900,
-                      fontSize: dim.fontSizeOrg,
-                      padding: "1.5mm 0",
-                      textTransform: "uppercase",
-                      textAlign: "center",
-                      letterSpacing: "1px",
-                      zIndex: 10
-                    }}>
-                      {badgeDestination}
-                    </div>
-                  )}
 
+
+                  </div>
                 </div>
               );
             })}

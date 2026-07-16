@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
 import { useAuth } from "../../../contexts/AuthContext";
 import LoadingBar from "../../../components/ui/LoadingBar";
-import { ArrowLeft, Check, Search } from "lucide-react";
+import { ArrowLeft, Check, Search, AlertTriangle, Filter, Camera } from "lucide-react";
 import { API_URL } from "../../../config/api";
 
 const API = API_URL;
@@ -213,7 +213,30 @@ const getParticipantPhoto = (p: any): string => {
 
   // Convert to string and trim
   let srcUrl = String(rawPhoto).trim();
-  if (!srcUrl) return "";
+  const lowerUrl = srcUrl.toLowerCase();
+  if (
+    !srcUrl ||
+    lowerUrl === "n/a" ||
+    lowerUrl === "na" ||
+    lowerUrl === "-" ||
+    lowerUrl === "null" ||
+    lowerUrl === "undefined" ||
+    lowerUrl === "no image" ||
+    lowerUrl === "no-image" ||
+    lowerUrl === "no photo" ||
+    lowerUrl === "no-photo" ||
+    lowerUrl === "no" ||
+    lowerUrl === "none"
+  ) {
+    return "";
+  }
+
+  // Convert Google Drive preview/sharing links to direct download links
+  const driveRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)|docs\.google\.com\/(?:file\/d\/|open\?id=))([a-zA-Z0-9_-]{25,})/;
+  const match = srcUrl.match(driveRegex);
+  if (match && match[1]) {
+    srcUrl = `https://lh3.googleusercontent.com/d/${match[1]}`;
+  }
 
   // If it's already a full URL, return it
   if (srcUrl.startsWith("http://") || srcUrl.startsWith("https://") || srcUrl.startsWith("data:image")) {
@@ -238,8 +261,11 @@ const BadgePrint = () => {
 
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [photoFilter, setPhotoFilter] = useState<"all" | "with" | "without">("all");
   const [fetching, setFetching] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
 
   // Mobile Tabs and Zoom support states
   const [activeTab, setActiveTab] = useState<"roster" | "options" | "preview">("roster");
@@ -266,6 +292,7 @@ const BadgePrint = () => {
   // Selection state
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [imageError, setImageError] = useState(false);
 
   // Editable badge fields
   const [editName, setEditName] = useState("");
@@ -341,6 +368,37 @@ const BadgePrint = () => {
     loadParticipants();
   }, [conferenceSlug]);
 
+  const getTemplateForParticipant = (p: Participant | null) => {
+    if (!p) return null;
+    const pCategory = p.category?.trim().toLowerCase();
+    
+    // Find matching template (case insensitive)
+    const match = templates.find(t => t.category?.trim().toLowerCase() === pCategory && t.category?.trim().toLowerCase() !== "default");
+    if (match) return { template: match, isDefaultFallback: false };
+
+    // Fallback to default template
+    const defaultTemplate = templates.find(t => t.isDefault || t.category?.trim().toLowerCase() === "default");
+    if (defaultTemplate) {
+      return { template: defaultTemplate, isDefaultFallback: true };
+    }
+
+    return null;
+  };
+
+  const getPreviewFieldValue = (p: Participant, type: string, label: string) => {
+    switch (type) {
+      case "name": return p.name || "PARTICIPANT NAME";
+      case "regId": return p.regId || p._id;
+      case "category": return p.category || "DELEGATE";
+      case "city": return p.state || p.dynamicData?.City || "";
+      case "state": return p.state || "";
+      case "organization": return p.dynamicData?.Organization || "HOSPITAL / ORG";
+      case "designation": return p.dynamicData?.Designation || "DESIGNATION";
+      case "customText": return label;
+      default: return label;
+    }
+  };
+
   const loadParticipants = async () => {
     if (!conferenceSlug) return;
     try {
@@ -349,6 +407,13 @@ const BadgePrint = () => {
       const data = await res.json();
       setParticipants(Array.isArray(data) ? data : []);
       setSelectedIds([]);
+
+      // Load Templates
+      const tRes = await fetch(`${API}/api/badge-templates/conference/${conferenceSlug}`);
+      if (tRes.ok) {
+        const tData = await tRes.json();
+        setTemplates(tData);
+      }
     } catch (err) {
       console.error("Failed to load participants", err);
     } finally {
@@ -408,11 +473,13 @@ const BadgePrint = () => {
           [pId]: defaults
         }));
       }
+      setImageError(false);
     } else {
       setEditName("");
       setEditDestination("");
       setEditState("");
       setSelectedCheckpoints([]);
+      setImageError(false);
     }
   }, [selectedParticipant]);
 
@@ -451,15 +518,35 @@ const BadgePrint = () => {
     setSelectedIds(notPrinted);
   };
 
+  // Extract unique categories from participants roster
+  const categories = useMemo(() => {
+    const cats = participants.map((p) => p.category?.trim()).filter(Boolean);
+    return Array.from(new Set(cats));
+  }, [participants]);
+
   // Filter list (optimized with useMemo to prevent lag)
   const filtered = useMemo(() => {
+    let result = participants;
+    
+    // 1. Filter by category
+    if (selectedCategory) {
+      result = result.filter(p => p.category?.trim() === selectedCategory);
+    }
+    
+    // 2. Filter by photo status
+    if (photoFilter === "with") {
+      result = result.filter(p => !!getParticipantPhoto(p));
+    } else if (photoFilter === "without") {
+      result = result.filter(p => !getParticipantPhoto(p));
+    }
+    
     const term = searchTerm.toLowerCase().trim();
-    if (!term) return participants;
-    return participants.filter((p) =>
+    if (!term) return result;
+    return result.filter((p) =>
       (p.name && p.name.toLowerCase().includes(term)) ||
       (p.regId && p.regId.toLowerCase().includes(term))
     );
-  }, [participants, searchTerm]);
+  }, [participants, searchTerm, selectedCategory, photoFilter]);
 
   // Individual Print Action
   const handlePrintBadge = async () => {
@@ -572,7 +659,9 @@ const BadgePrint = () => {
         nextBadgePayload: nextBadgePayload,
         avatar: selectedParticipant.avatar || "",
         avatarUrl: selectedParticipant.avatarUrl || "",
-        photo: selectedParticipant.photo || ""
+        photo: selectedParticipant.photo || "",
+        category: selectedParticipant.category || "",
+        conferenceSlug: conferenceSlug
       };
 
       sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
@@ -653,7 +742,8 @@ const BadgePrint = () => {
           photoFit: photoFit,
           avatar: p.avatar || "",
           avatarUrl: p.avatarUrl || "",
-          photo: p.photo || ""
+          photo: p.photo || "",
+          category: p.category || ""
         };
       });
 
@@ -662,7 +752,8 @@ const BadgePrint = () => {
         backUrl: `/u/${conferenceSlug}/badge-print`,
         badgeSize: badgeSize,
         topSpacing: topSpacing,
-        photoFit: photoFit
+        photoFit: photoFit,
+        conferenceSlug: conferenceSlug
       };
 
       sessionStorage.setItem("print_badge_data", JSON.stringify(payload));
@@ -697,37 +788,45 @@ const BadgePrint = () => {
       const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
       const formatVal = badgeSize === "A5" ? "a5" : badgeSize === "A6" ? "a6" : [dim.widthMm, dim.heightMm];
 
-      // Clone card for clean render
-      const clone = element.cloneNode(true) as HTMLElement;
-      clone.style.borderRadius = "0";
-      clone.style.border = "none";
-      clone.style.boxShadow = "none";
-      clone.style.position = "absolute";
-      clone.style.top = "0";
-      clone.style.left = "0";
-      clone.style.zIndex = "-9999";
-      clone.style.opacity = "0.01";
-      clone.style.pointerEvents = "none";
-      clone.style.width = `${dim.widthMm}mm`;
-      clone.style.height = `${dim.heightMm}mm`;
-      clone.style.transform = "none"; // Clear zoom transform!
-      clone.style.paddingTop = `${topSpacing}mm`;
-      clone.style.paddingLeft = "0";
-      clone.style.paddingRight = "0";
-      clone.style.paddingBottom = "0";
-      document.body.appendChild(clone);
+      // Save original styles
+      const originalBorderRadius = element.style.borderRadius;
+      const originalBorder = element.style.border;
+      const originalBoxShadow = element.style.boxShadow;
+      const originalTransform = element.style.transform;
+      const originalPaddingTop = element.style.paddingTop;
+      const originalPaddingLeft = element.style.paddingLeft;
+      const originalPaddingRight = element.style.paddingRight;
+      const originalPaddingBottom = element.style.paddingBottom;
 
-      const canvas = await html2canvasFn(clone, {
+      // Apply print styles temporarily
+      element.style.borderRadius = "0";
+      element.style.border = "none";
+      element.style.boxShadow = "none";
+      element.style.transform = "none";
+      element.style.paddingTop = `${topSpacing}mm`;
+      element.style.paddingLeft = "0";
+      element.style.paddingRight = "0";
+      element.style.paddingBottom = "0";
+
+      const canvas = await html2canvasFn(element, {
         scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: "#ffffff",
-        imageTimeout: 100
+        imageTimeout: 15000
       });
 
-      document.body.removeChild(clone);
+      // Restore original styles
+      element.style.borderRadius = originalBorderRadius;
+      element.style.border = originalBorder;
+      element.style.boxShadow = originalBoxShadow;
+      element.style.transform = originalTransform;
+      element.style.paddingTop = originalPaddingTop;
+      element.style.paddingLeft = originalPaddingLeft;
+      element.style.paddingRight = originalPaddingRight;
+      element.style.paddingBottom = originalPaddingBottom;
 
-      const imgData = canvas.toDataURL("image/png");
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
       const pdf = new jsPDFClass({
         unit: "mm",
@@ -737,7 +836,7 @@ const BadgePrint = () => {
 
       pdf.addImage(
         imgData,
-        "PNG",
+        "JPEG",
         0,
         0,
         badgeSize === "A5" ? 148 : badgeSize === "A6" ? 105 : dim.widthMm,
@@ -774,31 +873,43 @@ const BadgePrint = () => {
       const dim = BADGE_SIZES[badgeSize] || BADGE_SIZES.standard;
       const formatVal = badgeSize === "A5" ? "a5" : badgeSize === "A6" ? "a6" : [dim.widthMm, dim.heightMm];
 
-      const clone = element.cloneNode(true) as HTMLElement;
-      clone.style.borderRadius = "0";
-      clone.style.border = "none";
-      clone.style.boxShadow = "none";
-      clone.style.position = "fixed";
-      clone.style.top = "-9999px";
-      clone.style.left = "-9999px";
-      clone.style.width = `${dim.widthMm}mm`;
-      clone.style.height = `${dim.heightMm}mm`;
-      clone.style.transform = "none";
-      clone.style.paddingTop = `${topSpacing}mm`;
-      clone.style.paddingLeft = "0";
-      clone.style.paddingRight = "0";
-      clone.style.paddingBottom = "0";
-      document.body.appendChild(clone);
+      // Save original styles
+      const originalBorderRadius = element.style.borderRadius;
+      const originalBorder = element.style.border;
+      const originalBoxShadow = element.style.boxShadow;
+      const originalTransform = element.style.transform;
+      const originalPaddingTop = element.style.paddingTop;
+      const originalPaddingLeft = element.style.paddingLeft;
+      const originalPaddingRight = element.style.paddingRight;
+      const originalPaddingBottom = element.style.paddingBottom;
 
-      const canvas = await html2canvasFn(clone, {
+      // Apply print styles temporarily
+      element.style.borderRadius = "0";
+      element.style.border = "none";
+      element.style.boxShadow = "none";
+      element.style.transform = "none";
+      element.style.paddingTop = `${topSpacing}mm`;
+      element.style.paddingLeft = "0";
+      element.style.paddingRight = "0";
+      element.style.paddingBottom = "0";
+
+      const canvas = await html2canvasFn(element, {
         scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: null,
-        imageTimeout: 100
+        imageTimeout: 15000
       });
 
-      document.body.removeChild(clone);
+      // Restore original styles
+      element.style.borderRadius = originalBorderRadius;
+      element.style.border = originalBorder;
+      element.style.boxShadow = originalBoxShadow;
+      element.style.transform = originalTransform;
+      element.style.paddingTop = originalPaddingTop;
+      element.style.paddingLeft = originalPaddingLeft;
+      element.style.paddingRight = originalPaddingRight;
+      element.style.paddingBottom = originalPaddingBottom;
 
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
@@ -928,6 +1039,50 @@ const BadgePrint = () => {
               )}
             </div>
 
+            {/* Filter controls row */}
+            <div className="grid grid-cols-2 gap-2 mb-3.5 animate-fade-in">
+              {/* Category Dropdown */}
+              <div className="relative">
+                <Filter className="absolute left-3 top-3 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setSelectedIds([]); // Clear selection when category changes
+                  }}
+                  className="w-full bg-slate-50 hover:bg-slate-100/50 border border-slate-200/80 pl-8 pr-6 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-550 font-bold text-[10px] text-slate-700 cursor-pointer appearance-none transition-all"
+                >
+                  <option value="">All Categories</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px]">
+                  ▼
+                </div>
+              </div>
+
+              {/* Photo Filter Dropdown */}
+              <div className="relative">
+                <Camera className="absolute left-3 top-3 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                <select
+                  value={photoFilter}
+                  onChange={(e) => {
+                    setPhotoFilter(e.target.value as any);
+                    setSelectedIds([]); // Clear selection when photo filter changes
+                  }}
+                  className="w-full bg-slate-50 hover:bg-slate-100/50 border border-slate-200/80 pl-8 pr-6 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-550 font-bold text-[10px] text-slate-700 cursor-pointer appearance-none transition-all"
+                >
+                  <option value="all">All Photos</option>
+                  <option value="with">With Photo</option>
+                  <option value="without">Without Photo</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px]">
+                  ▼
+                </div>
+              </div>
+            </div>
+
             {/* Premium search bar with left search icon */}
             <div className="relative mb-4">
               <Search className="absolute left-4 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -978,7 +1133,10 @@ const BadgePrint = () => {
                     <div className="min-w-0 flex-1" onClick={() => { setSelectedParticipant(p); setActiveTab("preview"); }}>
                       <p className="font-bold text-slate-800 text-sm truncate group-hover:text-indigo-950 transition-colors">{p.name}</p>
                       <p className="text-xs font-semibold text-slate-400 mt-0.5 truncate">
-                        ID: {p.regId || "N/A"} • {p.category || "No Category"}
+                        ID: {p.regId || "N/A"}
+                      </p>
+                      <p className="text-xs font-semibold text-slate-400 mt-0.5 truncate">
+                        {p.category || "No Category"}
                       </p>
                     </div>
                     
@@ -1024,15 +1182,7 @@ const BadgePrint = () => {
                         />
                       </div>
                       
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Category Ribbon</label>
-                        <input
-                          type="text"
-                          value={editDestination}
-                          onChange={(e) => setEditDestination(e.target.value)}
-                          className="w-full bg-slate-55/65 hover:bg-slate-50 focus:bg-white border border-slate-200/80 p-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-550 font-bold text-sm text-slate-800 transition-all"
-                        />
-                      </div>
+
 
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Badge Print Size</label>
@@ -1265,163 +1415,194 @@ const BadgePrint = () => {
                           transition: "transform 0.1s ease-out"
                         }} className="flex-none flex items-center justify-center">
                           {(() => {
+                            const templateResult = getTemplateForParticipant(selectedParticipant);
                             const themeColor = getCategoryColor(editDestination);
                             const photoUrl = getParticipantPhoto(selectedParticipant);
+
+                            const template = templateResult?.template;
+                            const bgImgSrc = template?.backgroundImage
+                              ? (template.backgroundImage.startsWith("http") ? template.backgroundImage : `${API}/${template.backgroundImage}`)
+                              : null;
+
                             return (
-                              <div 
-                                id="badge-preview-card"
-                                className={`bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans transition-all duration-300 ${
-                                  dim.gap
-                                }`}
-                                style={{
-                                  height: "380px",
-                                  width: `${dim.previewWidthPx}px`,
-                                  paddingTop: `${(topSpacing * 380) / dim.heightMm}px`,
-                                  paddingLeft: "12px",
-                                  paddingRight: "12px",
-                                  paddingBottom: editDestination ? "35px" : "12px",
-                                  boxSizing: "border-box",
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  justifyContent: "start",
-                                  alignItems: "center"
-                                }}
-                              >
-                                {/* Glassmorphic Shine Effect */}
-                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none z-30" />
-                                
-                                {/* Lanyard Slot Simulator */}
-                                <div className="w-8 h-2 rounded-full bg-slate-200 border border-slate-300/65 mt-2.5 mb-1.5 flex items-center justify-center relative z-20 shadow-inner flex-none">
-                                  <div className="w-5 h-0.5 rounded-full bg-slate-300/40" />
-                                </div>
+                              <div className="flex flex-col items-center w-full">
+                                {/* Template Selection Info Banner */}
+                                {templateResult && template && (
+                                  <div className="w-full mb-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between text-xs font-bold no-print">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                                      <span className="text-slate-800 uppercase tracking-wide text-[9px]">Template Automatically Selected</span>
+                                    </div>
+                                    <div className="text-slate-500 uppercase tracking-wider text-[9px] text-right font-mono leading-tight">
+                                      <div>Category: {selectedParticipant.category || "N/A"}</div>
+                                      <div>Template: {template.name}</div>
+                                      {templateResult.isDefaultFallback && (
+                                        <div className="text-amber-600 font-extrabold flex items-center gap-0.5 justify-end text-[8px] mt-0.5">
+                                          <AlertTriangle size={10} /> Default Template Applied
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
 
-
-                                {/* B. Center Attendee Details */}
                                 <div 
-                                  className="flex-none flex flex-col items-center justify-center w-full px-1 box-border relative z-10 animate-fade-in"
-                                  style={{ gap: `${dim.innerGapPx}px` }}
+                                  id="badge-preview-card"
+                                  className={`bg-white border border-slate-300 rounded-2xl shadow-lg flex flex-col items-center text-center relative overflow-hidden font-sans transition-all duration-300 ${
+                                    dim.gap
+                                  }`}
+                                  style={{
+                                    position: "relative",
+                                    overflow: "hidden",
+                                    height: "380px",
+                                    width: `${dim.previewWidthPx}px`,
+                                    paddingTop: `${(topSpacing * 380) / dim.heightMm}px`,
+                                    paddingLeft: "12px",
+                                    paddingRight: "12px",
+                                    paddingBottom: "12px",
+                                    boxSizing: "border-box",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "start",
+                                    alignItems: "center"
+                                  }}
                                 >
-                                  
-                                  {/* Photo Placeholder */}
-                                  {printPhoto && (
-                                    <div className="bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden shadow-md transition-all duration-300 relative" 
-                                      style={{ 
-                                        padding: "1.5px",
-                                        width: `${dim.previewPhotoWidthPx}px`,
-                                        height: `${dim.previewPhotoHeightPx}px`
+                                  {/* Template background image */}
+                                  {bgImgSrc && (
+                                    <img
+                                      src={bgImgSrc}
+                                      alt=""
+                                      aria-hidden="true"
+                                      crossOrigin={bgImgSrc.startsWith("data:") ? undefined : "anonymous"}
+                                      style={{
+                                        position: "absolute",
+                                        top: 0, left: 0,
+                                        width: "100%", height: "100%",
+                                        objectFit: "fill",
+                                        zIndex: 0,
+                                        display: "block"
                                       }}
-                                    >
-                                      {/* Viewfinder Corner Accents */}
-                                      <div className="absolute top-0 left-0 border-t-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                                      <div className="absolute top-0 right-0 border-t-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                                      <div className="absolute bottom-0 left-0 border-b-[1.5px] border-l-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                                      <div className="absolute bottom-0 right-0 border-b-[1.5px] border-r-[1.5px] transition-all" style={{ width: badgeSize === "A5" ? "10px" : "5px", height: badgeSize === "A5" ? "10px" : "5px", borderColor: themeColor }} />
-                                      
-                                      {photoUrl ? (
+                                    />
+                                  )}
+                                  {/* Glassmorphic Shine Effect */}
+                                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none z-30" />
+                                  
+                                  {/* Lanyard Slot Simulator */}
+                                  <div className="w-8 h-2 rounded-full bg-slate-200 border border-slate-300/65 mt-2.5 mb-1.5 flex items-center justify-center relative z-20 shadow-inner flex-none">
+                                    <div className="w-5 h-0.5 rounded-full bg-slate-300/40" />
+                                  </div>
+
+                                  {/* B. Center Attendee Details */}
+                                  <div 
+                                    className="flex-none flex flex-col items-center justify-center w-full px-1 box-border relative z-10 animate-fade-in"
+                                    style={{ gap: `${dim.innerGapPx}px` }}
+                                  >
+                                    
+                                    {/* Photo Placeholder */}
+                                    {printPhoto && photoUrl && !imageError && (
+                                      <div className="border border-slate-400 flex items-center justify-center overflow-hidden relative animate-fade-in" 
+                                        style={{ 
+                                          width: `${dim.previewPhotoWidthPx}px`,
+                                          height: `${dim.previewPhotoHeightPx}px`
+                                        }}
+                                      >
                                         <img 
                                           src={photoUrl} 
                                           alt="Delegate" 
-                                          className={`w-full h-full rounded-[3px] ${photoFit === "contain" ? "object-contain bg-slate-100" : "object-cover object-top"}`} 
+                                          onError={() => setImageError(true)}
+                                          crossOrigin={photoUrl.startsWith("data:") ? undefined : "anonymous"}
+                                          className={`w-full h-full ${photoFit === "contain" ? "object-contain bg-slate-100" : "object-cover object-top"}`} 
                                         />
-                                      ) : (
-                                        <svg className={`${badgeSize === "A5" ? "w-10 h-10" : "w-8 h-8"} text-slate-300`} fill="currentColor" viewBox="0 0 24 24">
-                                          <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0 1 12.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
-                                        </svg>
+                                      </div>
+                                    )}
+
+                                    {/* 1. Name */}
+                                    {printName && (
+                                      <h3 
+                                        className={`font-extrabold text-slate-900 uppercase line-clamp-2 px-1 transition-all duration-300 ${
+                                          dim.fontSizeName
+                                        }`}
+                                        style={{ lineHeight: 1.3, paddingBottom: "4px" }}
+                                      >
+                                        {editName || "PARTICIPANT NAME"}
+                                      </h3>
+                                    )}
+
+                                    {/* 2. Designation / Org Suffix */}
+                                    {selectedParticipant.dynamicData?.Organization && (
+                                      <p className={`font-semibold text-slate-500 uppercase truncate max-w-full transition-all duration-300 ${
+                                        dim.fontSizeOrg
+                                      }`}>
+                                        {selectedParticipant.dynamicData.Organization}
+                                      </p>
+                                    )}
+
+                                    {/* 3. City / Location */}
+                                    {printCity && editState && (
+                                      <p className={`font-semibold text-slate-400 uppercase truncate max-w-full transition-all duration-300 ${
+                                        dim.fontSizeOrg
+                                      }`}>
+                                        {editState}
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  {/* Decorative Divider */}
+                                  <div 
+                                    className="transition-all duration-300 relative z-10"
+                                    style={{
+                                      width: "80%",
+                                      height: "1px",
+                                      backgroundColor: "#e2e8f0",
+                                      marginTop: "2px",
+                                      marginBottom: "2px"
+                                    }}
+                                  />
+
+                                  {/* C. QR Code Section */}
+                                  {(printQR || printRegId) && (
+                                    <div 
+                                      className="flex flex-col items-center justify-center pb-2 box-border relative z-10"
+                                      style={{ gap: `${dim.innerGapPx}px` }}
+                                    >
+                                      {printQR && selectedCheckpoints.includes("QR Code") && (
+                                        <div 
+                                          className="bg-white p-2 rounded-xl shadow-md flex items-center justify-center transition-all duration-300"
+                                          style={{
+                                            border: `1.5px solid ${themeColor}25`,
+                                            boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+                                            width: `${dim.previewPhotoWidthPx}px`,
+                                            height: `${dim.previewPhotoWidthPx}px`,
+                                            boxSizing: "border-box"
+                                          }}
+                                        >
+                                          <QRCode
+                                            value={selectedParticipant.regId || selectedParticipant._id}
+                                            size={256}
+                                            level="L"
+                                            style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                          />
+                                        </div>
+                                      )}
+                                      
+                                      {/* Registration ID */}
+                                      {printRegId && (
+                                        <div 
+                                          className="flex items-center justify-center transition-all duration-300"
+                                        >
+                                          <p className={`font-sans text-black font-extrabold tracking-wider leading-none ${dim.fontSizeRegId}`}>
+                                            {(() => {
+                                              const rawId = selectedParticipant.regId || selectedParticipant._id || "";
+                                              const cleanId = rawId.replace(/^(reg\s*id|regid|id)\s*[-\s:]*/i, "");
+                                              const cat = String(selectedParticipant.category || "").toLowerCase();
+                                              const isIndustryPartner = cat.includes("industry partner") || cat.includes("industry-partner") || cat.includes("exhibitor") || cat.includes("sponsor");
+                                              return isIndustryPartner ? <span>{cleanId}</span> : <span>ID : {cleanId}</span>;
+                                            })()}
+                                          </p>
+                                        </div>
                                       )}
                                     </div>
                                   )}
-
-                                  {/* 1. Name */}
-                                  {printName && (
-                                    <h3 className={`font-extrabold text-slate-900 leading-tight uppercase line-clamp-2 px-1 transition-all duration-300 ${
-                                      dim.fontSizeName
-                                    }`}>
-                                      {editName || "PARTICIPANT NAME"}
-                                    </h3>
-                                  )}
-
-                                  {/* 2. Designation / Org Suffix */}
-                                  {selectedParticipant.dynamicData?.Organization && (
-                                    <p className={`font-semibold text-slate-500 uppercase truncate max-w-full transition-all duration-300 ${
-                                      dim.fontSizeOrg
-                                    }`}>
-                                      {selectedParticipant.dynamicData.Organization}
-                                    </p>
-                                  )}
-
-                                  {/* 3. City / Location */}
-                                  {printCity && editState && (
-                                    <p className={`font-semibold text-slate-400 uppercase truncate max-w-full transition-all duration-300 ${
-                                      dim.fontSizeOrg
-                                    }`}>
-                                      {editState}
-                                    </p>
-                                  )}
                                 </div>
-
-                                {/* Decorative Divider */}
-                                <div 
-                                  className="transition-all duration-300 relative z-10"
-                                  style={{
-                                    width: "80%",
-                                    height: "1px",
-                                    background: "linear-gradient(to right, transparent, #e2e8f0, transparent)",
-                                    marginTop: "2px",
-                                    marginBottom: "2px"
-                                  }}
-                                />
-
-                                {/* C. QR Code Section */}
-                                {(printQR || printRegId) && (
-                                  <div 
-                                    className="flex flex-col items-center justify-center pb-2 box-border relative z-10"
-                                    style={{ gap: `${dim.innerGapPx}px` }}
-                                  >
-                                    {printQR && selectedCheckpoints.includes("QR Code") && (
-                                      <div 
-                                        className="bg-white p-2 rounded-xl shadow-md flex items-center justify-center transition-all duration-300"
-                                        style={{
-                                          border: `1.5px solid ${themeColor}25`,
-                                          boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
-                                          width: `${dim.previewPhotoWidthPx}px`,
-                                          height: `${dim.previewPhotoWidthPx}px`,
-                                          boxSizing: "border-box"
-                                        }}
-                                      >
-                                        <QRCode
-                                          value={selectedParticipant.regId || selectedParticipant._id}
-                                          size={256}
-                                          level="L"
-                                          style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                                        />
-                                      </div>
-                                    )}
-                                    
-                                    {/* Registration ID */}
-                                    {printRegId && (
-                                      <div 
-                                        className="flex items-center justify-center transition-all duration-300"
-                                      >
-                                        <p className={`font-sans text-slate-500 font-bold tracking-wider leading-none ${dim.fontSizeRegId}`}>
-                                          <span className="text-slate-800 font-extrabold">{selectedParticipant.regId || selectedParticipant._id}</span>
-                                        </p>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-
-                                {/* Category Ribbon */}
-                                {editDestination && (
-                                  <div 
-                                    className="absolute bottom-0 left-0 w-full text-white font-black uppercase text-center tracking-widest py-2 z-20 text-[10px] shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
-                                    style={{
-                                      backgroundColor: themeColor,
-                                    }}
-                                  >
-                                    {editDestination}
-                                  </div>
-                                )}
-
                               </div>
                             );
                           })()}

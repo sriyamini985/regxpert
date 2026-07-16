@@ -64,10 +64,7 @@ const isSafeUrl = async (urlStr) => {
 
 const router = express.Router();
 
-// Apply authentication middleware to protect all participant operations
-router.use(requireAuth);
-
-// 0. Image CORS Proxy Route
+// 0. Image CORS Proxy Route (Public - needed for browser img tags to bypass CORS on print)
 router.get("/proxy-image", async (req, res) => {
   try {
     const { url } = req.query;
@@ -117,6 +114,9 @@ router.get("/proxy-image", async (req, res) => {
   }
 });
 
+// Apply authentication middleware to protect all subsequent participant database operations
+router.use(requireAuth);
+
 // 1. Verify and Scan Route (Kitbag / Certificate)
 router.post("/verify-and-scan", verifyAndScan);
 
@@ -157,14 +157,35 @@ router.post("/", async (req, res) => {
     }
 
     // Check for duplicate participant (same phone or email under the same conference)
-    if (body.phone || body.email) {
+    const isPlaceholder = (val) => {
+      if (!val) return true;
+      const clean = String(val).trim().toLowerCase();
+      return (
+        clean === "" ||
+        clean === "-" ||
+        clean === "n/a" ||
+        clean === "na" ||
+        clean === "null" ||
+        clean === "undefined" ||
+        clean === "none" ||
+        clean === "no" ||
+        clean === "0" ||
+        clean === "0000000000" ||
+        clean === "1234567890"
+      );
+    };
+
+    const phoneVal = body.phone && !isPlaceholder(body.phone) ? body.phone.trim() : null;
+    const emailVal = body.email && !isPlaceholder(body.email) ? body.email.trim().toLowerCase() : null;
+
+    if (phoneVal || emailVal) {
       const query = { conferenceId: actualConferenceId };
       const orConditions = [];
-      if (body.phone && body.phone.trim() !== "") {
-        orConditions.push({ phone: body.phone.trim() });
+      if (phoneVal) {
+        orConditions.push({ phone: phoneVal });
       }
-      if (body.email && body.email.trim() !== "") {
-        orConditions.push({ email: body.email.trim().toLowerCase() });
+      if (emailVal) {
+        orConditions.push({ email: emailVal });
       }
       if (orConditions.length > 0) {
         query.$or = orConditions;
@@ -173,7 +194,7 @@ router.post("/", async (req, res) => {
           return res.status(409).json({
             success: false,
             message: `A delegate with this ${
-              existing.phone === body.phone ? "phone number" : "email address"
+              existing.phone === phoneVal ? "phone number" : "email address"
             } is already registered for this conference.`
           });
         }
@@ -215,9 +236,15 @@ router.get("/", async (req, res) => {
         { phone: safeSearch },
         { email: safeSearch },
         { qrCode: safeSearch },
-        { name: { $regex: "^" + escapedSearch, $options: "i" } }, 
-        { phone: { $regex: "^" + escapedSearch, $options: "i" } }, 
-        { regId: { $regex: "^" + escapedSearch, $options: "i" } }
+        // Prefix match (fast – uses index)
+        { name: { $regex: "^" + escapedSearch, $options: "i" } },
+        { phone: { $regex: "^" + escapedSearch, $options: "i" } },
+        { regId: { $regex: "^" + escapedSearch, $options: "i" } },
+        // Substring/contains match on name (catches "Rohit" inside "Dr. Rohit Agarwal")
+        // Only run for queries >= 3 chars to avoid expensive full-collection scans
+        ...(safeSearch.length >= 3 ? [
+          { name: { $regex: escapedSearch, $options: "i" } }
+        ] : [])
       ] : [
         { regId: safeSearch },
         { phone: safeSearch },

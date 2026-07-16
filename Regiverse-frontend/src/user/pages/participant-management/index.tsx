@@ -401,7 +401,7 @@ const ParticipantPage = () => {
           />
 
           <input
-            placeholder="Medical Council Number *"
+            placeholder="Medical Council Number"
             value={form.medicalCouncilNumber}
             onChange={(e) => handleChange("medicalCouncilNumber", e.target.value)}
             className="w-full h-12 px-4 border rounded-xl md:col-span-2 text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -436,7 +436,7 @@ const ParticipantPage = () => {
           </div>
 
           <input
-            placeholder="Reference *"
+            placeholder="Reference"
             value={form.reference}
             onChange={(e) => handleChange("reference", e.target.value)}
             className="w-full h-12 px-4 border rounded-xl md:col-span-2 text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"

@@ -34,7 +34,7 @@ const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
     const trimmedLine = line.trim();
     const lowerLine = trimmedLine.toLowerCase();
     
-    if (lowerLine.startsWith("reg id:") || lowerLine.startsWith("regid:")) {
+    if (lowerLine.startsWith("reg id:") || lowerLine.startsWith("regid:") || lowerLine.startsWith("id:") || lowerLine.startsWith("id :")) {
       const parts = trimmedLine.split(":");
       if (parts[1]) regIdFromQR = parts.slice(1).join(":").trim();
     } else if (lowerLine.startsWith("name:")) {
@@ -78,8 +78,9 @@ const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
   let cleanRaw = safeIdentifier;
   if (safeIdentifier.toLowerCase().startsWith("name:")) {
     cleanRaw = safeIdentifier.substring(5).trim();
-  } else if (safeIdentifier.toLowerCase().startsWith("reg id:") || safeIdentifier.toLowerCase().startsWith("regid:")) {
-    cleanRaw = safeIdentifier.split(":").slice(1).join(":").trim();
+  } else {
+    const prefixRegex = /^(?:reg\s*id|regid|id)\s*[-\s:]*/i;
+    cleanRaw = safeIdentifier.replace(prefixRegex, "").trim();
   }
 
   const exactConditions = [];
@@ -158,7 +159,13 @@ const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
     conditions.push({ qrCode: { $regex: new RegExp(`^\\s*${escapedCleanRaw}\\s*$`, "i") } });
     conditions.push({ regId: { $regex: new RegExp(`^\\s*${escapedCleanRaw}\\s*$`, "i") } });
     conditions.push({ regId: { $regex: new RegExp(escapedCleanRaw + "\\s*$", "i") } });
+    // Exact full-name match
     conditions.push({ name: { $regex: new RegExp(`^\\s*${escapedCleanRaw}\\s*$`, "i") } });
+    // Substring / contains match on name (allows partial name scans like "Rohit" → "Dr. Rohit Agarwal")
+    // Only trigger for inputs >= 3 characters to avoid false positives
+    if (cleanRaw.length >= 3) {
+      conditions.push({ name: { $regex: new RegExp(escapedCleanRaw, "i") } });
+    }
   }
 
   if (mongoose.Types.ObjectId.isValid(safeIdentifier)) {
@@ -193,6 +200,55 @@ const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
   const result = await Participant.findOne(query);
   console.log(`[SCAN DEBUG] Query result fallback:`, result ? `Found (ID: ${result._id}, Name: "${result.name}")` : "Not Found");
   return result;
+};
+
+// Same as findParticipantByIdentifier but returns ALL matches (for disambiguation when multiple share the same qrCode/regId)
+const findAllParticipantsByIdentifier = async (identifier, conferenceIdOrSlug) => {
+  if (!identifier) return [];
+  let safeIdentifier = String(identifier).trim();
+  if (safeIdentifier === "") return [];
+
+  // Resolve conference filter
+  let conferenceFilter = {};
+  if (conferenceIdOrSlug) {
+    const cleanConf = String(conferenceIdOrSlug).trim();
+    const targetConference = await Conference.findOne({
+      $or: [
+        { _id: mongoose.Types.ObjectId.isValid(cleanConf) ? cleanConf : undefined },
+        { slug: cleanConf },
+        { name: cleanConf }
+      ].filter(Boolean)
+    });
+    if (targetConference) {
+      conferenceFilter = { conferenceId: String(targetConference._id) };
+    }
+  }
+
+  // Strip prefix labels
+  let cleanRaw = safeIdentifier;
+  if (safeIdentifier.toLowerCase().startsWith("name:")) {
+    cleanRaw = safeIdentifier.substring(5).trim();
+  } else {
+    const prefixRegex = /^(?:reg\s*id|regid|id)\s*[-\s:]*/i;
+    cleanRaw = safeIdentifier.replace(prefixRegex, "").trim();
+  }
+
+  const conditions = [];
+  if (mongoose.Types.ObjectId.isValid(safeIdentifier)) conditions.push({ _id: safeIdentifier });
+  if (cleanRaw) {
+    conditions.push({ regId: cleanRaw });
+    conditions.push({ qrCode: cleanRaw });
+    conditions.push({ phone: cleanRaw });
+    conditions.push({ email: cleanRaw });
+  }
+
+  if (conditions.length === 0) return [];
+
+  const query = conferenceFilter.conferenceId
+    ? { ...conferenceFilter, $or: conditions }
+    : { $or: conditions };
+
+  return await Participant.find(query).lean();
 };
 
 // 1. BULK EXCEL IMPORT CONTROLLER
@@ -301,10 +357,45 @@ export const scanQR = async (req, res) => {
 // 4. VERIFY AND SCAN (Restricted items: Kitbag/Certificate)
 export const verifyAndScan = async (req, res) => {
   try {
-    const { identifier, scanType, conferenceId } = req.body;
-    const user = await findParticipantByIdentifier(identifier, conferenceId);
+    const { identifier, scanType, conferenceId, participantId } = req.body;
+    let user;
 
-    if (!user) return res.status(404).json({ msg: "Participant not found" });
+    if (participantId && mongoose.Types.ObjectId.isValid(participantId)) {
+      // Explicit selection by operator
+      user = await Participant.findById(participantId);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    } else {
+      // General scan lookup
+      const allMatches = await findAllParticipantsByIdentifier(identifier, conferenceId);
+
+      if (allMatches.length === 0) {
+        return res.status(404).json({ msg: "Participant not found" });
+      }
+
+      if (allMatches.length > 1) {
+        // Return multiple matches for disambiguation
+        return res.status(300).json({
+          multipleMatches: true,
+          msg: `Multiple participants found for "${identifier}". Please select the correct person.`,
+          participants: allMatches.map(p => ({
+            _id: p._id,
+            name: p.name,
+            regId: p.regId,
+            phone: p.phone || "",
+            category: p.category || "",
+            isCheckedIn: p.isCheckedIn || false,
+            printed: p.printed || false,
+            kitbagCollected: p.kitbagCollected || false,
+            certificateGiven: p.certificateGiven || false,
+            foodLogs: p.foodLogs || {},
+            workshopScans: p.workshopScans || []
+          }))
+        });
+      }
+
+      user = await Participant.findById(allMatches[0]._id);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    }
 
     // Determine the corresponding block key and field mapping dynamically
     let isKitbag = false;
@@ -324,7 +415,8 @@ export const verifyAndScan = async (req, res) => {
     if (user[blockKey] === true) {
       return res.status(403).json({ 
         msg: `Access Denied: ${scanType} is restricted.`,
-        blocked: true 
+        blocked: true,
+        user
       });
     }
 
@@ -367,10 +459,45 @@ export const verifyAndScan = async (req, res) => {
 // 5. FOOD SCAN (Day-specific meals)
 export const scanFood = async (req, res) => {
   try {
-    const { identifier, mealType, conferenceId } = req.body;
-    const user = await findParticipantByIdentifier(identifier, conferenceId);
+    const { identifier, mealType, conferenceId, participantId } = req.body;
+    let user;
 
-    if (!user) return res.status(404).json({ msg: "Participant not found" });
+    if (participantId && mongoose.Types.ObjectId.isValid(participantId)) {
+      // Explicit selection by operator
+      user = await Participant.findById(participantId);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    } else {
+      // General scan lookup
+      const allMatches = await findAllParticipantsByIdentifier(identifier, conferenceId);
+
+      if (allMatches.length === 0) {
+        return res.status(404).json({ msg: "Participant not found" });
+      }
+
+      if (allMatches.length > 1) {
+        // Return multiple matches for disambiguation
+        return res.status(300).json({
+          multipleMatches: true,
+          msg: `Multiple participants found for "${identifier}". Please select the correct person.`,
+          participants: allMatches.map(p => ({
+            _id: p._id,
+            name: p.name,
+            regId: p.regId,
+            phone: p.phone || "",
+            category: p.category || "",
+            isCheckedIn: p.isCheckedIn || false,
+            printed: p.printed || false,
+            kitbagCollected: p.kitbagCollected || false,
+            certificateGiven: p.certificateGiven || false,
+            foodLogs: p.foodLogs || {},
+            workshopScans: p.workshopScans || []
+          }))
+        });
+      }
+
+      user = await Participant.findById(allMatches[0]._id);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    }
 
     // Parse day and meal from mealType (e.g., "day1-lunch")
     const [dayPart, mealPart] = mealType.split("-");
@@ -381,7 +508,8 @@ export const scanFood = async (req, res) => {
     if (user[blockKey] === true) {
       return res.status(403).json({
         msg: `Access Denied: ${meal} on Day ${day} is restricted for this participant.`,
-        blocked: true
+        blocked: true,
+        user
       });
     }
 
@@ -448,9 +576,42 @@ export const checkInParticipant = async (req, res) => {
 // 7. PATH ENTRY / EXIT SCAN
 export const scanHall = async (req, res) => {
   try {
-    const { identifier, mode, conferenceId } = req.body; // mode: "entry" or "exit"
-    const user = await findParticipantByIdentifier(identifier, conferenceId);
-    if (!user) return res.status(404).json({ msg: "Participant not found" });
+    const { identifier, mode, conferenceId, participantId } = req.body; // mode: "entry" or "exit"
+
+    let user;
+
+    if (participantId && mongoose.Types.ObjectId.isValid(participantId)) {
+      // Operator explicitly confirmed which person to log (disambiguation flow)
+      user = await Participant.findById(participantId);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    } else {
+      // First check if multiple participants share the same scanned identifier
+      const allMatches = await findAllParticipantsByIdentifier(identifier, conferenceId);
+
+      if (allMatches.length === 0) {
+        return res.status(404).json({ msg: "Participant not found" });
+      }
+
+      if (allMatches.length > 1) {
+        // Multiple people share the same QR/regId — ask the operator to pick the correct one
+        return res.status(300).json({
+          multipleMatches: true,
+          msg: `Multiple participants found for "${identifier}". Please select the correct person.`,
+          participants: allMatches.map(p => ({
+            _id: p._id,
+            name: p.name,
+            regId: p.regId,
+            phone: p.phone || "",
+            category: p.category || "",
+            hallEntries: p.hallEntries || [],
+            hallExits: p.hallExits || []
+          }))
+        });
+      }
+
+      user = await Participant.findById(allMatches[0]._id);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    }
 
     const now = new Date();
     const THRESHOLD_MS = 30000;
