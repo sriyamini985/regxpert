@@ -73,10 +73,8 @@ const CertificateScan: React.FC = () => {
     return () => clearTimeout(delay);
   }, [search, conferenceSlug]);
 
-  /* =========================
-     API ద్వారా సర్టిఫికేట్ ఇష్యూ చేయడం 
-  ========================= */
-  const issueCertificate = async (user: any) => {
+const issueCertificate = async (user: any) => {
+    // 1. Check if already issued
     if (user.certificateGiven || user.certificate?.issued) {
       setFeedback({
         type: "error",
@@ -95,14 +93,15 @@ const CertificateScan: React.FC = () => {
     try {
       const body = {
         identifier: finalRegId,
-        scanType: "certificate",
+        // 🚨 MUST BE EXACTLY "certificate" so the backend controller detects it
+        scanType: "certificate", 
         conferenceId: finalConferenceId,
         participantId: finalParticipantId,
         certificateType: selectedCertificate,
       };
 
-      // 🚨 CHANGED ENDPOINT HERE: Using '/issue-certificate'
-      const res = await fetch(`${API}/api/participants/issue-certificate`, {
+      // 🚨 USE THE CORRECT ROUTE THAT EXISTS IN YOUR BACKEND
+      const res = await fetch(`${API}/api/participants/verify-and-scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -113,7 +112,7 @@ const CertificateScan: React.FC = () => {
       if (!res.ok) {
         setFeedback({
           type: "error",
-          message: data.msg || "❌ Failed to issue certificate. Server returned 404/Error.",
+          message: data.msg || "❌ Failed to issue certificate.",
         });
       } else {
         setFeedback({
@@ -121,6 +120,7 @@ const CertificateScan: React.FC = () => {
           message: `✅ Certificate issued successfully to ${user.name}!`,
         });
 
+        // Update UI
         setFiltered((prev) =>
           prev.map((u: any) =>
             u._id === user._id ? { ...u, certificateGiven: true } : u
