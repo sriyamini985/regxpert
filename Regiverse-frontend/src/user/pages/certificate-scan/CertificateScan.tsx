@@ -96,13 +96,18 @@ const CertificateScan: React.FC = () => {
     setIsProcessing(true);
     setFeedback(null);
 
+    // 🚨 ఇక్కడే మనం డేటాబేస్ ఐడీలని సరిగ్గా తీస్తున్నాము 🚨
+    const finalParticipantId = String(user._id || user.id);
+    const finalRegId = user.regId || finalParticipantId;
+    const finalConferenceId = user.conferenceId || conferenceSlug; // <-- The Fix!
+
     try {
       const body = {
-        identifier: user.regId || user._id,
-        scanType: "certificate", // ఇక్కడ "certificate" అని పంపిస్తున్నాము
-        conferenceId: conferenceSlug,
-        participantId: String(user._id),
-        certificateType: selectedCertificate, // సెలెక్ట్ చేసిన సర్టిఫికేట్ టైప్
+        identifier: finalRegId,
+        scanType: "certificate",
+        conferenceId: finalConferenceId, 
+        participantId: finalParticipantId,
+        certificateType: selectedCertificate, 
       };
 
       const res = await fetch(`${API}/api/participants/verify-and-scan`, {
@@ -116,7 +121,7 @@ const CertificateScan: React.FC = () => {
       if (!res.ok) {
         setFeedback({
           type: "error",
-          message: data.msg || "❌ Failed to issue certificate.",
+          message: data.msg || "❌ Failed to issue certificate. Participant not found.",
         });
       } else {
         setFeedback({
