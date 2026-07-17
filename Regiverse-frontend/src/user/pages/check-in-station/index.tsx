@@ -57,9 +57,6 @@ const CheckInStation = () => {
   /* ===========================
      PLAY BEEP SOUND
   =========================== */
-  /* ===========================
-     PLAY BEEP SOUND
-  =========================== */
   const playBeep = () => {
     new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg").play().catch(() => {});
   };
@@ -440,11 +437,12 @@ const CheckInStation = () => {
                     </div>
                   </div>
 
+                  {/* 🚨 THE FIX IS HERE: Passing String(p._id) as the second argument 🚨 */}
                   <button
                     onClick={() => {
                       setSearchQuery("");
                       setSearchResult(null);
-                      callScanAPI(p.regId || p._id);
+                      callScanAPI(p.regId || String(p._id), String(p._id)); 
                     }}
                     disabled={isProcessing || p.kitbagCollected}
                     className="px-5 py-2.5 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition text-sm whitespace-nowrap h-fit self-end sm:self-center"
@@ -456,7 +454,7 @@ const CheckInStation = () => {
             })}
           </div>
 
-          {/* DISAMBIGUATION PICKER — shown when multiple people share the same QR code */}
+          {/* DISAMBIGUATION PICKER */}
           {ambiguousMatches.length > 0 && (
             <div className="bg-white rounded-2xl shadow-sm border-2 border-blue-400 p-6 mb-4">
               <div className="flex items-start gap-3 mb-4">

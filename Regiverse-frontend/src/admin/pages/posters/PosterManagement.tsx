@@ -8,7 +8,7 @@ import {
   FileText,
   Image as ImageIcon,
   Loader2,
-  Upload,
+  Upload,                                           
   ArrowLeft,
   X,
   Search,
