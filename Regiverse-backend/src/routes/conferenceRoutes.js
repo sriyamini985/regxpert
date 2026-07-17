@@ -3,6 +3,8 @@ import multer from "multer";
 import Conference from "../models/Conference.js";
 import Participant from "../models/Participant.js";
 import SharedData from "../models/SharedData.js";
+import BadgeTemplate from "../models/BadgeTemplate.js";
+import Poster from "../models/Poster.js";
 import { importExcel } from "../controllers/conferenceController.js";
 
 const router = express.Router();
@@ -111,6 +113,17 @@ router.delete("/:id", requireAuth, requireRole(["admin"]), async (req, res) => {
 
     // Cascade delete: Delete all shared data belonging to this conference
     await SharedData.deleteMany({ conferenceId: id });
+
+    // Cascade delete: Delete all badge templates belonging to this conference
+    await BadgeTemplate.deleteMany({ conferenceId: id });
+
+    // Cascade delete: Delete all posters belonging to this conference
+    await Poster.deleteMany({
+      $or: [
+        { conferenceId: id },
+        { conferenceId: conference.slug }
+      ]
+    });
 
     // Delete the conference itself
     await Conference.findByIdAndDelete(id);

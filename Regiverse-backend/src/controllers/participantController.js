@@ -7,7 +7,6 @@ import {
   broadcastParticipantDeleted,
   broadcastBulkImport
 } from "../socket.js";
-import xlsx from "xlsx";
 
 // Centralized helper function to find a participant by name, phone, email, qrCode, regId, or partial regId suffix (case-insensitive)
 const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
@@ -251,64 +250,6 @@ const findAllParticipantsByIdentifier = async (identifier, conferenceIdOrSlug) =
   return await Participant.find(query).lean();
 };
 
-// 1. BULK EXCEL IMPORT CONTROLLER
-export const importExcel = async (req, res) => {
-  try {
-    const { conferenceId } = req.body;
-
-    if (!req.file) {
-      return res.status(400).json({ success: false, msg: "No file uploaded." });
-    }
-
-    if (!conferenceId) {
-      return res.status(400).json({ success: false, msg: "Missing conference identifier context." });
-    }
-
-    const cleanConferenceId = String(conferenceId).trim();
-
-    // Parse the uploaded excel sheet buffer directly from memory
-    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
-    const firstSheetName = workbook.SheetNames[0];
-    const rawRows = xlsx.utils.sheet_to_json(workbook.Sheets[firstSheetName]);
-
-    if (!rawRows || rawRows.length === 0) {
-      return res.status(400).json({ success: false, msg: "The uploaded sheet is empty." });
-    }
-
-    // Map rows cleanly to fit schema profile fields
-    const processedParticipants = rawRows.map((row) => ({
-      name: row.Name || row.name || "Unknown Delegate",
-      email: row.Email || row.email || "",
-      company: row.Company || row.company || "",
-      phone: String(row.Phone || row.phone || ""),
-      regId: String(row.RegId || row.regId || row.id || ""),
-      qrCode: String(row.QrCode || row.qrcode || row.RegId || row.regId || ""),
-      status: "pending",
-      conferenceId: cleanConferenceId,
-      isCheckedIn: false,
-      printed: false,
-      kitbagCollected: false,
-      certificateGiven: false,
-      foodLogs: {}
-    }));
-
-    // Save batch items directly to MongoDB
-    const insertedRecords = await Participant.insertMany(processedParticipants);
-
-    // Alert the workspace dashboard sockets that a bulk load completed
-    broadcastBulkImport(cleanConferenceId);
-
-    return res.json({ 
-      success: true, 
-      inserted: insertedRecords.length, 
-      msg: "Roster imported successfully." 
-    });
-
-  } catch (err) {
-    console.error("EXCEL IMPORT RUNTIME CRASH:", err);
-    return res.status(500).json({ success: false, message: err.message });
-  }
-};
 
 // 2. CREATE PARTICIPANT
 export const createParticipant = async (req, res) => {

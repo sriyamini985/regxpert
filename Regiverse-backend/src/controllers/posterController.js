@@ -78,13 +78,14 @@ export const verifyParticipant = async (req, res) => {
     }
 
     const cleanIdentifier = identifier.trim();
+    const escapedIdentifier = cleanIdentifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     // Query participant by email, regId, or phone
     const participant = await Participant.findOne({
       conferenceId: conf._id.toString(),
       $or: [
-        { regId: { $regex: new RegExp(`^${cleanIdentifier}$`, "i") } },
-        { email: { $regex: new RegExp(`^${cleanIdentifier}$`, "i") } },
+        { regId: { $regex: new RegExp(`^${escapedIdentifier}$`, "i") } },
+        { email: { $regex: new RegExp(`^${escapedIdentifier}$`, "i") } },
         { phone: cleanIdentifier }
       ]
     });

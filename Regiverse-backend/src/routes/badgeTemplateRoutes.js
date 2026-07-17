@@ -9,6 +9,9 @@ import cloudinary from "../config/cloudinary.js";
 
 const router = express.Router();
 
+// Enforce authentication middleware to protect all badge design template configurations
+router.use(requireAuth);
+
 // Use memory storage - we stream directly to Cloudinary
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 

@@ -22,6 +22,66 @@ function formatPhoneForMeta(phone) {
   return cleaned;
 }
 
+// Helper function to send WhatsApp for a single participant
+const sendWhatsappForParticipant = async (p, message, isMockMode, accessToken, phoneNumberId) => {
+  try {
+    if (!p.phone) {
+      console.log(`❌ NO PHONE NUMBER FOR PARTICIPANT: ${p.name}`);
+      return false;
+    }
+
+    const formattedPhone = formatPhoneForMeta(p.phone);
+
+    if (isMockMode) {
+      console.log(`
+==================================
+[MOCK WHATSAPP]
+TO: ${formattedPhone} (Original: ${p.phone})
+MESSAGE:
+${message}
+USER: ${p.name}
+==================================
+`);
+      return true;
+    } else {
+      // Call Meta WhatsApp Cloud API
+      const response = await fetch(
+        `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: formattedPhone,
+            type: "text",
+            text: {
+              preview_url: false,
+              body: message,
+            },
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log(`✅ WHATSAPP SENT TO ${p.name} (${formattedPhone}):`, data.messages?.[0]?.id);
+        return true;
+      } else {
+        console.error(`❌ WHATSAPP ERROR FOR ${p.name} (${formattedPhone}):`, JSON.stringify(data.error || data));
+        return false;
+      }
+    }
+  } catch (err) {
+    console.error(`❌ FAILED TO SEND WHATSAPP FOR ${p.name}:`, err.message);
+    return false;
+  }
+};
+
 router.post("/:conferenceId/send", requireAuth, async (req, res) => {
   try {
     const { message, participantIds } = req.body;
@@ -88,78 +148,46 @@ router.post("/:conferenceId/send", requireAuth, async (req, res) => {
       });
     }
 
-    let sent = 0;
-    let failed = 0;
+    // --- DUAL PATH NON-BLOCKING IMPLEMENTATION ---
+    if (participants.length > 30) {
+      // Background Mode: return 202 Accepted immediately to avoid reverse-proxy timeouts
+      res.status(202).json({
+        success: true,
+        sent: participants.length,
+        failed: 0,
+        queued: true,
+        message: `Campaign queued in background for ${participants.length} recipients.`
+      });
 
-    /* =========================
-       SEND MESSAGES
-    ========================= */
-    for (const p of participants) {
-      try {
-        if (!p.phone) {
-          console.log(`❌ NO PHONE NUMBER FOR PARTICIPANT: ${p.name}`);
-          failed++;
-          continue;
-        }
-
-        const formattedPhone = formatPhoneForMeta(p.phone);
-
-        if (isMockMode) {
-          console.log(`
-==================================
-[MOCK WHATSAPP]
-TO: ${formattedPhone} (Original: ${p.phone})
-MESSAGE:
-${message}
-USER: ${p.name}
-==================================
-`);
-          sent++;
-        } else {
-          // Call Meta WhatsApp Cloud API
-          const response = await fetch(
-            `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
-            {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${accessToken}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                messaging_product: "whatsapp",
-                recipient_type: "individual",
-                to: formattedPhone,
-                type: "text",
-                text: {
-                  preview_url: false,
-                  body: message,
-                },
-              }),
-            }
-          );
-
-          const data = await response.json();
-
-          if (response.ok) {
-            console.log(`✅ WHATSAPP SENT TO ${p.name} (${formattedPhone}):`, data.messages?.[0]?.id);
-            sent++;
-          } else {
-            console.error(`❌ WHATSAPP ERROR FOR ${p.name} (${formattedPhone}):`, JSON.stringify(data.error || data));
-            failed++;
+      // Execute loop asynchronously in the background
+      (async () => {
+        for (const p of participants) {
+          try {
+            await sendWhatsappForParticipant(p, message, isMockMode, accessToken, phoneNumberId);
+            // Yield control back to event loop with a 50ms delay between pings to avoid event loop starvation
+            await new Promise(resolve => setTimeout(resolve, 50));
+          } catch (bgErr) {
+            console.error(`❌ Background WhatsApp campaign execution failed for participant ${p._id}:`, bgErr.message);
           }
         }
-      } catch (err) {
-        console.error(`❌ FAILED TO SEND WHATSAPP FOR ${p.name}:`, err.message);
-        failed++;
+      })();
+    } else {
+      // Synchronous Mode: send and wait to return exact stats for small participant sets
+      let sent = 0;
+      let failed = 0;
+      for (const p of participants) {
+        const success = await sendWhatsappForParticipant(p, message, isMockMode, accessToken, phoneNumberId);
+        if (success) sent++;
+        else failed++;
       }
+
+      return res.json({
+        success: true,
+        sent,
+        failed,
+        queued: false
+      });
     }
-
-    return res.json({
-      success: true,
-      sent,
-      failed,
-    });
-
   } catch (err) {
     console.error("❌ WHATSAPP ROUTE ERROR:", err);
     return res.status(500).json({
