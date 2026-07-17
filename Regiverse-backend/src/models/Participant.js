@@ -318,6 +318,5 @@ const Participant =
   mongoose.models.Participant ||
   mongoose.model("Participant", participantSchema);
 
-export  default router;
 export default Participant;
 
