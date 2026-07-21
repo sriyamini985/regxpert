@@ -566,25 +566,21 @@ export default function PosterManagement() {
                           <span className="text-slate-350 italic font-medium">Uncategorized</span>
                         )}
                       </td>
-                      <td className="py-4 px-6 flex gap-2 items-center min-h-[4.5rem]">
-                        <a
-                          href={poster.imageUrl.startsWith("/uploads/") ? `${import.meta.env.VITE_API_URL}${poster.imageUrl}` : poster.imageUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-all"
-                          title="View Large Image / PDF"
-                        >
-                          <FileText size={14} />
-                        </a>
-                        <a
-                          href={poster.thumbnailUrl.startsWith("/uploads/") ? `${import.meta.env.VITE_API_URL}${poster.thumbnailUrl}` : poster.thumbnailUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-all"
-                          title="View Thumbnail"
-                        >
-                          <ImageIcon size={14} />
-                        </a>
+                      <td className="py-4 px-6 min-h-[4.5rem] flex items-center">
+                        {poster.imageUrl ? (
+                          <a
+                            href={poster.imageUrl.startsWith("/uploads/") ? `${import.meta.env.VITE_API_URL}${poster.imageUrl}` : poster.imageUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 font-extrabold rounded-lg transition-all text-xs border border-blue-100/80 shadow-sm flex items-center gap-1"
+                            title="View Presentation File"
+                          >
+                            <FileText size={13} />
+                            View
+                          </a>
+                        ) : (
+                          <span className="text-slate-350 italic font-medium">No Media</span>
+                        )}
                       </td>
                       <td className="py-4 px-6 text-right">
                         <div className="flex justify-end gap-1.5">
