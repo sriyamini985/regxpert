@@ -13,14 +13,17 @@ const PrivateRoute = ({ children, role }: PrivateRouteProps) => {
 
   if (!user) {
     // Redirect to the appropriate login page based on the intended role
-    if (role === "admin") return <Navigate to="/admin-login" />;
-    if (role === "client") return <Navigate to="/client-login" />;
+    if (role === "admin") return <Navigate to="/admin-login" replace />;
+    if (role === "client") return <Navigate to="/client-login" replace />;
     // If it's a regular user, you might want to redirect to a general login or conference page
-    return <Navigate to="/" />; 
+    return <Navigate to="/" replace />; 
   }
 
   if (user.role !== role) {
-    return <Navigate to="/not-found" />;
+    // If user is logged in but doesn't have the required role, redirect them to the correct login route to re-authenticate
+    if (role === "admin") return <Navigate to="/admin-login" replace />;
+    if (role === "client") return <Navigate to="/client-login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
