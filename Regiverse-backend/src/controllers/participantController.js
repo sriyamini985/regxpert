@@ -88,7 +88,9 @@ const findParticipantByIdentifier = async (identifier, conferenceIdOrSlug) => {
   }
   if (cleanRaw) {
     exactConditions.push({ regId: cleanRaw });
+    exactConditions.push({ regId: safeIdentifier });
     exactConditions.push({ qrCode: cleanRaw });
+    exactConditions.push({ qrCode: safeIdentifier });
     exactConditions.push({ phone: cleanRaw });
     exactConditions.push({ email: cleanRaw });
   }
@@ -236,9 +238,18 @@ const findAllParticipantsByIdentifier = async (identifier, conferenceIdOrSlug) =
   if (mongoose.Types.ObjectId.isValid(safeIdentifier)) conditions.push({ _id: safeIdentifier });
   if (cleanRaw) {
     conditions.push({ regId: cleanRaw });
+    conditions.push({ regId: safeIdentifier });
     conditions.push({ qrCode: cleanRaw });
+    conditions.push({ qrCode: safeIdentifier });
     conditions.push({ phone: cleanRaw });
     conditions.push({ email: cleanRaw });
+    
+    // Fallback regex matching for regId/qrCode to ensure prefix-based identifiers are resolved
+    const escapedCleanRaw = cleanRaw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escapedSafe = safeIdentifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    conditions.push({ regId: { $regex: new RegExp(`^\\s*${escapedSafe}\\s*$`, "i") } });
+    conditions.push({ regId: { $regex: new RegExp(`^\\s*${escapedCleanRaw}\\s*$`, "i") } });
+    conditions.push({ regId: { $regex: new RegExp(escapedCleanRaw + "\\s*$", "i") } });
   }
 
   if (conditions.length === 0) return [];
