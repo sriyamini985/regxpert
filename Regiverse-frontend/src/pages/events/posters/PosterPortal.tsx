@@ -688,13 +688,6 @@ export default function PosterPortal() {
           } bg-slate-950/40`}
           style={{ overflow: "hidden" }}
         >
-          {/* Zoom Instruction Overlay */}
-          {zoomScale === 1 && (
-            <div className="absolute top-4 left-4 bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-400 tracking-wider uppercase pointer-events-none z-10">
-              💡 Drag to pan after Zooming
-            </div>
-          )}
-
           {selectedPoster.imageUrl.toLowerCase().endsWith(".pdf") ? (
             <iframe
               src={selectedPoster.imageUrl.startsWith("/uploads/") 
@@ -709,7 +702,7 @@ export default function PosterPortal() {
             />
           ) : (
             <div
-              className="max-h-[60vh] md:max-h-[64vh] max-w-[95%] transition-transform duration-75 ease-out select-none"
+              className="max-h-[85vh] md:max-h-[88vh] max-w-[95%] transition-transform duration-75 ease-out select-none"
               style={{
                 transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
                 transition: isDragging.current ? "none" : "transform 0.15s ease-out"
@@ -718,56 +711,12 @@ export default function PosterPortal() {
               <CachedImage
                 src={selectedPoster.imageUrl}
                 alt={selectedPoster.title}
-                className="max-h-[60vh] md:max-h-[64vh] object-contain rounded-lg shadow-2xl"
+                className="max-h-[85vh] md:max-h-[88vh] object-contain rounded-lg shadow-2xl"
                 draggable={false}
               />
             </div>
           )}
         </main>
-
-        {/* Footer Details Card */}
-        <section className="bg-slate-950 border-t border-slate-850 p-6 z-20">
-          <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between gap-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="px-3 py-1 bg-blue-600 text-white text-xs font-black rounded-lg">
-                  {selectedPoster.posterNumber}
-                </span>
-                {selectedPoster.category && (
-                  <span className="px-3 py-1 bg-slate-800 text-slate-300 text-xs font-bold rounded-lg">
-                    {selectedPoster.category}
-                  </span>
-                )}
-              </div>
-              <h2 className="text-xl font-extrabold tracking-tight text-white mb-2 leading-snug">
-                {selectedPoster.title}
-              </h2>
-              <p className="text-sm font-bold text-slate-300">
-                🎙️ Presenter: <span className="text-blue-400 font-extrabold">{selectedPoster.presenterName}</span>
-              </p>
-              {selectedPoster.coPresenters && (
-                <p className="text-xs font-semibold text-slate-400 mt-1">
-                  Co-Presenter(s): {selectedPoster.coPresenters}
-                </p>
-              )}
-            </div>
-
-            <div className="md:w-72 flex flex-col justify-end text-left md:text-right border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-6 shrink-0">
-              {selectedPoster.institution && (
-                <div className="mb-2">
-                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider">Institution</p>
-                  <p className="text-xs font-bold text-slate-300 leading-normal">{selectedPoster.institution}</p>
-                </div>
-              )}
-              {selectedPoster.department && (
-                <div>
-                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider">Department</p>
-                  <p className="text-xs font-bold text-slate-300 leading-normal">{selectedPoster.department}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
 
         {/* Floating navigation and control elements */}
         {/* Floating Left Slide Button */}
