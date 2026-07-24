@@ -709,7 +709,7 @@ export default function PosterPortal() {
             />
           ) : (
             <div
-              className="max-h-[90%] max-w-[95%] transition-transform duration-75 ease-out select-none"
+              className="max-h-[60vh] md:max-h-[64vh] max-w-[95%] transition-transform duration-75 ease-out select-none"
               style={{
                 transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
                 transition: isDragging.current ? "none" : "transform 0.15s ease-out"
@@ -718,7 +718,7 @@ export default function PosterPortal() {
               <CachedImage
                 src={selectedPoster.imageUrl}
                 alt={selectedPoster.title}
-                className="max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                className="max-h-[60vh] md:max-h-[64vh] object-contain rounded-lg shadow-2xl"
                 draggable={false}
               />
             </div>
