@@ -12,7 +12,9 @@ import {
   LogOut, 
   Grid, 
   FileText,
-  Bookmark
+  Bookmark,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 // --- Cached Image Component for Offline Mode ---
@@ -370,9 +372,59 @@ export default function PosterPortal() {
     }
   };
 
+  // Slide to next/prev poster in filtered list
+  const handleNextPoster = () => {
+    if (!selectedPoster) return;
+    const currentIndex = filteredPosters.findIndex(p => p._id === selectedPoster._id);
+    if (currentIndex !== -1 && currentIndex < filteredPosters.length - 1) {
+      const nextPoster = filteredPosters[currentIndex + 1];
+      setSelectedPoster(nextPoster);
+      setZoomScale(1);
+      setPanOffset({ x: 0, y: 0 });
+      navigate(`?poster=${nextPoster.posterNumber}`, { replace: true });
+    }
+  };
+
+  const handlePrevPoster = () => {
+    if (!selectedPoster) return;
+    const currentIndex = filteredPosters.findIndex(p => p._id === selectedPoster._id);
+    if (currentIndex > 0) {
+      const prevPoster = filteredPosters[currentIndex - 1];
+      setSelectedPoster(prevPoster);
+      setZoomScale(1);
+      setPanOffset({ x: 0, y: 0 });
+      navigate(`?poster=${prevPoster.posterNumber}`, { replace: true });
+    }
+  };
+
   const handleTouchEnd = () => {
     isDragging.current = false;
   };
+
+  // Keyboard Navigation for Selected Poster slider
+  useEffect(() => {
+    if (!selectedPoster) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") {
+        return;
+      }
+      
+      if (e.key === "ArrowRight") {
+        handleNextPoster();
+      } else if (e.key === "ArrowLeft") {
+        handlePrevPoster();
+      } else if (e.key === "Escape") {
+        setSelectedPoster(null);
+        navigate(window.location.pathname, { replace: true });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedPoster, filteredPosters]);
 
   // Share functionality
   const handleShare = async () => {
@@ -525,8 +577,9 @@ export default function PosterPortal() {
 
   // --- VIEW 2: POSTER DETAILS FULL-SCREEN VIEW ---
   if (selectedPoster) {
+    const currentIndex = filteredPosters.findIndex(p => p._id === selectedPoster._id);
     return (
-      <div className="min-h-screen bg-slate-900 text-white font-sans flex flex-col justify-between overflow-hidden">
+      <div className="min-h-screen bg-slate-900 text-white font-sans flex flex-col justify-between overflow-hidden relative">
         {/* Top Header Controls */}
         <header className="p-4 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between z-20 backdrop-blur-md">
           <button
@@ -683,6 +736,29 @@ export default function PosterPortal() {
             </div>
           </div>
         </section>
+
+        {/* Floating navigation and control elements */}
+        {/* Floating Left Slide Button */}
+        {currentIndex > 0 && (
+          <button
+            onClick={handlePrevPoster}
+            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-30 p-3 md:p-5 bg-slate-950/80 hover:bg-slate-900 border border-slate-800/80 text-white rounded-full transition-all active:scale-95 shadow-2xl group focus:outline-none focus:ring-2 focus:ring-blue-500"
+            title="Previous Poster (Left Arrow Key)"
+          >
+            <ChevronLeft size={28} className="group-hover:-translate-x-0.5 transition-transform" />
+          </button>
+        )}
+
+        {/* Floating Right Slide Button */}
+        {currentIndex < filteredPosters.length - 1 && (
+          <button
+            onClick={handleNextPoster}
+            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 p-3 md:p-5 bg-slate-950/80 hover:bg-slate-900 border border-slate-800/80 text-white rounded-full transition-all active:scale-95 shadow-2xl group focus:outline-none focus:ring-2 focus:ring-blue-500"
+            title="Next Poster (Right Arrow Key)"
+          >
+            <ChevronRight size={28} className="group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        )}
       </div>
     );
   }
