@@ -372,12 +372,15 @@ export default function PosterPortal() {
     }
   };
 
-  // Slide to next/prev poster in filtered list
+  // Slide list is filtered by category if selected, but ignores search text query to allow sliding
+  const slidePosters = posters.filter(p => !selectedCategory || p.category === selectedCategory);
+
+  // Slide to next/prev poster in slide list
   const handleNextPoster = () => {
     if (!selectedPoster) return;
-    const currentIndex = filteredPosters.findIndex(p => p._id === selectedPoster._id);
-    if (currentIndex !== -1 && currentIndex < filteredPosters.length - 1) {
-      const nextPoster = filteredPosters[currentIndex + 1];
+    const currentIndex = slidePosters.findIndex(p => p._id === selectedPoster._id);
+    if (currentIndex !== -1 && currentIndex < slidePosters.length - 1) {
+      const nextPoster = slidePosters[currentIndex + 1];
       setSelectedPoster(nextPoster);
       setZoomScale(1);
       setPanOffset({ x: 0, y: 0 });
@@ -387,9 +390,9 @@ export default function PosterPortal() {
 
   const handlePrevPoster = () => {
     if (!selectedPoster) return;
-    const currentIndex = filteredPosters.findIndex(p => p._id === selectedPoster._id);
+    const currentIndex = slidePosters.findIndex(p => p._id === selectedPoster._id);
     if (currentIndex > 0) {
-      const prevPoster = filteredPosters[currentIndex - 1];
+      const prevPoster = slidePosters[currentIndex - 1];
       setSelectedPoster(prevPoster);
       setZoomScale(1);
       setPanOffset({ x: 0, y: 0 });
@@ -424,7 +427,7 @@ export default function PosterPortal() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedPoster, filteredPosters]);
+  }, [selectedPoster, slidePosters]);
 
   // Share functionality
   const handleShare = async () => {
@@ -577,7 +580,7 @@ export default function PosterPortal() {
 
   // --- VIEW 2: POSTER DETAILS FULL-SCREEN VIEW ---
   if (selectedPoster) {
-    const currentIndex = filteredPosters.findIndex(p => p._id === selectedPoster._id);
+    const currentIndex = slidePosters.findIndex(p => p._id === selectedPoster._id);
     return (
       <div className="min-h-screen bg-slate-900 text-white font-sans flex flex-col justify-between overflow-hidden relative">
         {/* Top Header Controls */}
@@ -750,7 +753,7 @@ export default function PosterPortal() {
         )}
 
         {/* Floating Right Slide Button */}
-        {currentIndex < filteredPosters.length - 1 && (
+        {currentIndex < slidePosters.length - 1 && (
           <button
             onClick={handleNextPoster}
             className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 p-3 md:p-5 bg-slate-950/80 hover:bg-slate-900 border border-slate-800/80 text-white rounded-full transition-all active:scale-95 shadow-2xl group focus:outline-none focus:ring-2 focus:ring-blue-500"
