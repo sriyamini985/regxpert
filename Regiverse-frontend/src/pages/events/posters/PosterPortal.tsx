@@ -142,6 +142,35 @@ export default function PosterPortal() {
   // Check auth on mount
   useEffect(() => {
     if (!slug) return;
+
+    // Admin session bypass verification check
+    const savedUserStr = localStorage.getItem("user");
+    if (savedUserStr) {
+      try {
+        const savedUser = JSON.parse(savedUserStr);
+        if (savedUser && savedUser.role === "admin") {
+          // Fetch conference list via public route to resolve slug -> _id
+          fetch(`${import.meta.env.VITE_API_URL}/api/conferences`)
+            .then(res => res.json())
+            .then(data => {
+              if (Array.isArray(data)) {
+                const found = data.find(c => c.slug === slug || c._id === slug);
+                if (found) {
+                  setConference(found);
+                  setAttendee({ name: savedUser.name || "Administrator", isStaff: true, isBypassAdmin: true });
+                }
+              }
+            })
+            .catch(err => {
+              console.error("Admin session bypass failed:", err);
+            });
+          return;
+        }
+      } catch (e) {
+        // Fallback to normal flow
+      }
+    }
+
     const session = localStorage.getItem(`verified_attendee_${slug}`);
     if (session) {
       try {
