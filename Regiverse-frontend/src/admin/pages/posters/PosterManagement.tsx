@@ -21,6 +21,7 @@ export default function PosterManagement() {
 
   // State management
   const [posters, setPosters] = useState<any[]>([]);
+  const [conferenceSlug, setConferenceSlug] = useState("");
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
@@ -65,7 +66,27 @@ export default function PosterManagement() {
   // Load posters on mount
   useEffect(() => {
     fetchPosters();
+    fetchConferenceDetails();
   }, [conferenceId]);
+
+  const fetchConferenceDetails = async () => {
+    if (!conferenceId) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/conferences/${conferenceId}`, {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.slug) {
+          setConferenceSlug(data.slug);
+        }
+      }
+    } catch (err) {
+      // Ignore
+    }
+  };
 
   const fetchPosters = async () => {
     if (!conferenceId) return;
@@ -569,7 +590,7 @@ export default function PosterManagement() {
                       <td className="py-4 px-6 min-h-[4.5rem] flex items-center">
                         {poster.imageUrl ? (
                           <a
-                            href={poster.imageUrl.startsWith("/uploads/") ? `${import.meta.env.VITE_API_URL}${poster.imageUrl}` : poster.imageUrl}
+                            href={`/events/${conferenceSlug || conferenceId}/posters?poster=${poster.posterNumber}`}
                             target="_blank"
                             rel="noreferrer"
                             className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 font-extrabold rounded-lg transition-all text-xs border border-blue-100/80 shadow-sm flex items-center gap-1"

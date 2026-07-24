@@ -76,6 +76,20 @@ router.post("/", requireAuth, requireRole(["admin"]), async (req, res) => {
   }
 });
 
+// GET SINGLE CONFERENCE DETAILS BY ID
+router.get("/:id", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const conference = await Conference.findById(id);
+    if (!conference) {
+      return res.status(404).json({ error: "Conference workspace profile not found" });
+    }
+    res.json(conference);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 4. TOGGLE WORKSPACE ACTIVE STATUS
 router.patch("/:id/activate", requireAuth, requireRole(["admin"]), async (req, res) => {
   try {
