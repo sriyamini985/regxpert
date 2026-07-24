@@ -30,8 +30,8 @@ const connectDB = async (retries = 5) => {
       
       // Seed/Ensure default accounts exist with fixed credentials
       console.log("⏳ Checking and ensuring default roles exist...");
-      const adminPasswordHashed = await bcryptjs.hash("Regxperts@2026", 10);
-      const staffPasswordHashed = await bcryptjs.hash("staff@2026", 10);
+      const adminPasswordHashed = await bcryptjs.hash("cmc@2026", 10);
+      const staffPasswordHashed = await bcryptjs.hash("regxpertstaff@2026", 10);
       const clientPasswordHashed = await bcryptjs.hash("123456", 10);
 
       // Upsert admin user
