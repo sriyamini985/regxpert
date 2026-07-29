@@ -1010,17 +1010,17 @@ const LandingPage: React.FC = () => {
 
                 {/* Headline */}
                 <h1 className="rx-hero-title" style={{
-                  fontSize: "clamp(38px, 5.2vw, 68px)", fontWeight: 900, lineHeight: 1.03,
+                  fontSize: "clamp(32px, 5.2vw, 68px)", fontWeight: 900, lineHeight: 1.03,
                   letterSpacing: "-2.5px", color: "#fff", marginBottom: 24,
                   animation: "rx-slidein 0.9s cubic-bezier(.16,1,.3,1) forwards",
                   opacity: 0, animationDelay: "0.2s",
                 }}>
-                  Conference<br className="rx-desktop-br" />
+                  Conference <br className="rx-desktop-br" />
                   <span style={{
                     background: "linear-gradient(135deg, #60a5fa 0%, #818cf8 48%, #a78bfa 100%)",
                     WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
-                  }}>management,</span>
+                  }}>management,</span>{" "}
                   <br className="rx-desktop-br" />redefined.
                 </h1>
 
@@ -1803,6 +1803,10 @@ const LandingPage: React.FC = () => {
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
+          #rx-root *, #rx-root *::before, #rx-root *::after {
+            box-sizing: border-box;
+          }
+
           @keyframes rx-fadein {
             from { opacity: 0; }
             to   { opacity: 1; }
@@ -2210,12 +2214,13 @@ const LandingPage: React.FC = () => {
             align-items: flex-start !important;
             height: calc(600px * var(--illus-scale, 1)) !important;
             width: 100% !important;
-            overflow: visible !important;
+            overflow: hidden !important;
           }
           @media (min-width: 901px) {
             .rx-hero-illus {
               height: auto !important;
               align-items: center !important;
+              overflow: visible !important;
             }
           }
 
