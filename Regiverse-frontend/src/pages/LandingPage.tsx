@@ -280,8 +280,8 @@ const PAST_EVENTS = [
     color: "#ea580c",
   },
   {
-    name: "Dia Dhi Telusu Ga",
-    org: "Diabetes Awareness & Education Programme",
+    name: "DIA: Safety 360",
+    org: "DIA Conference on Clinical and Post-Market Safety",
     location: "AIG Hospitals, Hyderabad",
     date: "Coming Soon",
     participants: 0,
