@@ -459,7 +459,7 @@ const MiniBarChart: React.FC<{ color?: string }> = ({ color = "#3b82f6" }) => {
 // HERO ILLUSTRATION
 // ─────────────────────────────────────────────
 const HeroIllustration: React.FC = () => (
-  <div style={{ position: "relative", width: 540, height: 600, margin: "0 auto" }}>
+  <div className="rx-illus-inner" style={{ position: "relative", width: 540, height: 600, margin: "0 auto" }}>
 
     {/* ── Deep blue radial glow behind dashboard ── */}
     <div style={{
@@ -897,35 +897,38 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/* Mobile burger */}
-            <button className="rx-burger" onClick={() => setMenuOpen(!menuOpen)} style={{ display: "none", background: "none", border: "none", cursor: "pointer", padding: 6 }}>
-              <svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round">
+            <button className="rx-burger" onClick={() => setMenuOpen(!menuOpen)} style={{ display: "none", background: "none", border: "none", cursor: "pointer", width: 44, height: 44, alignItems: "center", justifyContent: "center", padding: 0 }}>
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.2" strokeLinecap="round">
                 {menuOpen ? (<><line x1="4" y1="4" x2="18" y2="18"/><line x1="18" y1="4" x2="4" y2="18"/></>) : (<><line x1="3" y1="6" x2="19" y2="6"/><line x1="3" y1="11" x2="19" y2="11"/><line x1="3" y1="16" x2="19" y2="16"/></>)}
               </svg>
             </button>
           </div>
 
           {/* Mobile menu */}
-          {menuOpen && (
-            <div style={{
-              maxWidth: 1160, margin: "8px auto 0",
+          <div 
+            className={`rx-mobile-menu ${menuOpen ? "open" : ""}`}
+            style={{
+              maxWidth: 1160, margin: "0 auto",
               background: "rgba(4,10,28,0.95)",
               backdropFilter: "blur(20px)",
               border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 12, padding: "12px 16px 16px"
-            }}>
-              {[["Features", "features"], ["Why Us", "why"], ["Events", "events"]].map(([l, id]) => (
-                <button key={id} onClick={() => scrollTo(id)} style={{
-                  display: "block", width: "100%", textAlign: "left", background: "none", border: "none",
-                  fontSize: 15, fontWeight: 500, color: "rgba(255,255,255,0.75)", padding: "11px 4px", cursor: "pointer",
-                  borderBottom: "1px solid rgba(255,255,255,0.06)",
-                }}>{l}</button>
-              ))}
-              <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-                <button onClick={() => navigate("/admin-login")} style={{ flex: 1, padding: "10px", fontSize: 14, fontWeight: 600, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, cursor: "pointer", color: "rgba(255,255,255,0.8)" }}>Log in</button>
-                <button onClick={requestDemo} style={{ flex: 1, padding: "10px", fontSize: 14, fontWeight: 600, background: "#3b82f6", border: "none", borderRadius: 8, cursor: "pointer", color: "#fff" }}>Request Demo</button>
-              </div>
+              borderRadius: 12, padding: "12px 16px 16px",
+              overflow: "hidden",
+              transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+          >
+            {[["Features", "features"], ["Why Us", "why"], ["Events", "events"]].map(([l, id]) => (
+              <button key={id} onClick={() => scrollTo(id)} style={{
+                display: "block", width: "100%", textAlign: "left", background: "none", border: "none",
+                fontSize: 15, fontWeight: 500, color: "rgba(255,255,255,0.75)", padding: "11px 4px", cursor: "pointer",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              }}>{l}</button>
+            ))}
+            <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+              <button onClick={() => navigate("/admin-login")} style={{ flex: 1, padding: "10px", fontSize: 14, fontWeight: 600, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, cursor: "pointer", color: "rgba(255,255,255,0.8)" }}>Log in</button>
+              <button onClick={requestDemo} style={{ flex: 1, padding: "10px", fontSize: 14, fontWeight: 600, background: "#3b82f6", border: "none", borderRadius: 8, cursor: "pointer", color: "#fff" }}>Request Demo</button>
             </div>
-          )}
+          </div>
         </nav>
 
         {/* ══════════ HERO ══════════ */}
@@ -1714,7 +1717,7 @@ const LandingPage: React.FC = () => {
               <p style={{ fontSize: 16.5, color: "rgba(255,255,255,0.42)", lineHeight: 1.75, marginBottom: 44, maxWidth: 520, margin: "0 auto 44px" }}>
                 Request a free demo and see how RegXpert transforms event management from registration to the final report.
               </p>
-              <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+              <div className="rx-cta-buttons" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
                 <button onClick={requestDemo} id="cta-demo-btn" style={{
                   background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
                   color: "#fff", border: "1px solid rgba(255,255,255,0.12)",
@@ -2071,12 +2074,45 @@ const LandingPage: React.FC = () => {
             }
           }
 
+          :root {
+            --illus-scale: 1;
+          }
+          @media (max-width: 1200px) {
+            :root {
+              --illus-scale: 0.85;
+            }
+          }
+          @media (max-width: 1024px) {
+            :root {
+              --illus-scale: 0.72;
+            }
+          }
+          @media (max-width: 900px) {
+            :root {
+              --illus-scale: 0.76;
+            }
+          }
+          @media (max-width: 600px) {
+            :root {
+              --illus-scale: 0.65;
+            }
+          }
+          @media (max-width: 480px) {
+            :root {
+              --illus-scale: 0.54;
+            }
+          }
+          @media (max-width: 360px) {
+            :root {
+              --illus-scale: 0.44;
+            }
+          }
+
           /* Responsive General */
           @media (max-width: 900px) {
             .rx-nav-links  { display: none !important; }
             .rx-burger     { display: flex !important; }
             .rx-hero-grid  { grid-template-columns: 1fr !important; }
-            .rx-hero-illus { display: none !important; }
             .rx-events-grid { grid-template-columns: 1fr !important; }
 
             /* Center hero content on mobile/tablet */
@@ -2132,6 +2168,10 @@ const LandingPage: React.FC = () => {
             .rx-lifecycle-card {
               padding: 24px 20px !important;
             }
+            .rx-illus-inner *, .rx-illus-inner {
+              animation: none !important;
+              transition: none !important;
+            }
           }
 
           @media (max-width: 480px) {
@@ -2142,6 +2182,62 @@ const LandingPage: React.FC = () => {
             .rx-stat-card {
               padding: 14px 8px 12px !important;
             }
+            .rx-hero-ctas, .rx-cta-buttons {
+              flex-direction: column !important;
+              align-items: stretch !important;
+              gap: 12px !important;
+            }
+            .rx-hero-ctas button, .rx-cta-buttons button {
+              width: 100% !important;
+              justify-content: center !important;
+            }
+            .rx-illus-container {
+              height: 200px !important;
+            }
+          }
+
+          /* Scale Hero Illustration */
+          .rx-illus-inner {
+            transform-origin: top center;
+            transform: scale(var(--illus-scale, 1));
+            width: 540px;
+            height: 600px;
+            transition: transform 0.3s ease;
+          }
+          .rx-hero-illus {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: flex-start !important;
+            height: calc(600px * var(--illus-scale, 1)) !important;
+            width: 100% !important;
+            overflow: visible !important;
+          }
+          @media (min-width: 901px) {
+            .rx-hero-illus {
+              height: auto !important;
+              align-items: center !important;
+            }
+          }
+
+          /* Hamburger menu toggle and transition rules */
+          .rx-burger {
+            display: none;
+          }
+          .rx-mobile-menu {
+            max-height: 0px;
+            opacity: 0;
+            pointer-events: none;
+            padding: 0px 16px !important;
+            border-width: 0px !important;
+            margin-top: 0px !important;
+          }
+          .rx-mobile-menu.open {
+            max-height: 320px;
+            opacity: 1;
+            pointer-events: auto;
+            padding: 12px 16px 16px !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            margin-top: 8px !important;
           }
         `}</style>
       </div>
