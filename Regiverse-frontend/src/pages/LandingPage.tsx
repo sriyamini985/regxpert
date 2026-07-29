@@ -985,7 +985,7 @@ const LandingPage: React.FC = () => {
               {/* LEFT — text */}
               <div>
                 {/* Pill badge */}
-                <div style={{
+                <div className="rx-hero-pill" style={{
                   display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 32,
                   background: "rgba(59,130,246,0.1)",
                   border: "1px solid rgba(59,130,246,0.28)",
@@ -1006,23 +1006,23 @@ const LandingPage: React.FC = () => {
                 </div>
 
                 {/* Headline */}
-                <h1 style={{
+                <h1 className="rx-hero-title" style={{
                   fontSize: "clamp(38px, 5.2vw, 68px)", fontWeight: 900, lineHeight: 1.03,
                   letterSpacing: "-2.5px", color: "#fff", marginBottom: 24,
                   animation: "rx-slidein 0.9s cubic-bezier(.16,1,.3,1) forwards",
                   opacity: 0, animationDelay: "0.2s",
                 }}>
-                  Conference<br />
+                  Conference<br className="rx-desktop-br" />
                   <span style={{
                     background: "linear-gradient(135deg, #60a5fa 0%, #818cf8 48%, #a78bfa 100%)",
                     WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
                   }}>management,</span>
-                  <br />redefined.
+                  <br className="rx-desktop-br" />redefined.
                 </h1>
 
                 {/* Description */}
-                <p style={{
+                <p className="rx-hero-desc" style={{
                   fontSize: "clamp(15px, 1.6vw, 17.5px)",
                   color: "rgba(255,255,255,0.48)", lineHeight: 1.8,
                   maxWidth: 430, marginBottom: 38,
@@ -1033,7 +1033,7 @@ const LandingPage: React.FC = () => {
                 </p>
 
                 {/* CTAs */}
-                <div style={{
+                <div className="rx-hero-ctas" style={{
                   display: "flex", gap: 12, flexWrap: "wrap",
                   animation: "rx-fadein 1s ease forwards", opacity: 0, animationDelay: "0.55s",
                 }}>
@@ -1063,7 +1063,7 @@ const LandingPage: React.FC = () => {
                 </div>
 
                 {/* Stats strip — glassmorphism cards */}
-                <div ref={statsRef} style={{
+                <div ref={statsRef} className="rx-hero-stats-grid" style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(4, 1fr)",
                   gap: 0,
@@ -2078,6 +2078,27 @@ const LandingPage: React.FC = () => {
             .rx-hero-grid  { grid-template-columns: 1fr !important; }
             .rx-hero-illus { display: none !important; }
             .rx-events-grid { grid-template-columns: 1fr !important; }
+
+            /* Center hero content on mobile/tablet */
+            .rx-hero-pill {
+              margin: 0 auto 32px !important;
+            }
+            .rx-hero-title {
+              text-align: center !important;
+            }
+            .rx-hero-desc {
+              text-align: center !important;
+              margin: 0 auto 38px !important;
+            }
+            .rx-hero-ctas {
+              justify-content: center !important;
+            }
+            .rx-hero-stats-grid {
+              margin: 52px auto 0 !important;
+            }
+            .rx-desktop-br {
+              display: none !important;
+            }
           }
           @media (max-width: 1024px) {
             .rx-events-grid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -2087,6 +2108,40 @@ const LandingPage: React.FC = () => {
           }
           @media (min-width: 901px) {
             .rx-burger { display: none !important; }
+          }
+
+          /* Responsive paddings and layouts */
+          @media (max-width: 767px) {
+            section {
+              padding-top: 80px !important;
+              padding-bottom: 80px !important;
+              padding-left: 20px !important;
+              padding-right: 20px !important;
+            }
+            #hero {
+              padding-left: 0px !important;
+              padding-right: 0px !important;
+            }
+            #hero > div {
+              padding-left: 20px !important;
+              padding-right: 20px !important;
+            }
+            .rx-bento-card-large {
+              padding: 24px !important;
+            }
+            .rx-lifecycle-card {
+              padding: 24px 20px !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .rx-hero-stats-grid {
+              grid-template-columns: repeat(2, 1fr) !important;
+              max-width: 100% !important;
+            }
+            .rx-stat-card {
+              padding: 14px 8px 12px !important;
+            }
           }
         `}</style>
       </div>
