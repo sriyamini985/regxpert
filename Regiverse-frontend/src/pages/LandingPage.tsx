@@ -808,7 +808,7 @@ const LandingPage: React.FC = () => {
   const navScrolled = scrollY > 40;
 
   const requestDemo = () => {
-    window.location.href = "mailto:sriyamini659@gmail.com?subject=RegXpert%20Demo%20Request&body=Hi%2C%20I%27d%20like%20to%20schedule%20a%20demo%20of%20RegXpert.";
+    window.location.href = "mailto:harshachinnu637@gmail.com?subject=RegXpert%20Demo%20Request&body=Hi%2C%20I%27d%20like%20to%20schedule%20a%20demo%20of%20RegXpert.";
   };
 
   return (
