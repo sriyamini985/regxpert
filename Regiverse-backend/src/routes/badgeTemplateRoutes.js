@@ -15,24 +15,49 @@ router.use(requireAuth);
 // Use memory storage - we stream directly to Cloudinary
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-// Helper: upload buffer to Cloudinary and return secure URL
-const uploadToCloudinary = (buffer, originalname) => {
-  return new Promise((resolve, reject) => {
-    const ext = path.extname(originalname).replace(".", "");
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: "badge-templates",
-        resource_type: "image",
-        format: ext || "jpg",
-        quality: "auto:best",
-      },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result.secure_url);
-      }
-    );
-    uploadStream.end(buffer);
-  });
+// Helper: upload buffer to Cloudinary or save locally as fallback
+const saveTemplateBackground = async (file) => {
+  if (!file) return "";
+
+  // Try Cloudinary if config is present
+  if (process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_CLOUD_NAME) {
+    try {
+      return await new Promise((resolve, reject) => {
+        const ext = path.extname(file.originalname).replace(".", "");
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: "badge-templates",
+            resource_type: "image",
+            format: ext || "jpg",
+            quality: "auto:best",
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result.secure_url);
+          }
+        );
+        uploadStream.end(file.buffer);
+      });
+    } catch (err) {
+      console.warn("Cloudinary badge template upload failed, falling back to local storage:", err.message);
+    }
+  }
+
+  // Fallback: Local storage
+  try {
+    const uploadsDir = path.resolve("./uploads/badge-templates");
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    const ext = path.extname(file.originalname) || ".jpg";
+    const filename = `${Date.now()}-${Math.floor(Math.random() * 1000000)}${ext}`;
+    const filepath = path.join(uploadsDir, filename);
+    fs.writeFileSync(filepath, file.buffer);
+    return `/uploads/badge-templates/${filename}`;
+  } catch (err) {
+    console.error("Local template file save failed:", err);
+    throw new Error("Failed to save template background image.");
+  }
 };
 
 // 1. Get all templates for a conference (supporting slug, ID, or name)
@@ -89,8 +114,8 @@ router.post("/", upload.single("backgroundImageFile"), async (req, res) => {
 
     let backgroundImage = req.body.backgroundImage || "";
     if (req.file) {
-      // Upload to Cloudinary for persistent storage
-      backgroundImage = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+      // Upload to Cloudinary or save locally as fallback
+      backgroundImage = await saveTemplateBackground(req.file);
     }
 
     const templateData = {

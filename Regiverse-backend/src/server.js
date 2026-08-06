@@ -85,7 +85,7 @@ app.use("/api/posters", posterRoutes);
 
 // Ensure directories exist on startup
 try {
-  const dirs = ["./uploads", "./uploads/posters", "./uploads/thumbnails"];
+  const dirs = ["./uploads", "./uploads/posters", "./uploads/thumbnails", "./uploads/badge-templates"];
   dirs.forEach(d => {
     const p = path.resolve(d);
     if (!fs.existsSync(p)) {
