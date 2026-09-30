@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
+import { API_URL } from "../../../config/api";
 
 // --- Cached Image Component for Offline Mode ---
 interface CachedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -115,6 +116,7 @@ export default function PosterPortal() {
   const [zoomScale, setZoomScale] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDraggingState, setIsDraggingState] = useState(false);
 
   // Offline status tracking
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -124,6 +126,10 @@ export default function PosterPortal() {
   const isDragging = useRef(false);
   const startDrag = useRef({ x: 0, y: 0 });
   const pinchStartDist = useRef(0);
+  const zoomScaleRef = useRef(zoomScale);
+  zoomScaleRef.current = zoomScale;
+  const panOffsetRef = useRef(panOffset);
+  panOffsetRef.current = panOffset;
 
   // Listen to network changes
   useEffect(() => {
@@ -148,16 +154,16 @@ export default function PosterPortal() {
     if (savedUserStr) {
       try {
         const savedUser = JSON.parse(savedUserStr);
-        if (savedUser && savedUser.role === "admin") {
+        if (savedUser && (savedUser.role === "admin" || savedUser.role === "client")) {
           // Fetch conference list via public route to resolve slug -> _id
-          fetch(`${import.meta.env.VITE_API_URL}/api/conferences`)
+          fetch(`${API_URL}/api/conferences`)
             .then(res => res.json())
             .then(data => {
               if (Array.isArray(data)) {
                 const found = data.find(c => c.slug === slug || c._id === slug);
                 if (found) {
                   setConference(found);
-                  setAttendee({ name: savedUser.name || "Administrator", isStaff: true, isBypassAdmin: true });
+                  setAttendee({ name: savedUser.name || (savedUser.role === "admin" ? "Administrator" : "Organizer"), isStaff: true, isBypassAdmin: true });
                 }
               }
             })
@@ -224,7 +230,7 @@ export default function PosterPortal() {
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posters/list/${conference._id}`);
+      const res = await fetch(`${API_URL}/api/posters/list/${conference._id}`);
       if (!res.ok) throw new Error("Failed to fetch posters");
       const list = await res.json();
       
@@ -238,6 +244,13 @@ export default function PosterPortal() {
       preCachePosterMedia(list);
     } catch (err) {
       console.error("Poster synchronization failed:", err);
+      // If error occurs, check if we have offline cache available
+      const cached = localStorage.getItem(`posters_cache_${slug}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        setPosters(parsed);
+        extractCategories(parsed);
+      }
     } finally {
       setLoadingPosters(false);
     }
@@ -249,7 +262,6 @@ export default function PosterPortal() {
       const cache = await caches.open("posters-media-cache");
       for (const p of posterList) {
         if (p.thumbnailUrl) {
-          // Add silently, don't break if single item fails
           cache.add(p.thumbnailUrl).catch(() => {});
         }
         if (p.imageUrl) {
@@ -261,6 +273,7 @@ export default function PosterPortal() {
     }
   };
 
+  // --- Attendee Authentication Handler ---
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier.trim() || !slug) return;
@@ -282,7 +295,7 @@ export default function PosterPortal() {
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posters/verify`, {
+      const res = await fetch(`${API_URL}/api/posters/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug, identifier }),
@@ -344,9 +357,19 @@ export default function PosterPortal() {
     return next;
   });
 
+  const handleDoubleClick = () => {
+    if (zoomScale > 1) {
+      setZoomScale(1);
+      setPanOffset({ x: 0, y: 0 });
+    } else {
+      setZoomScale(2);
+    }
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (zoomScale === 1) return;
     isDragging.current = true;
+    setIsDraggingState(true);
     startDrag.current = { x: e.clientX - panOffset.x, y: e.clientY - panOffset.y };
   };
 
@@ -354,52 +377,114 @@ export default function PosterPortal() {
     if (!isDragging.current || zoomScale === 1) return;
     const newX = e.clientX - startDrag.current.x;
     const newY = e.clientY - startDrag.current.y;
-    
-    // Bounds check to avoid dragging off screen
     setPanOffset({ x: newX, y: newY });
   };
 
   const handleMouseUpOrLeave = () => {
     isDragging.current = false;
+    setIsDraggingState(false);
   };
 
-  // Touch Support (Pinch to Zoom & Drag Panning)
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 1 && zoomScale > 1) {
-      isDragging.current = true;
-      startDrag.current = { 
-        x: e.touches[0].clientX - panOffset.x, 
-        y: e.touches[0].clientY - panOffset.y 
-      };
-    } else if (e.touches.length === 2) {
-      // Setup pinch zoom
+  // Active non-passive event listeners on viewerRef to prevent browser viewport pinch-zoom & page scaling
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || !selectedPoster) return;
+
+    const handleNativeTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1 && zoomScaleRef.current > 1) {
+        isDragging.current = true;
+        setIsDraggingState(true);
+        startDrag.current = { 
+          x: e.touches[0].clientX - panOffsetRef.current.x, 
+          y: e.touches[0].clientY - panOffsetRef.current.y 
+        };
+      } else if (e.touches.length >= 2) {
+        // Prevent native browser pinch zoom on the entire webpage
+        e.preventDefault();
+        isDragging.current = false;
+        setIsDraggingState(false);
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        pinchStartDist.current = dist;
+      }
+    };
+
+    const handleNativeTouchMove = (e: TouchEvent) => {
+      if (e.touches.length >= 2) {
+        // Stop browser native page zoom
+        e.preventDefault();
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        if (pinchStartDist.current > 0) {
+          const ratio = dist / pinchStartDist.current;
+          pinchStartDist.current = dist;
+          setZoomScale(prev => {
+            const next = Math.max(1, Math.min(prev * ratio, 4));
+            if (next === 1) setPanOffset({ x: 0, y: 0 });
+            return next;
+          });
+        }
+      } else if (isDragging.current && e.touches.length === 1 && zoomScaleRef.current > 1) {
+        e.preventDefault();
+        const newX = e.touches[0].clientX - startDrag.current.x;
+        const newY = e.touches[0].clientY - startDrag.current.y;
+        setPanOffset({ x: newX, y: newY });
+      }
+    };
+
+    const handleNativeTouchEnd = () => {
       isDragging.current = false;
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      pinchStartDist.current = dist;
-    }
-  };
+      setIsDraggingState(false);
+      pinchStartDist.current = 0;
+    };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (isDragging.current && e.touches.length === 1 && zoomScale > 1) {
-      const newX = e.touches[0].clientX - startDrag.current.x;
-      const newY = e.touches[0].clientY - startDrag.current.y;
-      setPanOffset({ x: newX, y: newY });
-    } else if (e.touches.length === 2) {
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      const factor = dist / pinchStartDist.current;
-      setZoomScale(prev => {
-        const next = Math.max(1, Math.min(prev * (factor > 1 ? 1.02 : 0.98), 4));
-        if (next === 1) setPanOffset({ x: 0, y: 0 });
-        return next;
-      });
-    }
-  };
+    const handleNativeWheel = (e: WheelEvent) => {
+      // Intercept trackpad pinch gesture or Ctrl + wheel to prevent browser page zoom
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.08 : 0.92;
+        setZoomScale(prev => {
+          const next = Math.max(1, Math.min(prev * factor, 4));
+          if (next === 1) setPanOffset({ x: 0, y: 0 });
+          return next;
+        });
+      } else if (zoomScaleRef.current > 1) {
+        e.preventDefault();
+        setPanOffset(prev => ({
+          x: prev.x - e.deltaX,
+          y: prev.y - e.deltaY,
+        }));
+      }
+    };
+
+    const handleGesture = (e: Event) => {
+      e.preventDefault();
+    };
+
+    viewer.addEventListener("touchstart", handleNativeTouchStart, { passive: false });
+    viewer.addEventListener("touchmove", handleNativeTouchMove, { passive: false });
+    viewer.addEventListener("touchend", handleNativeTouchEnd, { passive: true });
+    viewer.addEventListener("touchcancel", handleNativeTouchEnd, { passive: true });
+    viewer.addEventListener("wheel", handleNativeWheel, { passive: false });
+    viewer.addEventListener("gesturestart", handleGesture as EventListener, { passive: false });
+    viewer.addEventListener("gesturechange", handleGesture as EventListener, { passive: false });
+    viewer.addEventListener("gestureend", handleGesture as EventListener, { passive: false });
+
+    return () => {
+      viewer.removeEventListener("touchstart", handleNativeTouchStart);
+      viewer.removeEventListener("touchmove", handleNativeTouchMove);
+      viewer.removeEventListener("touchend", handleNativeTouchEnd);
+      viewer.removeEventListener("touchcancel", handleNativeTouchEnd);
+      viewer.removeEventListener("wheel", handleNativeWheel);
+      viewer.removeEventListener("gesturestart", handleGesture as EventListener);
+      viewer.removeEventListener("gesturechange", handleGesture as EventListener);
+      viewer.removeEventListener("gestureend", handleGesture as EventListener);
+    };
+  }, [selectedPoster]);
 
   // Slide list is filtered by category if selected, but ignores search text query to allow sliding
   const slidePosters = posters.filter(p => !selectedCategory || p.category === selectedCategory);
@@ -484,7 +569,7 @@ export default function PosterPortal() {
     if (!selectedPoster?.imageUrl) return;
     try {
       const url = selectedPoster.imageUrl.startsWith("/uploads/") 
-        ? `${import.meta.env.VITE_API_URL}${selectedPoster.imageUrl}`
+        ? `${API_URL}${selectedPoster.imageUrl}`
         : selectedPoster.imageUrl;
 
       const response = await fetch(url);
@@ -501,7 +586,7 @@ export default function PosterPortal() {
     } catch (e) {
       // Fallback direct open in case of CORS or local failures
       const fullUrl = selectedPoster.imageUrl.startsWith("/uploads/") 
-        ? `${import.meta.env.VITE_API_URL}${selectedPoster.imageUrl}`
+        ? `${API_URL}${selectedPoster.imageUrl}`
         : selectedPoster.imageUrl;
       window.open(fullUrl, "_blank");
     }
@@ -611,7 +696,10 @@ export default function PosterPortal() {
   if (selectedPoster) {
     const currentIndex = slidePosters.findIndex(p => p._id === selectedPoster._id);
     return (
-      <div className="min-h-screen bg-slate-900 text-white font-sans flex flex-col justify-between overflow-hidden relative">
+      <div 
+        className="min-h-screen bg-slate-900 text-white font-sans flex flex-col justify-between overflow-hidden relative select-none touch-none"
+        style={{ touchAction: "none" }}
+      >
         {/* Top Header Controls */}
         <header className="p-4 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between z-20 backdrop-blur-md">
           <button
@@ -680,18 +768,16 @@ export default function PosterPortal() {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          className={`flex-1 flex items-center justify-center relative select-none ${
+          onDoubleClick={handleDoubleClick}
+          className={`flex-1 flex items-center justify-center relative select-none touch-none ${
             zoomScale > 1 ? "cursor-move" : "cursor-default"
           } bg-slate-950/40`}
-          style={{ overflow: "hidden" }}
+          style={{ overflow: "hidden", touchAction: "none" }}
         >
           {selectedPoster.imageUrl.toLowerCase().endsWith(".pdf") ? (
             <iframe
               src={selectedPoster.imageUrl.startsWith("/uploads/") 
-                ? `${import.meta.env.VITE_API_URL}${selectedPoster.imageUrl}`
+                ? `${API_URL}${selectedPoster.imageUrl}`
                 : selectedPoster.imageUrl}
               title={selectedPoster.title}
               className="w-full h-full border-none z-10"
@@ -723,10 +809,13 @@ export default function PosterPortal() {
         {currentIndex > 0 && (
           <button
             onClick={handlePrevPoster}
-            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-30 p-3 md:p-5 bg-slate-950/80 hover:bg-slate-900 border border-slate-800/80 text-white rounded-full transition-all active:scale-95 shadow-2xl group focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`fixed md:absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 md:w-14 md:h-14 flex items-center justify-center shrink-0 bg-slate-950/80 hover:bg-slate-900 border border-slate-700/80 text-white rounded-full transition-all duration-200 active:scale-95 shadow-2xl group focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              isDraggingState ? "opacity-0 pointer-events-none" : zoomScale > 1 ? "opacity-30 hover:opacity-100" : "opacity-90 hover:opacity-100"
+            }`}
+            style={{ transform: "translateY(-50%)" }}
             title="Previous Poster (Left Arrow Key)"
           >
-            <ChevronLeft size={28} className="group-hover:-translate-x-0.5 transition-transform" />
+            <ChevronLeft size={24} className="shrink-0 group-hover:-translate-x-0.5 transition-transform" />
           </button>
         )}
 
@@ -734,10 +823,13 @@ export default function PosterPortal() {
         {currentIndex < slidePosters.length - 1 && (
           <button
             onClick={handleNextPoster}
-            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 p-3 md:p-5 bg-slate-950/80 hover:bg-slate-900 border border-slate-800/80 text-white rounded-full transition-all active:scale-95 shadow-2xl group focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`fixed md:absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 md:w-14 md:h-14 flex items-center justify-center shrink-0 bg-slate-950/80 hover:bg-slate-900 border border-slate-700/80 text-white rounded-full transition-all duration-200 active:scale-95 shadow-2xl group focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              isDraggingState ? "opacity-0 pointer-events-none" : zoomScale > 1 ? "opacity-30 hover:opacity-100" : "opacity-90 hover:opacity-100"
+            }`}
+            style={{ transform: "translateY(-50%)" }}
             title="Next Poster (Right Arrow Key)"
           >
-            <ChevronRight size={28} className="group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight size={24} className="shrink-0 group-hover:translate-x-0.5 transition-transform" />
           </button>
         )}
       </div>

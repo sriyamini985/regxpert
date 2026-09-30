@@ -22,11 +22,11 @@ router.post("/verify", verifyParticipant);
 router.get("/list/:conferenceId", getPosters);
 
 // Administrative management endpoints
-router.get("/admin/list/:conferenceId", requireAuth, requireRole(["admin"]), adminGetPosters);
+router.get("/admin/list/:conferenceId", requireAuth, requireRole(["admin", "client"]), adminGetPosters);
 router.post(
   "/admin/create",
   requireAuth,
-  requireRole(["admin"]),
+  requireRole(["admin", "client"]),
   upload.fields([
     { name: "posterFile", maxCount: 1 },
     { name: "thumbnailFile", maxCount: 1 }
@@ -36,14 +36,14 @@ router.post(
 router.put(
   "/admin/edit/:id",
   requireAuth,
-  requireRole(["admin"]),
+  requireRole(["admin", "client"]),
   upload.fields([
     { name: "posterFile", maxCount: 1 },
     { name: "thumbnailFile", maxCount: 1 }
   ]),
   adminEditPoster
 );
-router.delete("/admin/delete/:id", requireAuth, requireRole(["admin"]), adminDeletePoster);
-router.post("/admin/bulk-upload", requireAuth, requireRole(["admin"]), adminBulkUploadPosters);
+router.delete("/admin/delete/:id", requireAuth, requireRole(["admin", "client"]), adminDeletePoster);
+router.post("/admin/bulk-upload", requireAuth, requireRole(["admin", "client"]), adminBulkUploadPosters);
 
 export default router;

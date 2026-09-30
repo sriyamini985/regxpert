@@ -1,5 +1,6 @@
 import express from "express";
 import multer from "multer";
+import mongoose from "mongoose";
 import Conference from "../models/Conference.js";
 import Participant from "../models/Participant.js";
 import SharedData from "../models/SharedData.js";
@@ -76,11 +77,16 @@ router.post("/", requireAuth, requireRole(["admin"]), async (req, res) => {
   }
 });
 
-// GET SINGLE CONFERENCE DETAILS BY ID
+// GET SINGLE CONFERENCE DETAILS BY ID OR SLUG
 router.get("/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const conference = await Conference.findById(id);
+    const conference = await Conference.findOne({
+      $or: [
+        { _id: mongoose.isValidObjectId(id) ? id : null },
+        { slug: id }
+      ].filter(Boolean)
+    });
     if (!conference) {
       return res.status(404).json({ error: "Conference workspace profile not found" });
     }

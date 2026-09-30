@@ -12,8 +12,10 @@ import {
   ArrowLeft,
   X,
   Search,
-  Database
+  Database,
+  ExternalLink
 } from "lucide-react";
+import { API_URL } from "../../../config/api";
 
 export default function PosterManagement() {
   const { conferenceId } = useParams<{ conferenceId: string }>();
@@ -72,7 +74,7 @@ export default function PosterManagement() {
   const fetchConferenceDetails = async () => {
     if (!conferenceId) return;
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/conferences/${conferenceId}`, {
+      const res = await fetch(`${API_URL}/api/conferences/${conferenceId}`, {
         headers: {
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         }
@@ -93,14 +95,20 @@ export default function PosterManagement() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posters/admin/list/${conferenceId}`, {
+      const res = await fetch(`${API_URL}/api/posters/admin/list/${conferenceId}`, {
         headers: {
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         }
       });
-      if (!res.ok) throw new Error("Failed to fetch posters roster.");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 401 || res.status === 403) {
+          throw new Error(errData.error || "Authentication session expired or unauthorized. Please sign in as Admin.");
+        }
+        throw new Error(errData.error || "Failed to fetch posters roster.");
+      }
       const data = await res.json();
-      setPosters(data);
+      setPosters(Array.isArray(data) ? data : []);
     } catch (err: any) {
       setError(err.message || "An error occurred fetching posters.");
     } finally {
@@ -234,7 +242,7 @@ export default function PosterManagement() {
         formData.append("conferenceId", conferenceId!);
         formData.append("posterFile", item.file!);
 
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posters/admin/create`, {
+        const res = await fetch(`${API_URL}/api/posters/admin/create`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${localStorage.getItem("token")}`
@@ -325,8 +333,8 @@ export default function PosterManagement() {
       }
 
       const url = editingPoster 
-        ? `${import.meta.env.VITE_API_URL}/api/posters/admin/edit/${editingPoster._id}`
-        : `${import.meta.env.VITE_API_URL}/api/posters/admin/create`;
+        ? `${API_URL}/api/posters/admin/edit/${editingPoster._id}`
+        : `${API_URL}/api/posters/admin/create`;
 
       const method = editingPoster ? "PUT" : "POST";
 
@@ -359,7 +367,7 @@ export default function PosterManagement() {
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posters/admin/delete/${id}`, {
+      const res = await fetch(`${API_URL}/api/posters/admin/delete/${id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${localStorage.getItem("token")}`
@@ -416,7 +424,7 @@ export default function PosterManagement() {
         throw new Error("Could not parse any valid poster rows. Verify your CSV format.");
       }
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posters/admin/bulk-upload`, {
+      const res = await fetch(`${API_URL}/api/posters/admin/bulk-upload`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -475,7 +483,17 @@ export default function PosterManagement() {
             </p>
           </div>
 
-          <div className="flex gap-3 w-full sm:w-auto">
+          <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+            <a
+              href={`/events/${conferenceSlug || conferenceId}/posters`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md active:scale-95"
+              title="Open public scientific posters attendee viewer in a new tab"
+            >
+              <ExternalLink size={15} />
+              <span>View Live Posters</span>
+            </a>
             <button
               onClick={() => setIsBulkModalOpen(true)}
               className="flex-1 sm:flex-none px-5 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"

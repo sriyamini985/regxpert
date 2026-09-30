@@ -34,7 +34,25 @@ window.fetch = async (input, init) => {
       init.headers = headers;
     }
   }
-  return originalFetch(input, init);
+  const response = await originalFetch(input, init);
+
+  if (response.status === 401 || response.status === 403) {
+    try {
+      const cloned = response.clone();
+      const data = await cloned.json();
+      if (data?.error && (data.error.toLowerCase().includes("expired") || data.error.toLowerCase().includes("malformed") || data.error.toLowerCase().includes("invalid"))) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        if (window.location.pathname.startsWith("/admin") && !window.location.pathname.includes("login")) {
+          window.location.href = "/admin-login?expired=true";
+        }
+      }
+    } catch {
+      // Ignore non-json responses
+    }
+  }
+
+  return response;
 };
 
 const container = document.getElementById("root");

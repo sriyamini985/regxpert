@@ -44,6 +44,10 @@ export default function AdminLogin() {
 
     // Pre-warm the Render backend so it's ready when the user clicks Sign In
     pingServer();
+
+    if (window.location.search.includes("expired=true")) {
+      setLoginError("Your session has expired. Please sign in again to continue.");
+    }
   }, []);
 
   // Autofocus email input on load

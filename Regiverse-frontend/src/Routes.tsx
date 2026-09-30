@@ -1,7 +1,7 @@
 import React, { useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useParams, Outlet, Navigate } from "react-router-dom";
-import ScrollToTop from "components/ScrollToTop";
-import NotFound from "pages/NotFound";
+import ScrollToTop from "./components/ScrollToTop";
+import NotFound from "./pages/NotFound";
 
 // Auth & Core wrappers (static)
 import PrivateRoute from "./PrivateRoute";
@@ -22,7 +22,7 @@ const AddDelegatePage = lazy(() => import("./admin/pages/participant-management"
 const RegisteredList = lazy(() => import("./admin/pages/RegisteredList"));
 const BulkEmail = lazy(() => import("./admin/pages/BulkEmail"));
 const BulkWhatsapp = lazy(() => import("./admin/pages/BulkWhatsapp"));
-const UserLogin = lazy(() => import("auth/pages/userlogin"));
+const UserLogin = lazy(() => import("./auth/pages/userlogin"));
 const ParticipantPage = lazy(() => import("./admin/pages/participant-management"));
 const PosterPortal = lazy(() => import("./pages/events/posters/PosterPortal"));
 

@@ -40,7 +40,10 @@ const Conferences = () => {
     try {
       const res = await fetch(`${API_URL}/api/conferences`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify({ title, name: title, slug }),
       });
       if (res.ok) {
@@ -48,7 +51,10 @@ const Conferences = () => {
         loadConferences();
       } else {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || `Server error ${res.status} when creating workspace`);
+        if (res.status === 401 || res.status === 403) {
+          throw new Error(errData.error || "Your admin login session has expired. Please sign in again at Admin Login.");
+        }
+        throw new Error(errData.error || errData.message || `Server error ${res.status} when creating workspace`);
       }
     } catch (err: any) {
       console.error("Create conference failed", err);
@@ -64,7 +70,10 @@ const Conferences = () => {
     setError(null);
     try {
       const res = await fetch(`${API_URL}/api/conferences/${selectedConferenceToDelete._id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
       });
       if (res.ok) {
         setShowDeleteModal(false);
@@ -72,7 +81,10 @@ const Conferences = () => {
         loadConferences();
       } else {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Server error ${res.status} when deleting event`);
+        if (res.status === 401 || res.status === 403) {
+          throw new Error(errData.error || "Your admin login session has expired. Please sign in again at Admin Login.");
+        }
+        throw new Error(errData.error || errData.message || `Server error ${res.status} when deleting event`);
       }
     } catch (err: any) {
       console.error("Delete conference failed", err);
