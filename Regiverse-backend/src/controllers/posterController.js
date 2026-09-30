@@ -183,7 +183,12 @@ export const adminCreatePoster = async (req, res) => {
     } = req.body;
 
     if (!posterNumber || !title || !presenterName || !conferenceId) {
-      return res.status(400).json({ error: "Missing required fields." });
+      const missing = [];
+      if (!posterNumber) missing.push("Poster Number");
+      if (!title) missing.push("Title");
+      if (!presenterName) missing.push("Presenter Name");
+      if (!conferenceId) missing.push("Conference ID");
+      return res.status(400).json({ error: `Missing required fields: ${missing.join(", ")}` });
     }
 
     let confId = conferenceId;
@@ -199,7 +204,8 @@ export const adminCreatePoster = async (req, res) => {
     }
 
     const files = req.files || {};
-    const posterFile = files.posterFile ? files.posterFile[0] : null;
+    // Accept thumbnailFile as posterFile if posterFile was omitted
+    const posterFile = files.posterFile ? files.posterFile[0] : (files.thumbnailFile ? files.thumbnailFile[0] : null);
     const thumbnailFile = files.thumbnailFile ? files.thumbnailFile[0] : null;
 
     if (!posterFile) {

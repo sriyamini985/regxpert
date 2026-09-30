@@ -33,6 +33,7 @@ export default function PosterManagement() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editingPoster, setEditingPoster] = useState<any>(null);
+  const [modalError, setModalError] = useState("");
 
   // Form Fields State
   const [posterNumber, setPosterNumber] = useState("");
@@ -285,6 +286,7 @@ export default function PosterManagement() {
     setPosterFile(null);
     setThumbnailFile(null);
     setError("");
+    setModalError("");
     setIsFormModalOpen(true);
   };
 
@@ -300,18 +302,26 @@ export default function PosterManagement() {
     setPosterFile(null);
     setThumbnailFile(null);
     setError("");
+    setModalError("");
     setIsFormModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!posterNumber.trim() || !title.trim() || !presenterName.trim() || !conferenceId) {
-      setError("Please fill in all required fields.");
+      setModalError("Please fill in all required fields (Poster Number, Title, Presenter Name).");
+      return;
+    }
+
+    const activePosterFile = posterFile || thumbnailFile;
+    if (!editingPoster && !activePosterFile) {
+      setModalError("Please select a Poster Image or PDF file.");
       return;
     }
 
     setSubmitting(true);
     setError("");
+    setModalError("");
     setSuccess("");
 
     try {
@@ -325,9 +335,13 @@ export default function PosterManagement() {
       formData.append("category", category.trim());
       formData.append("conferenceId", conferenceId);
 
+      // If user uploaded only one file into thumbnail slot, use it as posterFile
       if (posterFile) {
         formData.append("posterFile", posterFile);
+      } else if (thumbnailFile) {
+        formData.append("posterFile", thumbnailFile);
       }
+
       if (thumbnailFile) {
         formData.append("thumbnailFile", thumbnailFile);
       }
@@ -355,7 +369,7 @@ export default function PosterManagement() {
       setIsFormModalOpen(false);
       fetchPosters();
     } catch (err: any) {
-      setError(err.message || "Failed to save poster.");
+      setModalError(err.message || "Failed to save poster.");
     } finally {
       setSubmitting(false);
     }
@@ -664,6 +678,14 @@ export default function PosterManagement() {
               </div>
 
               <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                {modalError && (
+                  <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-xs font-bold shadow-sm flex items-center justify-between animate-in fade-in">
+                    <span>{modalError}</span>
+                    <button type="button" onClick={() => setModalError("")} className="text-rose-400 hover:text-rose-600">
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
