@@ -6,20 +6,55 @@ import Participant from "../models/Participant.js";
 import Conference from "../models/Conference.js";
 import cloudinary from "../config/cloudinary.js";
 
-// Helper: upload buffer to Cloudinary or save locally as fallback
-const saveUploadedFile = async (file, folder = "posters") => {
+// Helper: detect real file extension from magic bytes
+const detectRealExtension = (file) => {
+  const buf = file.buffer;
+  if (!buf || buf.length < 4) {
+    return path.extname(file.originalname).toLowerCase() || ".jpg";
+  }
+
+  // PDF: %PDF (0x25 0x50 0x44 0x46)
+  if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) {
+    return ".pdf";
+  }
+  // JPEG: 0xFF 0xD8 0xFF
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) {
+    return ".jpg";
+  }
+  // PNG: 0x89 0x50 0x4E 0x47
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) {
+    return ".png";
+  }
+  // WEBP: RIFF....WEBP
+  if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 && buf.length >= 12) {
+    const riffType = buf.slice(8, 12).toString("ascii");
+    if (riffType === "WEBP") return ".webp";
+  }
+  // ZIP / PPTX: PK\x03\x04
+  if (buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04) {
+    const headerStr = buf.slice(0, 4000).toString("binary");
+    if (headerStr.includes("ppt/")) {
+      return ".pptx";
+    }
+  }
+
+  return path.extname(file.originalname).toLowerCase() || ".jpg";
+};
+
+// Helper: save uploaded file
+const saveUploadedFile = async (file, folder) => {
   if (!file) return "";
 
-  // Try Cloudinary if config is present
-  if (process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_CLOUD_NAME) {
+  // Cloudinary upload if configured
+  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
     try {
       return await new Promise((resolve, reject) => {
-        const ext = path.extname(file.originalname).replace(".", "");
+        const realExt = detectRealExtension(file).replace(".", "");
         const uploadStream = cloudinary.uploader.upload_stream(
           {
             folder: `regxpert/${folder}`,
             resource_type: "auto",
-            format: ext || "jpg",
+            format: realExt || "jpg",
             quality: "auto",
           },
           (error, result) => {
@@ -40,7 +75,7 @@ const saveUploadedFile = async (file, folder = "posters") => {
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
-    const ext = path.extname(file.originalname) || ".jpg";
+    const ext = detectRealExtension(file);
     const filename = `${Date.now()}-${Math.floor(Math.random() * 1000000)}${ext}`;
     const filepath = path.join(uploadsDir, filename);
     fs.writeFileSync(filepath, file.buffer);

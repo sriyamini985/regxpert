@@ -315,7 +315,7 @@ export default function PosterManagement() {
 
     const activePosterFile = posterFile || thumbnailFile;
     if (!editingPoster && !activePosterFile) {
-      setModalError("Please select a Poster Image or PDF file.");
+      setModalError("Please select a Poster Image, PDF, or PowerPoint file.");
       return;
     }
 
@@ -787,7 +787,7 @@ export default function PosterManagement() {
                 <div className="space-y-3 pt-2">
                   <div>
                     <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
-                      Poster Image/PDF * {editingPoster && "(Leave blank to keep current)"}
+                      Poster File (JPG / PNG / PDF / PPTX) * {editingPoster && "(Leave blank to keep current)"}
                     </label>
                     <div 
                       onClick={() => posterInputRef.current?.click()}
@@ -795,13 +795,13 @@ export default function PosterManagement() {
                     >
                       <Upload size={18} className="text-slate-400" />
                       <span className="text-[10px] font-bold text-slate-500">
-                        {posterFile ? posterFile.name : "Select Image or PDF file"}
+                        {posterFile ? posterFile.name : "Select Image, PDF, or PowerPoint (.pptx)"}
                       </span>
                     </div>
                     <input
                       ref={posterInputRef}
                       type="file"
-                      accept=".jpg,.jpeg,.png,.pdf"
+                      accept=".jpg,.jpeg,.png,.pdf,.pptx,.ppt"
                       onChange={e => setPosterFile(e.target.files ? e.target.files[0] : null)}
                       className="hidden"
                     />
@@ -959,11 +959,11 @@ export default function PosterManagement() {
                           />
                         </div>
 
-                        {/* Step 2: JPEGs batch selection */}
+                        {/* Step 2: Poster files batch selection */}
                         <div className="border border-slate-200 p-4 rounded-2xl bg-slate-50/50">
-                          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-2">Step 2: Select Poster JPEG Images</h4>
+                          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-2">Step 2: Select Poster Files (Images, PDF, or PowerPoint)</h4>
                           <p className="text-[10px] text-slate-400 leading-normal mb-4 font-semibold">
-                            Select multiple poster JPEG images at once. Image filenames should match their respective Poster Numbers (e.g. <code className="bg-slate-100 px-1 py-0.5 rounded text-blue-600 font-bold">P-01.jpg</code>).
+                            Select multiple poster files at once. Filenames should match their respective Poster Numbers (e.g. <code className="bg-slate-100 px-1 py-0.5 rounded text-blue-600 font-bold">P-01.jpg</code>, <code className="bg-slate-100 px-1 py-0.5 rounded text-blue-600 font-bold">P-01.png</code>, or <code className="bg-slate-100 px-1 py-0.5 rounded text-blue-600 font-bold">P-01.pptx</code>).
                           </p>
                           
                           <div 
@@ -972,14 +972,14 @@ export default function PosterManagement() {
                           >
                             <ImageIcon size={20} className="text-slate-400" />
                             <span className="text-xs font-bold text-slate-700">
-                              {selectedJpegs.length > 0 ? `${selectedJpegs.length} Images Selected` : "Select JPEG files"}
+                              {selectedJpegs.length > 0 ? `${selectedJpegs.length} Files Selected` : "Select Poster Files"}
                             </span>
                           </div>
                           <input
                             ref={jpegsInputRef}
                             type="file"
                             multiple
-                            accept="image/jpeg,image/jpg,image/png"
+                            accept="image/jpeg,image/jpg,image/png,.pdf,.pptx,.ppt"
                             onChange={handleJpegsChange}
                             className="hidden"
                           />
