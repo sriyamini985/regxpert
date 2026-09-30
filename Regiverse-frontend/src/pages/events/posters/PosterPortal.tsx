@@ -18,7 +18,35 @@ import {
 } from "lucide-react";
 import { API_URL } from "../../../config/api";
 
-// --- Cached Image Component for Offline Mode ---
+// Clean corrupted UTF-8 entities (like Windows-1252/Latin-1 double encoded quotes and dashes)
+export const cleanText = (str?: string): string => {
+  if (!str) return "";
+  return str
+    .replace(/â€“/g, "–")
+    .replace(/â€”/g, "—")
+    .replace(/â€˜/g, "‘")
+    .replace(/â€™/g, "’")
+    .replace(/â€œ/g, "“")
+    .replace(/â€/g, "”")
+    .replace(/â€¢/g, "•")
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¡/g, "á")
+    .replace(/Â/g, "")
+    .trim();
+};
+
+export const getFullMediaUrl = (url?: string): string => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
+    return url;
+  }
+  const cleanPath = url.startsWith("/") ? url : `/${url}`;
+  return `${API_URL}${cleanPath}`;
+};
+
+// --- Cached Image Component with Smart PDF & Error Fallbacks ---
 interface CachedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
 }
@@ -26,18 +54,28 @@ interface CachedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 const CachedImage: React.FC<CachedImageProps> = ({ src, alt, className, ...props }) => {
   const [imgSrc, setImgSrc] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  const fullUrl = getFullMediaUrl(src);
+  const isPdf = fullUrl?.toLowerCase().endsWith(".pdf") || false;
 
   useEffect(() => {
     let active = true;
     let objectUrl = "";
 
+    setHasError(false);
+
+    if (!fullUrl || isPdf) {
+      setLoading(false);
+      return;
+    }
+
     const resolveSrc = async () => {
-      if (!src) return;
-      
+      setLoading(true);
       // Try local cache storage first if offline or anyway for speed
       try {
         const cache = await caches.open("posters-media-cache");
-        const matchedResponse = await cache.match(src);
+        const matchedResponse = await cache.match(fullUrl);
         
         if (matchedResponse) {
           const blob = await matchedResponse.blob();
@@ -54,8 +92,7 @@ const CachedImage: React.FC<CachedImageProps> = ({ src, alt, className, ...props
 
       // Fallback/Default: online source load
       if (active) {
-        setImgSrc(src);
-        setLoading(false);
+        setImgSrc(fullUrl);
       }
     };
 
@@ -67,7 +104,38 @@ const CachedImage: React.FC<CachedImageProps> = ({ src, alt, className, ...props
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [src]);
+  }, [fullUrl, isPdf]);
+
+  // If the file is a PDF, render a clean presentation badge preview instead of a broken img tag
+  if (isPdf) {
+    return (
+      <div className={`w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 flex flex-col items-center justify-center p-6 text-center select-none relative ${className || ""}`}>
+        <div className="w-13 h-13 rounded-2xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-2.5 shadow-lg group-hover:scale-110 transition-transform">
+          <FileText size={28} />
+        </div>
+        <span className="px-2.5 py-0.5 bg-rose-600/90 text-white font-black text-[9px] tracking-widest uppercase rounded-full shadow-sm mb-2">
+          PDF Presentation
+        </span>
+        <p className="text-[11px] font-bold text-slate-300 line-clamp-2 px-2 text-center leading-snug">
+          {cleanText(alt as string)}
+        </p>
+      </div>
+    );
+  }
+
+  // If broken or empty source, show a clean fallback card instead of browser alt text overflow
+  if (hasError || !fullUrl) {
+    return (
+      <div className={`w-full h-full bg-gradient-to-br from-slate-850 to-slate-900 flex flex-col items-center justify-center p-5 text-center select-none ${className || ""}`}>
+        <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700/80 flex items-center justify-center text-slate-400 mb-2 shadow-inner">
+          <FileText size={24} />
+        </div>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          Scientific Presentation
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className={`relative overflow-hidden ${className || ""}`}>
@@ -79,9 +147,13 @@ const CachedImage: React.FC<CachedImageProps> = ({ src, alt, className, ...props
       {imgSrc && (
         <img
           src={imgSrc}
-          alt={alt}
+          alt=""
           className="w-full h-full object-cover"
           onLoad={() => setLoading(false)}
+          onError={() => {
+            setLoading(false);
+            setHasError(true);
+          }}
           {...props}
         />
       )}
@@ -551,8 +623,8 @@ export default function PosterPortal() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: selectedPoster.title,
-          text: `View Scientific Poster ${selectedPoster.posterNumber} presented by ${selectedPoster.presenterName}`,
+          title: cleanText(selectedPoster.title),
+          text: `View Scientific Poster ${selectedPoster.posterNumber} presented by ${cleanText(selectedPoster.presenterName)}`,
           url: shareUrl,
         });
       } catch (err) {
@@ -568,26 +640,23 @@ export default function PosterPortal() {
   const handleDownload = async () => {
     if (!selectedPoster?.imageUrl) return;
     try {
-      const url = selectedPoster.imageUrl.startsWith("/uploads/") 
-        ? `${API_URL}${selectedPoster.imageUrl}`
-        : selectedPoster.imageUrl;
-
+      const url = getFullMediaUrl(selectedPoster.imageUrl);
       const response = await fetch(url);
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
+      const isPdf = selectedPoster.imageUrl.toLowerCase().endsWith(".pdf");
+      const ext = isPdf ? "pdf" : "jpg";
       
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `${selectedPoster.posterNumber}_Poster.jpg`;
+      link.download = `${selectedPoster.posterNumber || "Presentation"}_Poster.${ext}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
     } catch (e) {
       // Fallback direct open in case of CORS or local failures
-      const fullUrl = selectedPoster.imageUrl.startsWith("/uploads/") 
-        ? `${API_URL}${selectedPoster.imageUrl}`
-        : selectedPoster.imageUrl;
+      const fullUrl = getFullMediaUrl(selectedPoster.imageUrl);
       window.open(fullUrl, "_blank");
     }
   };
@@ -718,7 +787,7 @@ export default function PosterPortal() {
             <span className="px-2.5 py-0.5 bg-blue-500/20 border border-blue-500/30 text-blue-400 text-xs font-black rounded-lg uppercase tracking-wider mb-1 inline-block">
               {selectedPoster.posterNumber}
             </span>
-            <h3 className="font-extrabold text-sm truncate leading-tight">{selectedPoster.title}</h3>
+            <h3 className="font-extrabold text-sm truncate leading-tight">{cleanText(selectedPoster.title)}</h3>
           </div>
 
           <div className="flex items-center gap-2">
@@ -776,10 +845,8 @@ export default function PosterPortal() {
         >
           {selectedPoster.imageUrl.toLowerCase().endsWith(".pdf") ? (
             <iframe
-              src={selectedPoster.imageUrl.startsWith("/uploads/") 
-                ? `${API_URL}${selectedPoster.imageUrl}`
-                : selectedPoster.imageUrl}
-              title={selectedPoster.title}
+              src={getFullMediaUrl(selectedPoster.imageUrl)}
+              title={cleanText(selectedPoster.title)}
               className="w-full h-full border-none z-10"
               style={{
                 transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
@@ -980,8 +1047,8 @@ export default function PosterPortal() {
                   {/* Poster Thumbnail frame */}
                   <div className="h-56 bg-slate-100 border-b border-slate-200/60 overflow-hidden relative">
                     <CachedImage
-                      src={poster.thumbnailUrl}
-                      alt={poster.title}
+                      src={poster.thumbnailUrl || poster.imageUrl}
+                      alt={cleanText(poster.title)}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
 
@@ -995,7 +1062,7 @@ export default function PosterPortal() {
                     {poster.category && (
                       <div className="absolute top-4 right-4 z-10">
                         <span className="px-2.5 py-1 bg-blue-600 border border-blue-500 text-white text-[9px] font-bold rounded-lg shadow-md uppercase tracking-widest">
-                          {poster.category}
+                          {cleanText(poster.category)}
                         </span>
                       </div>
                     )}
@@ -1004,11 +1071,14 @@ export default function PosterPortal() {
                   {/* Poster Info (Limited preview details for gallery visual cleanliness) */}
                   <div className="p-5 flex-1 flex flex-col justify-between">
                     <div className="mb-4">
-                      <h3 className="font-extrabold text-slate-800 text-sm tracking-tight leading-snug line-clamp-2 min-h-[2.5rem]">
-                        {poster.title}
+                      <h3 
+                        className="font-extrabold text-slate-800 text-sm tracking-tight leading-snug line-clamp-2 min-h-[2.5rem]"
+                        title={cleanText(poster.title)}
+                      >
+                        {cleanText(poster.title)}
                       </h3>
-                      <p className="text-xs text-slate-500 font-bold mt-2">
-                        🎙️ Author: <span className="text-slate-800 font-extrabold">{poster.presenterName}</span>
+                      <p className="text-xs text-slate-500 font-bold mt-2 truncate">
+                        🎙️ Author: <span className="text-slate-800 font-extrabold">{cleanText(poster.presenterName)}</span>
                       </p>
                     </div>
 
@@ -1018,7 +1088,7 @@ export default function PosterPortal() {
                         setZoomScale(1);
                         setPanOffset({ x: 0, y: 0 });
                       }}
-                      className="w-full py-3 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-700 font-extrabold text-xs rounded-xl border border-slate-200 hover:border-transparent transition-all flex items-center justify-center gap-2 active:scale-95"
+                      className="w-full py-3 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-700 font-extrabold text-xs rounded-xl border border-slate-200 hover:border-transparent transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
                     >
                       <FileText size={14} />
                       <span>View Presentation</span>
