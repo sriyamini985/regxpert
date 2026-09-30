@@ -56,17 +56,36 @@ export const getFileType = (url?: string): "image" | "pdf" | "ppt" | "other" => 
   return "other";
 };
 
+// Helper: Get the most valid working URL for a poster
+export const getEffectivePosterUrl = (poster?: { imageUrl?: string; thumbnailUrl?: string } | null): string => {
+  if (!poster) return "";
+  const img = poster.imageUrl || "";
+  const thumb = poster.thumbnailUrl || "";
+
+  // If imageUrl is a valid remote cloud URL, use it directly
+  if (img.startsWith("http://") || img.startsWith("https://")) {
+    return img;
+  }
+  // If thumbnailUrl is a valid remote cloud URL while imageUrl is not, prioritize thumbnailUrl
+  if (thumb.startsWith("http://") || thumb.startsWith("https://")) {
+    return thumb;
+  }
+  return img || thumb;
+};
+
 // --- Cached Image Component with Smart PDF, PPTX & Error Fallbacks ---
 interface CachedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
+  fallbackSrc?: string;
 }
 
-const CachedImage: React.FC<CachedImageProps> = ({ src, alt, className, ...props }) => {
+const CachedImage: React.FC<CachedImageProps> = ({ src, fallbackSrc, alt, className, ...props }) => {
   const [imgSrc, setImgSrc] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
   const fullUrl = getFullMediaUrl(src);
+  const fullFallback = fallbackSrc ? getFullMediaUrl(fallbackSrc) : "";
   const fileType = getFileType(fullUrl);
   const isDocument = fileType === "pdf" || fileType === "ppt" || fileType === "other";
 
@@ -189,8 +208,12 @@ const CachedImage: React.FC<CachedImageProps> = ({ src, alt, className, ...props
           className="w-full h-full object-cover"
           onLoad={() => setLoading(false)}
           onError={() => {
-            setLoading(false);
-            setHasError(true);
+            if (fullFallback && imgSrc !== fullFallback) {
+              setImgSrc(fullFallback);
+            } else {
+              setLoading(false);
+              setHasError(true);
+            }
           }}
           {...props}
         />
@@ -676,26 +699,27 @@ export default function PosterPortal() {
 
   // Download functionality
   const handleDownload = async () => {
-    if (!selectedPoster?.imageUrl) return;
+    const effectiveUrl = getEffectivePosterUrl(selectedPoster);
+    if (!effectiveUrl) return;
     try {
-      const url = getFullMediaUrl(selectedPoster.imageUrl);
+      const url = getFullMediaUrl(effectiveUrl);
       const response = await fetch(url);
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
-      const fileType = getFileType(selectedPoster.imageUrl);
+      const fileType = getFileType(url);
       const ext = fileType === "pdf" ? "pdf" : fileType === "ppt" ? "pptx" : "jpg";
       const fileLabel = fileType === "ppt" ? "Slides" : "Poster";
       
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `${selectedPoster.posterNumber || "Presentation"}_${fileLabel}.${ext}`;
+      link.download = `${selectedPoster?.posterNumber || "Presentation"}_${fileLabel}.${ext}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
     } catch (e) {
       // Fallback direct open in case of CORS or local failures
-      const fullUrl = getFullMediaUrl(selectedPoster.imageUrl);
+      const fullUrl = getFullMediaUrl(effectiveUrl);
       window.open(fullUrl, "_blank");
     }
   };
@@ -803,7 +827,8 @@ export default function PosterPortal() {
   // --- VIEW 2: POSTER DETAILS FULL-SCREEN VIEW ---
   if (selectedPoster) {
     const currentIndex = slidePosters.findIndex(p => p._id === selectedPoster._id);
-    const mediaUrl = getFullMediaUrl(selectedPoster.imageUrl);
+    const effectiveUrl = getEffectivePosterUrl(selectedPoster);
+    const mediaUrl = getFullMediaUrl(effectiveUrl);
     const mediaType = getFileType(mediaUrl);
     const isPpt = mediaType === "ppt";
     const isPdf = mediaType === "pdf";
@@ -933,7 +958,8 @@ export default function PosterPortal() {
               }}
             >
               <CachedImage
-                src={selectedPoster.imageUrl}
+                src={mediaUrl}
+                fallbackSrc={selectedPoster.thumbnailUrl}
                 alt={selectedPoster.title}
                 className="max-h-[85vh] md:max-h-[88vh] object-contain rounded-lg shadow-2xl"
                 draggable={false}
@@ -1161,7 +1187,7 @@ export default function PosterPortal() {
                       }}
                       className="w-full py-3 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-700 font-extrabold text-xs rounded-xl border border-slate-200 hover:border-transparent transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm group-hover:border-blue-300"
                     >
-                      {getFileType(poster.imageUrl) === "ppt" ? (
+                      {getFileType(getEffectivePosterUrl(poster)) === "ppt" ? (
                         <>
                           <Presentation size={15} className="text-amber-500" />
                           <span>View PowerPoint Slides</span>

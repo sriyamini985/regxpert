@@ -313,7 +313,12 @@ export const adminEditPoster = async (req, res) => {
     if (thumbnailFile) {
       deleteLocalFile(poster.thumbnailUrl);
       thumbnailUrl = await saveUploadedFile(thumbnailFile, "thumbnails");
-    } else if (posterFile && !thumbnailFile && poster.thumbnailUrl === poster.imageUrl) {
+      // If user only uploaded thumbnail or imageUrl was a broken local file, sync imageUrl to the working thumbnail
+      if (!posterFile && (!imageUrl || imageUrl.startsWith("/uploads/"))) {
+        imageUrl = thumbnailUrl;
+      }
+    } else if (posterFile && !thumbnailFile) {
+      // If posterFile was updated and no explicit thumbnail provided, keep them aligned
       thumbnailUrl = imageUrl;
     }
 
