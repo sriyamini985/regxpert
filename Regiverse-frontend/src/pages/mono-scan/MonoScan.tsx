@@ -11,6 +11,8 @@ const MonoScan = () => {
   const { conferenceSlug } = useParams<"conferenceSlug">();
 
   // Scan states
+  const [selectedDay, setSelectedDay] = useState<number>(1);
+  const [totalDays, setTotalDays] = useState<number>(9);
   const [qrInput, setQrInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -138,17 +140,29 @@ const MonoScan = () => {
       const res = await fetch(`${API}/api/participants/check-in`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier.trim(), conferenceId: conferenceSlug }),
+        body: JSON.stringify({ 
+          identifier: identifier.trim(), 
+          conferenceId: conferenceSlug,
+          day: selectedDay 
+        }),
       });
       const data = await res.json();
 
       if (res.status === 409) {
-        setScanResult({ type: "warning", message: `⚠️ ${data.msg}`, user: data.user });
+        setScanResult({ 
+          type: "warning", 
+          message: data.msg || `⚠️ Participant already checked in for Day ${selectedDay}!`, 
+          user: data.user 
+        });
       } else if (!res.ok) {
         setScanResult({ type: "error", message: data.msg || "Participant not found." });
       } else {
         playBeep();
-        setScanResult({ type: "success", message: `✅ ${data.message}`, user: data.user });
+        setScanResult({ 
+          type: "success", 
+          message: data.message || `✅ Successfully Checked In for Day ${selectedDay}!`, 
+          user: data.user 
+        });
       }
     } catch {
       setScanResult({ type: "error", message: "❌ Network error. Check backend connection." });
@@ -205,10 +219,36 @@ const MonoScan = () => {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">🎟️ Mono Scan (Onsite Check-In)</h1>
+          <h1 className="text-2xl font-bold text-slate-800">🎟️ Mono Scan (Daily Check-In)</h1>
           <p className="text-slate-500 text-sm mt-1">
-            General check-in scanner for delegates entering the venue.
+            General check-in scanner for delegates entering the venue across all {totalDays} days.
           </p>
+        </div>
+      </div>
+
+      {/* DAY SELECTOR TABS */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Attendance Day:</span>
+          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+            Scanning for Day {selectedDay}
+          </span>
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => { setSelectedDay(d); setScanResult(null); }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 ${
+                selectedDay === d
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 scale-105"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              Day {d}
+            </button>
+          ))}
         </div>
       </div>
 

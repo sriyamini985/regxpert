@@ -1,10 +1,12 @@
 interface Props {
   selectedDay: string;
   setSelectedDay: (day: string) => void;
+  totalDays?: number;
 }
 
-const DayTabs = ({ selectedDay, setSelectedDay }: Props) => {
-  const days = Array.from({ length: 5 }, (_, i) => `Day ${i + 1}`);
+const DayTabs = ({ selectedDay, setSelectedDay, totalDays = 9 }: Props) => {
+  const count = Math.max(1, totalDays || 9);
+  const days = Array.from({ length: count }, (_, i) => `Day ${i + 1}`);
 
   return (
     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">

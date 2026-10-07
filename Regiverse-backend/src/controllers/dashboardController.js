@@ -63,10 +63,14 @@ export const getDashboardStats = async (req, res) => {
     const hallEntriesCount = hallEntriesAgg[0]?.total || 0;
     const hallExitsCount = hallExitsAgg[0]?.total || 0;
 
-    // Construct day-specific meal stats
+    const totalDays = Number(targetConference?.totalDays) || 9;
+
+    // Construct day-specific meal stats (supports Day 1 - Day 9 dynamically)
     const food = {};
-    for (let d = 1; d <= 5; d++) {
+    const dailyAttendance = {};
+    for (let d = 1; d <= Math.max(5, totalDays); d++) {
       food[`day${d}`] = { breakfast: 0, lunch: 0, dinner: 0 };
+      dailyAttendance[`day${d}`] = 0;
     }
     
     foodLogsGrouped.forEach(item => {
@@ -75,6 +79,21 @@ export const getDashboardStats = async (req, res) => {
         if (food[dayPart] && mealPart) {
           food[dayPart][mealPart] = item.count;
         }
+      }
+    });
+
+    // Aggregate daily check-in attendance
+    const attendanceLogsGrouped = await Participant.aggregate([
+      { $match: { conferenceId: finalConferenceId } },
+      { $project: { attendanceLogsArray: { $objectToArray: "$attendanceLogs" } } },
+      { $unwind: "$attendanceLogsArray" },
+      { $match: { "attendanceLogsArray.v": true } },
+      { $group: { _id: "$attendanceLogsArray.k", count: { $sum: 1 } } }
+    ]);
+
+    attendanceLogsGrouped.forEach(item => {
+      if (item._id && dailyAttendance[item._id] !== undefined) {
+        dailyAttendance[item._id] = item.count;
       }
     });
 
@@ -89,7 +108,9 @@ export const getDashboardStats = async (req, res) => {
         hallEntriesCount,
         hallExitsCount,
         workshopScansCount,
-        food
+        food,
+        dailyAttendance,
+        totalDays
       }
     });
   } catch (error) {

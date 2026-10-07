@@ -4,7 +4,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import { ArrowLeft } from "lucide-react";
 
 import { API_URL as API } from "../../config/api";
-const days = [1, 2, 3, 4, 5];
+const days = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const meals = ["Breakfast", "Lunch", "Dinner"] as const;
 type Meal = typeof meals[number];
 
@@ -307,7 +307,7 @@ const FoodCounter = () => {
 
       {/* STEP 1: SELECT DAY */}
       {step === "day" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {days.map((day) => (
             <button
               key={day}

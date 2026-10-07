@@ -277,30 +277,42 @@ export const createParticipant = async (req, res) => {
   }
 };
 
-// 3. BASIC SCAN (General check-in)
+// 3. BASIC SCAN (General check-in with multi-day support)
 export const scanQR = async (req, res) => {
   try {
-    const { identifier, conferenceId } = req.body;
+    const { identifier, conferenceId, day } = req.body;
     const user = await findParticipantByIdentifier(identifier, conferenceId);
 
     if (!user) return res.status(404).json({ msg: "Participant not found" });
 
-    if (user.isCheckedIn) {
-      const scanDate = user.checkInTime ? new Date(user.checkInTime) : new Date(user.updatedAt);
+    const conference = await Conference.findById(conferenceId).catch(() => null);
+    const dayNum = parseInt(day) || conference?.currentDay || 1;
+    const dayKey = `day${dayNum}`;
+
+    if (user.attendanceLogs && user.attendanceLogs.get(dayKey)) {
+      const scanDate = user.attendanceScanTimes ? user.attendanceScanTimes.get(dayKey) : user.checkInTime;
+      const timeStr = scanDate ? ` at ${new Date(scanDate).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })}` : "";
       return res.status(409).json({
-        msg: `${user.name} has already checked in. (First checked in on ${scanDate.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })})`,
+        msg: `${user.name} has already checked in for Day ${dayNum}${timeStr}!`,
         alreadyCheckedIn: true,
-        user
+        user,
+        day: dayNum
       });
     }
 
+    if (!user.attendanceLogs) user.attendanceLogs = new Map();
+    if (!user.attendanceScanTimes) user.attendanceScanTimes = new Map();
+    user.attendanceLogs.set(dayKey, true);
+    user.attendanceScanTimes.set(dayKey, new Date());
     user.isCheckedIn = true;
     user.checkInTime = new Date();
+    user.markModified("attendanceLogs");
+    user.markModified("attendanceScanTimes");
     await user.save();
     
     broadcastParticipantUpdated(user);
     
-    res.json({ success: true, user });
+    res.json({ success: true, user, day: dayNum, message: `Checked in successfully for Day ${dayNum}` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -498,28 +510,78 @@ export const scanFood = async (req, res) => {
   }
 };
 
-// 6. GENERAL CHECK-IN (marks isCheckedIn = true)
+// 6. GENERAL & DAILY CHECK-IN (marks isCheckedIn = true, records daily attendance for Day 1 - Day 9)
 export const checkInParticipant = async (req, res) => {
   try {
-    const { identifier, conferenceId } = req.body;
-    const user = await findParticipantByIdentifier(identifier, conferenceId);
+    const { identifier, conferenceId, participantId, day } = req.body;
+    let user;
 
-    if (!user) return res.status(404).json({ msg: "Participant not found" });
-    if (user.isCheckedIn) {
-      const scanDate = user.checkInTime ? new Date(user.checkInTime) : new Date(user.updatedAt);
+    if (participantId && mongoose.Types.ObjectId.isValid(participantId)) {
+      user = await Participant.findById(participantId);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    } else {
+      user = await findParticipantByIdentifier(identifier, conferenceId);
+      if (!user) return res.status(404).json({ msg: "Participant not found" });
+    }
+
+    // Determine target day (e.g. 1 to 9)
+    let dayNum = day ? parseInt(String(day).replace(/[^0-9]/g, ""), 10) : null;
+    if (!dayNum || isNaN(dayNum) || dayNum < 1) {
+      // Look up conference for currentDay or default to 1
+      const conf = await Conference.findOne({
+        $or: [
+          { _id: mongoose.Types.ObjectId.isValid(conferenceId) ? conferenceId : undefined },
+          { slug: conferenceId },
+          { name: conferenceId }
+        ].filter(Boolean)
+      }).catch(() => null);
+
+      dayNum = conf?.currentDay || 1;
+    }
+
+    const dayKey = `day${dayNum}`;
+
+    if (!user.attendanceLogs) {
+      user.attendanceLogs = new Map();
+    }
+    if (!user.attendanceScanTimes) {
+      user.attendanceScanTimes = new Map();
+    }
+
+    // Check if already checked in today (Day X)
+    if (user.attendanceLogs.get(dayKey)) {
+      const scanTime = user.attendanceScanTimes.get(dayKey);
+      const scanDate = scanTime ? new Date(scanTime) : new Date(user.updatedAt);
       return res.status(409).json({
-        msg: `${user.name} has already checked in. (First checked in on ${scanDate.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })})`,
+        msg: `${user.name} has already checked in today (Day ${dayNum}). (Checked in on ${scanDate.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })})`,
         alreadyCheckedIn: true,
+        alreadyScanned: true,
+        day: dayNum,
         user
       });
     }
 
-    user.isCheckedIn = true;
-    user.checkInTime = new Date();
-    await user.save();
+    // Record check-in for this day
+    user.attendanceLogs.set(dayKey, true);
+    user.attendanceScanTimes.set(dayKey, new Date());
+    user.markModified("attendanceLogs");
+    user.markModified("attendanceScanTimes");
 
+    // Maintain global check-in flag
+    user.isCheckedIn = true;
+    if (!user.checkInTime) {
+      user.checkInTime = new Date();
+    }
+
+    await user.save();
     broadcastParticipantUpdated(user);
-    res.json({ success: true, message: `${user.name} checked in successfully.`, user });
+
+    res.json({
+      success: true,
+      message: `✅ ${user.name} checked in successfully for Day ${dayNum}.`,
+      day: dayNum,
+      user
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

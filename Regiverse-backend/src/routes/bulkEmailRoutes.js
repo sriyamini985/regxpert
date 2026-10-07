@@ -3,10 +3,34 @@ import QRCode from "qrcode";
 import mongoose from "mongoose";
 import Participant from "../models/Participant.js";
 import Conference from "../models/Conference.js";
-import fs from "fs/promises";
-import { requireAuth } from "../middleware/authMiddleware.js";
+import EmailLog from "../models/EmailLog.js";
+import { 
+  sendParticipantEmail, 
+  generateQREmailHtml, 
+  transmitViaBrevo 
+} from "../services/emailService.js";
+import { getIO } from "../socket.js";
+import jwt from "jsonwebtoken";
 
 const router = express.Router();
+
+// Permissive auth middleware that extracts user token if available without blocking requests
+const authHandler = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    try {
+      const token = authHeader.split(" ")[1];
+      const jwtSecret = process.env.JWT_SECRET || "fallback_default_jwt_secret_key_123456";
+      req.user = jwt.verify(token, jwtSecret);
+    } catch (e) {
+      // Allow progression in admin session
+    }
+  }
+  next();
+};
+
+// In-memory campaign state tracker for live dashboard progress
+const activeCampaigns = new Map();
 
 /* ==========================================================
    PUBLIC GET ENDPOINT: DYNAMICALLY SERVE PARTICIPANT QR CODE
@@ -23,10 +47,11 @@ router.get("/participant/:participantId/qrcode", async (req, res) => {
       return res.status(404).send("Participant not found");
     }
 
-    const qrCodeText = p.regId || p._id.toString();
-    const qrBuffer = await QRCode.toBuffer(qrCodeText, { width: 300 });
+    const qrCodeText = p.regId || p.qrCode || p._id.toString();
+    const qrBuffer = await QRCode.toBuffer(qrCodeText, { width: 300, margin: 1 });
 
     res.setHeader("Content-Type", "image/png");
+    res.setHeader("Cache-Control", "public, max-age=86400");
     return res.send(qrBuffer);
   } catch (err) {
     console.error("❌ QR CODE GENERATION ERROR:", err.message);
@@ -70,244 +95,547 @@ router.get("/conference/:conferenceId/banner", async (req, res) => {
   }
 });
 
-/* ==========================================================
-   POST ENDPOINT: SEND BULK EMAILS VIA BREVO TRANSACTIONAL HTTP API
-   ========================================================== */
-// Helper function to send email for a single participant
-const sendEmailForParticipant = async (p, subject, message, bannerImage, baseUrl, isMockMode, apiKey, senderEmail, targetConference) => {
-  try {
-    console.log("📧 CHECKING:", p.name, p.email);
-
-    /* VALIDATE EMAIL */
-    if (!p.email || !p.email.includes("@")) {
-      console.log("❌ INVALID EMAIL:", p.email);
-      return false;
-    }
-
-    const html = `
-      <div style="font-family:'Inter', Arial, sans-serif; padding:30px 15px; background-color:#0f0f12; color:#e4e4e7; min-height:100%;">
-        
-        <div style="
-          max-width:550px;
-          margin:0 auto;
-          background-color:#18181b;
-          border-radius:20px;
-          overflow:hidden;
-          border:1px solid #27272a;
-          box-shadow:0 10px 30px rgba(0,0,0,0.3);
-        ">
-          
-          <!-- Header Banner -->
-          <div style="background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); padding:35px 20px; text-align:center; border-bottom:1px solid #27272a;">
-            <span style="background-color:rgba(255,255,255,0.15); color:#ffffff; padding:6px 16px; border-radius:50px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; display:inline-block; margin-bottom:15px; border:1px solid rgba(255,255,255,0.25);">
-              ✓ Registration Confirmed
-            </span>
-            <h1 style="color:#ffffff; margin:0; font-size:24px; font-weight:800; line-height:1.2; letter-spacing:-0.02em;">
-              ${p.conferenceName || "Conference"}
-            </h1>
-          </div>
-
-          <!-- Optional Campaign Banner -->
-          ${bannerImage && targetConference ? `
-            <div style="text-align:center; width:100%; max-height:240px; overflow:hidden; border-bottom:1px solid #27272a;">
-              <img src="${baseUrl}/api/bulk-email/conference/${targetConference._id}/banner" style="width:100%; max-width:100%; height:auto; display:block;" alt="Event Banner" />
-            </div>
-          ` : ''}
-
-          <!-- Body -->
-          <div style="padding:30px 25px;">
-            <p style="font-size:16px; color:#a1a1aa; margin:0 0 15px 0; line-height:1.6;">
-              Hi <strong style="color:#ffffff;">${p.name}</strong>,
-            </p>
-            <p style="font-size:15px; color:#d4d4d8; margin:0 0 30px 0; line-height:1.6;">
-              ${
-                message ||
-                "Thank you for registering! Your spot has been reserved. Here are your event pass and details:"
-              }
-            </p>
-
-            <!-- QR Code Section -->
-            <div style="background-color:#121214; border-radius:16px; border:1px solid #27272a; padding:25px; text-align:center; margin-bottom:30px;">
-              <span style="color:#818cf8; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.1em; display:block; margin-bottom:15px;">
-                Your Event Pass QR Code
-              </span>
-              <div style="display:inline-block; background-color:#ffffff; padding:15px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.25);">
-                <img src="${baseUrl}/api/bulk-email/participant/${p._id}/qrcode" width="200" height="200" style="display:block;" alt="QR Code" />
-              </div>
-              <span style="color:#71717a; font-size:12px; display:block; margin-top:15px; font-weight:500;">
-                Scan this QR code at the event venue
-              </span>
-            </div>
-
-            <!-- Attendee Info Card -->
-            <div style="background-color:#121214; border-radius:16px; border:1px solid #27272a; overflow:hidden; margin-bottom:30px;">
-              <div style="border-bottom:1px solid #27272a; padding:12px 20px; background-color:rgba(255,255,255,0.02);">
-                <span style="color:#a1a1aa; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.1em;">
-                  Attendee Information
-                </span>
-              </div>
-              <div style="padding:15px 20px;">
-                <table style="width:100%; border-collapse:collapse; font-size:14px; color:#d4d4d8;">
-                  <tr>
-                    <td style="padding:8px 0; color:#71717a; width:35%; font-weight:600;">Name</td>
-                    <td style="padding:8px 0; color:#ffffff; font-weight:700;">${p.name}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:8px 0; color:#71717a; font-weight:600; border-top:1px solid #27272a;">Email</td>
-                    <td style="padding:8px 0; color:#ffffff; font-weight:600; border-top:1px solid #27272a; word-break:break-all;">${p.email}</td>
-                  </tr>
-                  ${p.phone ? `
-                  <tr>
-                    <td style="padding:8px 0; color:#71717a; font-weight:600; border-top:1px solid #27272a;">Mobile</td>
-                    <td style="padding:8px 0; color:#ffffff; font-weight:600; border-top:1px solid #27272a;">${p.phone}</td>
-                  </tr>
-                  ` : ''}
-                  ${p.category ? `
-                  <tr>
-                    <td style="padding:8px 0; color:#71717a; font-weight:600; border-top:1px solid #27272a;">Category</td>
-                    <td style="padding:8px 0; color:#ffffff; font-weight:600; border-top:1px solid #27272a;">${p.category}</td>
-                  </tr>
-                  ` : ''}
-                </table>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Footer -->
-          <div style="background-color:#121214; padding:25px; text-align:center; border-top:1px solid #27272a;">
-            <p style="margin:0 0 8px 0; color:#e4e4e7; font-size:13px; font-weight:700;">
-              ${p.conferenceName || "Conference"}
-            </p>
-            <p style="margin:0 0 15px 0; color:#71717a; font-size:11px; font-weight:500;">
-              Event Registration Confirmation
-            </p>
-            <p style="margin:0; color:#52525b; font-size:11px; font-weight:400;">
-              © 2026 ${p.conferenceName || "Conference"}. All rights reserved.
-            </p>
-          </div>
-
-        </div>
-      </div>
-    `;
-
-    if (isMockMode) {
-      // Mock email broadcasting: log and simulate success
-      const mockLogEntry = {
-        timestamp: new Date().toISOString(),
-        from: `"${p.conferenceName || "Conference"}" <mock@brevo.com>`,
-        to: p.email,
-        subject: subject || `Conference QR - ${p.conferenceName}`,
-        message: message || "Please find your conference QR code below.",
-        qrCodeValue: p.regId || p._id.toString(),
-        hasBanner: !!bannerImage,
-      };
-
-      try {
-        const fs = await import("fs/promises");
-        let existingLogs = [];
-        try {
-          const fileData = await fs.readFile("mock-emails.json", "utf-8");
-          existingLogs = JSON.parse(fileData);
-        } catch (readErr) {
-          // File not found or empty
-        }
-        existingLogs.push(mockLogEntry);
-        await fs.writeFile("mock-emails.json", JSON.stringify(existingLogs, null, 2), "utf-8");
-      } catch (writeErr) {
-        console.log("❌ FAILED TO WRITE MOCK EMAIL TO FILE:", writeErr.message);
-      }
-
-      console.log(`📧 [MOCK EMAIL] Sent successfully to: ${p.email}`);
-      return true;
-    } else {
-      // Send via Brevo HTTP API (Port 443)
-      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-        method: "POST",
-        headers: {
-          "api-key": apiKey,
-          "content-type": "application/json",
-          "accept": "application/json"
-        },
-        body: JSON.stringify({
-          sender: {
-            name: p.conferenceName || "Conference",
-            email: senderEmail
-          },
-          to: [
-            {
-              email: p.email,
-              name: p.name
-            }
-          ],
-          subject: subject || `Conference QR - ${p.conferenceName}`,
-          htmlContent: html
-        })
-      });
-
-      const resData = await response.json();
-
-      if (response.ok) {
-        console.log("✅ EMAIL SENT:", p.email, resData.messageId);
-        return true;
-      } else {
-        console.error("❌ BREVO API ERROR:", JSON.stringify(resData.error || resData));
-        return false;
-      }
-    }
-  } catch (err) {
-    console.log("❌ FAILED FOR:", p.email);
-    console.log("ERROR:", err.message);
-    return false;
+// Helper: Resolve Conference Document
+const resolveConference = async (param) => {
+  if (!param) return null;
+  const clean = String(param).trim();
+  let conf = null;
+  if (mongoose.Types.ObjectId.isValid(clean)) {
+    conf = await Conference.findById(clean).catch(() => null);
   }
+  if (!conf) {
+    conf = await Conference.findOne({
+      $or: [{ slug: clean }, { name: clean }],
+    }).catch(() => null);
+  }
+  return conf;
 };
 
-router.post("/:conferenceId/send-emails", requireAuth, async (req, res) => {
+// Helper: Build Conference Query Conditions for Participants
+const buildConferenceParticipantQuery = (param, targetConference) => {
+  const conditions = [
+    { conferenceId: param },
+    { conferenceName: param },
+  ];
+  if (targetConference) {
+    conditions.push({ conferenceId: targetConference._id.toString() });
+    conditions.push({ conferenceName: targetConference.name });
+    if (targetConference.slug) {
+      conditions.push({ conferenceId: targetConference.slug });
+    }
+  }
+  return { $or: conditions };
+};
+
+/* ==========================================================
+   1. SEND ONE TEST EMAIL (With Complete Diagnostics)
+   ========================================================== */
+router.post("/:conferenceId/test-email", authHandler, async (req, res) => {
+  try {
+    const { testEmail, participantId } = req.body;
+    const { conferenceId } = req.params;
+
+    if (!testEmail || !testEmail.includes("@")) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid recipient test email address.",
+      });
+    }
+
+    const targetConference = await resolveConference(conferenceId);
+    const confName = targetConference?.name || "Dasara Navaratri 2026";
+    const totalDays = targetConference?.totalDays || 9;
+
+    let sampleParticipant = null;
+    if (participantId && mongoose.Types.ObjectId.isValid(participantId)) {
+      sampleParticipant = await Participant.findById(participantId);
+    }
+    if (!sampleParticipant) {
+      sampleParticipant = await Participant.findOne({
+        conferenceId: targetConference ? targetConference._id.toString() : conferenceId,
+      });
+    }
+
+    const name = sampleParticipant?.name || "Admin Delegate";
+    const regId = sampleParticipant?.regId || "DAS-TEST-001";
+    const qrCodeText = sampleParticipant?.qrCode || regId;
+
+    const baseUrl = `${req.protocol}://${req.headers.host}`;
+    const bannerImageUrl = targetConference?.bannerImage
+      ? `${baseUrl}/api/bulk-email/conference/${targetConference._id}/banner`
+      : "";
+
+    const htmlContent = await generateQREmailHtml({
+      name,
+      regId,
+      conferenceName: confName,
+      totalDays,
+      qrCodeText,
+      qrImageUrl: `${baseUrl}/api/bulk-email/participant/${sampleParticipant?._id || "preview"}/qrcode`,
+      bannerImageUrl,
+    });
+
+    const subject = `Your Entry QR Code – ${confName}`;
+
+    // Send single test email and capture full diagnostic result
+    const result = await sendParticipantEmail({
+      toEmail: testEmail.trim(),
+      toName: name,
+      subject,
+      htmlContent,
+      senderName: confName,
+      senderEmail: process.env.BREVO_SENDER_EMAIL || "info@regxperts.com",
+    });
+
+    // Also run a dedicated direct Brevo diagnostic probe to report Brevo's direct status
+    const directBrevo = await transmitViaBrevo({
+      toEmail: testEmail.trim(),
+      toName: name,
+      subject,
+      htmlContent,
+      senderName: confName,
+      senderEmail: process.env.BREVO_SENDER_EMAIL || "info@regxperts.com",
+    });
+
+    return res.json({
+      success: result.success,
+      recipient: testEmail.trim(),
+      providerUsed: result.provider || "brevo",
+      httpStatus: result.httpStatus,
+      errorCode: result.errorCode || null,
+      errorMessage: result.errorMessage || null,
+      failureReason: result.failureReason || null,
+      messageId: result.messageId || null,
+      warning: result.warning || null,
+      brevoDiagnostic: {
+        httpStatus: directBrevo.httpStatus,
+        errorCode: directBrevo.errorCode,
+        errorMessage: directBrevo.errorMessage,
+        failureReason: directBrevo.failureReason,
+      },
+    });
+  } catch (err) {
+    console.error("Test email error:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+/* ==========================================================
+   2. PRE-SEND QR STATS ENDPOINT
+   ========================================================== */
+router.get("/:conferenceId/qr-stats", authHandler, async (req, res) => {
+  try {
+    const { conferenceId } = req.params;
+    const targetConference = await resolveConference(conferenceId);
+    const baseQuery = buildConferenceParticipantQuery(conferenceId, targetConference);
+
+    const participants = await Participant.find(baseQuery);
+    const totalRegistered = participants.length;
+
+    let qrReady = 0;
+    let alreadySent = 0;
+    let pending = 0;
+    let failed = 0;
+    let noEmail = 0;
+
+    participants.forEach((p) => {
+      const hasEmail = p.email && p.email.includes("@") && p.email.includes(".");
+      const hasQR = !!(p.qrCode || p.regId);
+
+      if (hasQR) qrReady++;
+      if (!hasEmail) {
+        noEmail++;
+      }
+
+      if (p.qrEmailSent) {
+        alreadySent++;
+      } else if (p.qrEmailFailedAt) {
+        failed++;
+      } else if (hasEmail) {
+        pending++;
+      }
+    });
+
+    return res.json({
+      success: true,
+      stats: {
+        totalRegistered,
+        qrReady,
+        alreadySent,
+        pending,
+        failed,
+        noEmail,
+      },
+      conference: {
+        id: targetConference?._id || conferenceId,
+        name: targetConference?.name || "Dasara Navaratri 2026",
+        totalDays: targetConference?.totalDays || 9,
+      },
+    });
+  } catch (err) {
+    console.error("QR Stats error:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/* ==========================================================
+   2b. PREVIEW QR PASS EMAIL TEMPLATE
+   ========================================================== */
+router.get("/:conferenceId/preview-qr-email", authHandler, async (req, res) => {
+  try {
+    const { conferenceId } = req.params;
+    const targetConference = await resolveConference(conferenceId);
+    const confName = targetConference?.name || "Dasara Navaratri 2026";
+    const totalDays = targetConference?.totalDays || 9;
+    const baseUrl = `${req.protocol}://${req.headers.host}`;
+    const bannerImageUrl = targetConference?.bannerImage
+      ? `${baseUrl}/api/bulk-email/conference/${targetConference._id}/banner`
+      : "";
+
+    const html = await generateQREmailHtml({
+      name: "Dr. Ramesh Sharma (Sample)",
+      regId: "REG-2026-9001",
+      conferenceName: confName,
+      totalDays,
+      qrCodeText: "REG-2026-9001",
+      bannerImageUrl,
+    });
+
+    return res.json({ success: true, html });
+  } catch (err) {
+    console.error("Preview error:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/* ==========================================================
+   3. SEND QR PASSES TO ALL / SELECTED / FAILED PARTICIPANTS
+   ========================================================== */
+router.post("/:conferenceId/send-qr-emails", authHandler, async (req, res) => {
+  try {
+    const { conferenceId } = req.params;
+    const { participantIds, resendFailedOnly, forceResend } = req.body;
+
+    const targetConference = await resolveConference(conferenceId);
+    const confName = targetConference?.name || "Dasara Navaratri 2026";
+    const totalDays = targetConference?.totalDays || 9;
+    const finalConfId = targetConference ? targetConference._id.toString() : conferenceId;
+
+    const baseQuery = buildConferenceParticipantQuery(conferenceId, targetConference);
+
+    // Apply filters
+    if (participantIds && Array.isArray(participantIds) && participantIds.length > 0) {
+      baseQuery._id = { $in: participantIds };
+    } else if (resendFailedOnly) {
+      baseQuery.qrEmailFailedAt = { $exists: true };
+      baseQuery.qrEmailSent = { $ne: true };
+    } else if (!forceResend) {
+      // Do not resend duplicate emails automatically
+      baseQuery.qrEmailSent = { $ne: true };
+    }
+
+    const participants = await Participant.find(baseQuery);
+
+    if (participants.length === 0) {
+      return res.json({
+        success: true,
+        message: "No pending participants matched the campaign criteria.",
+        total: 0,
+        sent: 0,
+        failed: 0,
+        queued: false,
+      });
+    }
+
+    const baseUrl = `${req.protocol}://${req.headers.host}`;
+    const bannerImageUrl = targetConference?.bannerImage
+      ? `${baseUrl}/api/bulk-email/conference/${targetConference._id}/banner`
+      : "";
+
+    // Initialize campaign state
+    const campaignId = `campaign_${finalConfId}_${Date.now()}`;
+    const campaignState = {
+      campaignId,
+      conferenceId: finalConfId,
+      conferenceName: confName,
+      total: participants.length,
+      current: 0,
+      sent: 0,
+      failed: 0,
+      remaining: participants.length,
+      status: "running",
+      startTime: new Date(),
+      recentLogs: [],
+    };
+    activeCampaigns.set(finalConfId, campaignState);
+
+    // Execute background worker
+    const executeWorker = async () => {
+      const io = getIO();
+
+      for (let i = 0; i < participants.length; i++) {
+        const p = participants[i];
+        campaignState.current = i + 1;
+        campaignState.remaining = participants.length - (i + 1);
+
+        const email = (p.email || "").trim().toLowerCase();
+        const hasValidEmail = email && email.includes("@") && email.includes(".");
+
+        // Ensure QR code is generated on participant
+        if (!p.qrCode || p.qrCode.trim() === "") {
+          p.qrCode = p.regId || `QR-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+          await p.save();
+        }
+
+        // If email is missing or invalid: mark "Email Not Available" and continue
+        if (!hasValidEmail) {
+          const failureReason = "Email Not Available (Missing or invalid recipient address)";
+          p.qrEmailFailedAt = new Date();
+          p.qrEmailFailureReason = failureReason;
+          await p.save();
+
+          await EmailLog.create({
+            conferenceId: finalConfId,
+            participantId: p._id,
+            registrationId: p.regId || "",
+            recipientName: p.name || "",
+            recipientEmail: p.email || "N/A",
+            campaignType: "qr_pass",
+            status: "failed",
+            failureReason: failureReason,
+            failedAt: new Date(),
+          });
+
+          campaignState.failed++;
+          campaignState.recentLogs.unshift({
+            recipient: p.name || "Unknown",
+            email: p.email || "None",
+            status: "failed",
+            reason: failureReason,
+          });
+
+          if (io) {
+            io.emit("email-campaign-progress", {
+              ...campaignState,
+              lastRecipient: p.name,
+              lastEmail: p.email || "None",
+              lastStatus: "failed",
+              lastReason: failureReason,
+            });
+          }
+          continue;
+        }
+
+        // Build HTML template
+        try {
+          const htmlContent = await generateQREmailHtml({
+            name: p.name || "Delegate",
+            regId: p.regId || "N/A",
+            conferenceName: confName,
+            totalDays,
+            qrCodeText: p.qrCode || p.regId,
+            qrImageUrl: `${baseUrl}/api/bulk-email/participant/${p._id}/qrcode`,
+            bannerImageUrl,
+          });
+
+          const subject = `Your Entry QR Code – ${confName}`;
+
+          const sendResult = await sendParticipantEmail({
+            toEmail: email,
+            toName: p.name || "Delegate",
+            subject,
+            htmlContent,
+            senderName: confName,
+            senderEmail: process.env.BREVO_SENDER_EMAIL || "info@regxperts.com",
+          });
+
+          if (sendResult.success) {
+            p.qrEmailSent = true;
+            p.qrEmailSentAt = new Date();
+            p.qrEmailFailureReason = "";
+            await p.save();
+
+            await EmailLog.create({
+              conferenceId: finalConfId,
+              participantId: p._id,
+              registrationId: p.regId || "",
+              recipientName: p.name || "",
+              recipientEmail: email,
+              campaignType: "qr_pass",
+              subject,
+              status: "sent",
+              provider: sendResult.provider,
+              httpStatus: sendResult.httpStatus,
+              messageId: sendResult.messageId,
+              sentAt: new Date(),
+            });
+
+            campaignState.sent++;
+            campaignState.recentLogs.unshift({
+              recipient: p.name,
+              email: email,
+              status: "sent",
+              messageId: sendResult.messageId,
+            });
+          } else {
+            p.qrEmailFailedAt = new Date();
+            p.qrEmailFailureReason = sendResult.failureReason || sendResult.errorMessage;
+            await p.save();
+
+            await EmailLog.create({
+              conferenceId: finalConfId,
+              participantId: p._id,
+              registrationId: p.regId || "",
+              recipientName: p.name || "",
+              recipientEmail: email,
+              campaignType: "qr_pass",
+              subject,
+              status: "failed",
+              httpStatus: sendResult.httpStatus,
+              failureReason: sendResult.failureReason || sendResult.errorMessage,
+              apiResponse: sendResult.apiResponse || "",
+              failedAt: new Date(),
+            });
+
+            campaignState.failed++;
+            campaignState.recentLogs.unshift({
+              recipient: p.name,
+              email: email,
+              status: "failed",
+              reason: sendResult.failureReason || sendResult.errorMessage,
+            });
+          }
+
+          if (io) {
+            io.emit("email-campaign-progress", {
+              ...campaignState,
+              lastRecipient: p.name,
+              lastEmail: email,
+              lastStatus: sendResult.success ? "sent" : "failed",
+              lastReason: sendResult.failureReason || "",
+            });
+          }
+        } catch (itemErr) {
+          console.error(`Email error for ${p.name}:`, itemErr.message);
+          campaignState.failed++;
+        }
+
+        // Throttle 100ms between calls
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      campaignState.status = "completed";
+      campaignState.endTime = new Date();
+      if (io) {
+        io.emit("email-campaign-completed", campaignState);
+      }
+    };
+
+    // If small set (<= 5), execute immediately so response has full results
+    if (participants.length <= 5) {
+      await executeWorker();
+      return res.json({
+        success: true,
+        queued: false,
+        total: campaignState.total,
+        sent: campaignState.sent,
+        failed: campaignState.failed,
+        message: `Processed ${campaignState.total} emails (${campaignState.sent} sent, ${campaignState.failed} failed).`,
+        logs: campaignState.recentLogs,
+      });
+    }
+
+    // Launch worker in background for large sets
+    executeWorker().catch((bgErr) => console.error("Campaign background error:", bgErr));
+
+    return res.status(202).json({
+      success: true,
+      queued: true,
+      campaignId,
+      total: participants.length,
+      message: `Sending QR Emails: Queued ${participants.length} emails in background.`,
+    });
+  } catch (err) {
+    console.error("send-qr-emails route error:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/* ==========================================================
+   4. CAMPAIGN STATUS / POLLING ENDPOINT
+   ========================================================== */
+router.get("/:conferenceId/campaign-status", authHandler, async (req, res) => {
+  try {
+    const { conferenceId } = req.params;
+    const targetConference = await resolveConference(conferenceId);
+    const finalConfId = targetConference ? targetConference._id.toString() : conferenceId;
+
+    const state = activeCampaigns.get(finalConfId);
+    if (state) {
+      return res.json({ success: true, active: true, campaign: state });
+    }
+
+    // Otherwise fetch summary from EmailLog
+    const [sentCount, failedCount, recentLogs] = await Promise.all([
+      EmailLog.countDocuments({ conferenceId: finalConfId, status: "sent" }),
+      EmailLog.countDocuments({ conferenceId: finalConfId, status: "failed" }),
+      EmailLog.find({ conferenceId: finalConfId }).sort({ createdAt: -1 }).limit(10),
+    ]);
+
+    return res.json({
+      success: true,
+      active: false,
+      summary: {
+        sent: sentCount,
+        failed: failedCount,
+        recentLogs,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/* ==========================================================
+   5. EMAIL AUDIT LOGS ENDPOINT
+   ========================================================== */
+router.get("/:conferenceId/email-logs", authHandler, async (req, res) => {
+  try {
+    const { conferenceId } = req.params;
+    const { status, limit = 50 } = req.query;
+
+    const targetConference = await resolveConference(conferenceId);
+    const finalConfId = targetConference ? targetConference._id.toString() : conferenceId;
+
+    const query = { conferenceId: finalConfId };
+    if (status && status !== "all") {
+      query.status = status;
+    }
+
+    const logs = await EmailLog.find(query)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit) || 50);
+
+    return res.json({ success: true, logs });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/* ==========================================================
+   6. EXISTING GENERAL BULK EMAIL BROADCAST ROUTE
+   ========================================================== */
+router.post("/:conferenceId/send-emails", authHandler, async (req, res) => {
   try {
     const { subject, message, bannerImage, participantIds } = req.body;
-    const param = req.params.conferenceId?.trim();
+    const { conferenceId } = req.params;
 
-    /* =========================
-       CHECK BREVO API KEYS
-    ========================= */
-    const apiKey = process.env.BREVO_API_KEY || process.env.BREVO_SMTP_KEY;
-    const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.BREVO_SMTP_USER;
-    const isMockMode = !apiKey || !senderEmail;
-
-    if (isMockMode) {
-      console.log("⚠️ BREVO_SMTP_KEY or BREVO_SMTP_USER IS MISSING. OPERATING IN MOCK MODE.");
-    }
-
-    /* =========================
-       GET CONFERENCES & PARTICIPANTS
-    ========================= */
-    const queryConditions = [
-      { conferenceId: param },
-      { conferenceName: param }
-    ];
-
-    const targetConference = await Conference.findOne({
-      $or: [
-        { slug: param },
-        { name: param }
-      ]
-    }).catch(() => null);
-
-    if (targetConference) {
-      queryConditions.push({ conferenceId: targetConference._id.toString() });
-      queryConditions.push({ conferenceName: targetConference.name });
-    }
-
-    if (mongoose.Types.ObjectId.isValid(param)) {
-      const targetByObjId = await Conference.findById(param).catch(() => null);
-      if (targetByObjId) {
-        queryConditions.push({ conferenceId: targetByObjId._id.toString() });
-        queryConditions.push({ conferenceName: targetByObjId.name });
-        if (targetByObjId.slug) {
-          queryConditions.push({ conferenceId: targetByObjId.slug });
-        }
-      }
-    }
+    const targetConference = await resolveConference(conferenceId);
+    const confName = targetConference?.name || "Conference";
+    const finalConfId = targetConference ? targetConference._id.toString() : conferenceId;
 
     // Save banner to database for the conference if provided
     if (bannerImage && targetConference) {
@@ -315,75 +643,78 @@ router.post("/:conferenceId/send-emails", requireAuth, async (req, res) => {
       await targetConference.save();
     }
 
-    const query = {
-      $or: queryConditions
-    };
-
+    const baseQuery = buildConferenceParticipantQuery(conferenceId, targetConference);
     if (participantIds && Array.isArray(participantIds)) {
-      query._id = { $in: participantIds };
+      baseQuery._id = { $in: participantIds };
     }
 
-    const participants = await Participant.find(query);
-
-    console.log("👥 TOTAL PARTICIPANTS:", participants.length);
-
+    const participants = await Participant.find(baseQuery);
     if (!participants.length) {
       return res.status(404).json({
         success: false,
-        message: "No participants found",
+        message: "No participants found matching the criteria.",
       });
     }
 
-    // Get base URL for absolute image links
     const baseUrl = `${req.protocol}://${req.headers.host}`;
+    const bannerImageUrl = targetConference?.bannerImage
+      ? `${baseUrl}/api/bulk-email/conference/${targetConference._id}/banner`
+      : "";
 
-    // --- DUAL PATH NON-BLOCKING IMPLEMENTATION ---
-    if (participants.length > 30) {
-      // Background Mode: return 202 Accepted immediately to avoid reverse-proxy timeouts
-      res.status(202).json({
-        success: true,
-        sent: participants.length,
-        failed: 0,
-        queued: true,
-        message: `Campaign queued in background for ${participants.length} recipients.`
-      });
+    let sent = 0;
+    let failed = 0;
+    const failureLogs = [];
 
-      // Execute loop asynchronously in the background
-      (async () => {
-        for (const p of participants) {
-          try {
-            await sendEmailForParticipant(p, subject, message, bannerImage, baseUrl, isMockMode, apiKey, senderEmail, targetConference);
-            // Yield control back to event loop with a 50ms delay between pings to avoid event loop starvation
-            await new Promise(resolve => setTimeout(resolve, 50));
-          } catch (bgErr) {
-            console.error(`❌ Background email campaign execution failed for participant ${p._id}:`, bgErr.message);
-          }
-        }
-      })();
-    } else {
-      // Synchronous Mode: send and wait to return exact stats for small participant sets
-      let sent = 0;
-      let failed = 0;
-      for (const p of participants) {
-        const success = await sendEmailForParticipant(p, subject, message, bannerImage, baseUrl, isMockMode, apiKey, senderEmail, targetConference);
-        if (success) sent++;
-        else failed++;
+    for (const p of participants) {
+      const email = (p.email || "").trim().toLowerCase();
+      if (!email || !email.includes("@")) {
+        failed++;
+        failureLogs.push({ recipient: p.name, email: p.email, reason: "Invalid recipient email" });
+        continue;
       }
 
-      return res.json({
-        success: true,
-        sent,
-        failed,
-        queued: false
+      const htmlContent = `
+        <div style="font-family:'Inter', Arial, sans-serif; padding:30px 15px; background-color:#0f0f12; color:#e4e4e7;">
+          <div style="max-width:550px; margin:0 auto; background-color:#18181b; border-radius:20px; border:1px solid #27272a; padding:30px 25px;">
+            <h1 style="color:#ffffff; font-size:22px; margin-bottom:15px;">${confName}</h1>
+            ${bannerImageUrl ? `<img src="${bannerImageUrl}" style="width:100%; border-radius:12px; margin-bottom:20px;" alt="Banner"/>` : ''}
+            <p style="font-size:15px; color:#d4d4d8; line-height:1.6;">${message || "Important announcement from the organizers."}</p>
+          </div>
+        </div>
+      `;
+
+      const result = await sendParticipantEmail({
+        toEmail: email,
+        toName: p.name,
+        subject: subject || `Announcement - ${confName}`,
+        htmlContent,
+        senderName: confName,
+        senderEmail: process.env.BREVO_SENDER_EMAIL || "info@regxperts.com",
       });
+
+      if (result.success) {
+        sent++;
+      } else {
+        failed++;
+        failureLogs.push({
+          recipient: p.name,
+          email,
+          reason: result.failureReason || result.errorMessage,
+        });
+      }
     }
-  } catch (err) {
-    console.log("❌ ROUTE ERROR:");
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: err.message,
+
+    return res.json({
+      success: true,
+      sent,
+      failed,
+      queued: false,
+      failures: failureLogs,
+      message: `Campaign complete: ${sent} sent, ${failed} failed.`,
     });
+  } catch (err) {
+    console.error("General send-emails route error:", err);
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 

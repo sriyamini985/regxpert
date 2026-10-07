@@ -95,6 +95,19 @@ const participantSchema = new mongoose.Schema(
       default: false,
     },
 
+    // Tracks daily attendance (e.g., {"day1": true, "day2": true, ..., "day9": true})
+    attendanceLogs: {
+      type: Map,
+      of: Boolean,
+      default: {},
+    },
+
+    attendanceScanTimes: {
+      type: Map,
+      of: Date,
+      default: {},
+    },
+
     // ADDED: Tracks dynamic meal scans (e.g., {"day1-lunch": true, "day2-dinner": true})
     foodLogs: {
       type: Map,
@@ -245,6 +258,66 @@ const participantSchema = new mongoose.Schema(
       default: false,
     },
 
+    blockDay6Breakfast: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockDay6Lunch: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockDay6Dinner: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockDay7Breakfast: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockDay7Lunch: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockDay7Dinner: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockDay8Breakfast: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockDay8Lunch: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockDay8Dinner: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockDay9Breakfast: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockDay9Lunch: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockDay9Dinner: {
+      type: Boolean,
+      default: false,
+    },
+
     blockWorkshop1: {
       type: Boolean,
       default: false,
@@ -271,6 +344,28 @@ const participantSchema = new mongoose.Schema(
     },
 
     /* =========================
+       QR EMAIL CAMPAIGN TRACKING
+    ========================= */
+
+    qrEmailSent: {
+      type: Boolean,
+      default: false,
+    },
+
+    qrEmailSentAt: {
+      type: Date,
+    },
+
+    qrEmailFailedAt: {
+      type: Date,
+    },
+
+    qrEmailFailureReason: {
+      type: String,
+      default: "",
+    },
+
+    /* =========================
        STORE FULL EXCEL/CSV DATA
     ========================= */
 
@@ -290,6 +385,7 @@ participantSchema.index({ conferenceName: 1 });
 participantSchema.index({ regId: 1 });
 participantSchema.index({ phone: 1 });
 participantSchema.index({ email: 1 });
+participantSchema.index({ qrEmailSent: 1 });
 participantSchema.index({ qrCode: 1 });
 participantSchema.index({ name: 1 });
 

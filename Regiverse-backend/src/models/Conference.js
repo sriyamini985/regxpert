@@ -6,6 +6,9 @@ const conferenceSchema = new mongoose.Schema(
     slug: { type: String, required: true, unique: true },
     isActive: { type: Boolean, default: false }, // Tracks workspace deployment status
     bannerImage: { type: String }, // Stored as base64 string
+    totalDays: { type: Number, default: 5 }, // Configurable event days (e.g., 5 or 9)
+    startDate: { type: Date },
+    currentDay: { type: Number, default: 1 },
   },
   { timestamps: true }
 );

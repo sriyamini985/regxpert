@@ -65,13 +65,43 @@ router.get("/", async (req, res) => {
 // 3. CREATE A NEW CONFERENCE
 router.post("/", requireAuth, requireRole(["admin"]), async (req, res) => {
   try {
-    const { title, name, slug } = req.body;
+    const { title, name, slug, totalDays, total_event_days, startDate, currentDay } = req.body;
+    const days = totalDays || total_event_days || 5;
     const newConference = await Conference.create({
       name: title || name,
       slug,
+      totalDays: Number(days) || 5,
+      startDate: startDate ? new Date(startDate) : undefined,
+      currentDay: Number(currentDay) || 1,
       isActive: false
     });
     res.status(201).json(newConference);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// UPDATE CONFERENCE DETAILS (totalDays, currentDay, etc.)
+router.put("/:id", requireAuth, requireRole(["admin"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, title, totalDays, total_event_days, startDate, currentDay, bannerImage } = req.body;
+    const conference = await Conference.findOne({
+      $or: [
+        { _id: mongoose.isValidObjectId(id) ? id : null },
+        { slug: id }
+      ].filter(Boolean)
+    });
+    if (!conference) {
+      return res.status(404).json({ error: "Conference workspace profile not found" });
+    }
+    if (name || title) conference.name = name || title;
+    if (totalDays || total_event_days) conference.totalDays = Number(totalDays || total_event_days);
+    if (startDate) conference.startDate = new Date(startDate);
+    if (currentDay) conference.currentDay = Number(currentDay);
+    if (bannerImage !== undefined) conference.bannerImage = bannerImage;
+    await conference.save();
+    res.json(conference);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

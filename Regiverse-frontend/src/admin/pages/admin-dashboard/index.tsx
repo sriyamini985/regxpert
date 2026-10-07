@@ -89,49 +89,55 @@ const Dashboard = () => {
         return istTime.toISOString().split('T')[0];
       };
 
-      const formattedData = roster.map((p: any, index: number) => ({
-        "S.No": index + 1,
-        "Registration ID": p.regId || "N/A",
-        "Name": p.name || "",
-        "Email": p.email || "",
-        "Phone": p.phone || "",
-        "Category": p.category || "",
-        "State/City": p.state || "",
-        "Checked In": p.isCheckedIn ? "Yes" : "No",
-        "Kitbag Collected": p.kitbagCollected ? (getISTDateStr(p.kitbagCollectedTime || p.updatedAt || p.createdAt) || "Yes") : "No",
-        "Certificate Issued": p.certificateGiven ? "Yes" : "No",
-        "Printed": (() => {
-          if (!p.printed) return "No";
-          const rawPrintTime = p.printLogs && p.printLogs.length > 0 ? p.printLogs[0].timestamp : (p.updatedAt || p.createdAt);
-          return getISTDateStr(rawPrintTime) || "Yes";
-        })(),
-        "Total Hall Entries": p.hallEntries ? p.hallEntries.length : 0,
-        "Total Hall Exits": p.hallExits ? p.hallExits.length : 0,
-        "Hall Entry Timestamps": p.hallEntries && p.hallEntries.length > 0 ? p.hallEntries.map((d: any) => new Date(d).toLocaleString("en-US", { timeZone: "Asia/Kolkata" })).join(", ") : "",
-        "Hall Exit Timestamps": p.hallExits && p.hallExits.length > 0 ? p.hallExits.map((d: any) => new Date(d).toLocaleString("en-US", { timeZone: "Asia/Kolkata" })).join(", ") : "",
-        "Day 1 Breakfast": p.foodLogs?.["day1-breakfast"] ? (getISTDateStr(p.foodScanTimes?.["day1-breakfast"]) || "Yes") : "No",
-        "Day 1 Lunch": p.foodLogs?.["day1-lunch"] ? (getISTDateStr(p.foodScanTimes?.["day1-lunch"]) || "Yes") : "No",
-        "Day 1 Dinner": p.foodLogs?.["day1-dinner"] ? (getISTDateStr(p.foodScanTimes?.["day1-dinner"]) || "Yes") : "No",
-        "Day 2 Breakfast": p.foodLogs?.["day2-breakfast"] ? (getISTDateStr(p.foodScanTimes?.["day2-breakfast"]) || "Yes") : "No",
-        "Day 2 Lunch": p.foodLogs?.["day2-lunch"] ? (getISTDateStr(p.foodScanTimes?.["day2-lunch"]) || "Yes") : "No",
-        "Day 2 Dinner": p.foodLogs?.["day2-dinner"] ? (getISTDateStr(p.foodScanTimes?.["day2-dinner"]) || "Yes") : "No",
-        "Day 3 Breakfast": p.foodLogs?.["day3-breakfast"] ? (getISTDateStr(p.foodScanTimes?.["day3-breakfast"]) || "Yes") : "No",
-        "Day 3 Lunch": p.foodLogs?.["day3-lunch"] ? (getISTDateStr(p.foodScanTimes?.["day3-lunch"]) || "Yes") : "No",
-        "Day 3 Dinner": p.foodLogs?.["day3-dinner"] ? (getISTDateStr(p.foodScanTimes?.["day3-dinner"]) || "Yes") : "No",
-        "Day 4 Breakfast": p.foodLogs?.["day4-breakfast"] ? (getISTDateStr(p.foodScanTimes?.["day4-breakfast"]) || "Yes") : "No",
-        "Day 4 Lunch": p.foodLogs?.["day4-lunch"] ? (getISTDateStr(p.foodScanTimes?.["day4-lunch"]) || "Yes") : "No",
-        "Day 4 Dinner": p.foodLogs?.["day4-dinner"] ? (getISTDateStr(p.foodScanTimes?.["day4-dinner"]) || "Yes") : "No",
-        "Day 5 Breakfast": p.foodLogs?.["day5-breakfast"] ? (getISTDateStr(p.foodScanTimes?.["day5-breakfast"]) || "Yes") : "No",
-        "Day 5 Lunch": p.foodLogs?.["day5-lunch"] ? (getISTDateStr(p.foodScanTimes?.["day5-lunch"]) || "Yes") : "No",
-        "Day 5 Dinner": p.foodLogs?.["day5-dinner"] ? (getISTDateStr(p.foodScanTimes?.["day5-dinner"]) || "Yes") : "No",
-        "Registration Date": p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "",
-      }));
+      const match = conferences.find(c => c._id === selectedConferenceId || c.slug === selectedConferenceId);
+      const confDays = Math.max(5, match?.totalDays || 9);
+
+      const formattedData = roster.map((p: any, index: number) => {
+        const row: Record<string, any> = {
+          "S.No": index + 1,
+          "Registration ID": p.regId || "N/A",
+          "Name": p.name || "",
+          "Email": p.email || "",
+          "Phone": p.phone || "",
+          "Category": p.category || "",
+          "State/City": p.state || "",
+          "Checked In": p.isCheckedIn ? "Yes" : "No",
+          "Kitbag Collected": p.kitbagCollected ? (getISTDateStr(p.kitbagCollectedTime || p.updatedAt || p.createdAt) || "Yes") : "No",
+          "Certificate Issued": p.certificateGiven ? "Yes" : "No",
+          "Printed": (() => {
+            if (!p.printed) return "No";
+            const rawPrintTime = p.printLogs && p.printLogs.length > 0 ? p.printLogs[0].timestamp : (p.updatedAt || p.createdAt);
+            return getISTDateStr(rawPrintTime) || "Yes";
+          })(),
+          "Total Hall Entries": p.hallEntries ? p.hallEntries.length : 0,
+          "Total Hall Exits": p.hallExits ? p.hallExits.length : 0,
+          "Hall Entry Timestamps": p.hallEntries && p.hallEntries.length > 0 ? p.hallEntries.map((d: any) => new Date(d).toLocaleString("en-US", { timeZone: "Asia/Kolkata" })).join(", ") : "",
+          "Hall Exit Timestamps": p.hallExits && p.hallExits.length > 0 ? p.hallExits.map((d: any) => new Date(d).toLocaleString("en-US", { timeZone: "Asia/Kolkata" })).join(", ") : "",
+        };
+
+        // Attendance Day 1 to Day N
+        for (let d = 1; d <= confDays; d++) {
+          const dayKey = `day${d}`;
+          const isAttended = p.attendanceLogs ? (p.attendanceLogs[dayKey] || (p.attendanceLogs instanceof Map ? p.attendanceLogs.get(dayKey) : false)) : false;
+          const scanTime = p.attendanceScanTimes ? (p.attendanceScanTimes[dayKey] || (p.attendanceScanTimes instanceof Map ? p.attendanceScanTimes.get(dayKey) : null)) : null;
+          row[`Day ${d} Attendance`] = isAttended ? (scanTime ? new Date(scanTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "Yes") : "No";
+        }
+
+        // Food Scans Day 1 to Day N
+        for (let d = 1; d <= confDays; d++) {
+          row[`Day ${d} Breakfast`] = p.foodLogs?.[`day${d}-breakfast`] ? (getISTDateStr(p.foodScanTimes?.[`day${d}-breakfast`]) || "Yes") : "No";
+          row[`Day ${d} Lunch`] = p.foodLogs?.[`day${d}-lunch`] ? (getISTDateStr(p.foodScanTimes?.[`day${d}-lunch`]) || "Yes") : "No";
+          row[`Day ${d} Dinner`] = p.foodLogs?.[`day${d}-dinner`] ? (getISTDateStr(p.foodScanTimes?.[`day${d}-dinner`]) || "Yes") : "No";
+        }
+
+        row["Registration Date"] = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "";
+        return row;
+      });
 
       const worksheet = XLSX.utils.json_to_sheet(formattedData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Registration List");
 
-      const match = conferences.find(c => c._id === selectedConferenceId || c.slug === selectedConferenceId);
       const cleanName = (match?.name || "Event").replace(/\s+/g, "_");
       const filename = `${cleanName}_Registration_List.xlsx`;
 
@@ -219,6 +225,7 @@ const Dashboard = () => {
         <DayTabs
           selectedDay={selectedDay}
           setSelectedDay={setSelectedDay}
+          totalDays={conferences.find(c => c._id === selectedConferenceId || c.slug === selectedConferenceId)?.totalDays || 9}
         />
       </div>
 
