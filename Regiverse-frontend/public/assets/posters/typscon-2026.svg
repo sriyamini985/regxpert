@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#090d16" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="50%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="600" height="800" fill="url(#bg)" />
+
+  <!-- Geometric accent circles -->
+  <circle cx="300" cy="380" r="220" fill="none" stroke="rgba(245, 158, 11, 0.12)" stroke-width="2" />
+  <circle cx="300" cy="380" r="170" fill="none" stroke="rgba(56, 189, 248, 0.15)" stroke-width="1.5" stroke-dasharray="6,6" />
+
+  <!-- Top Badge -->
+  <g transform="translate(180, 70)">
+    <rect width="240" height="34" rx="17" fill="rgba(245, 158, 11, 0.15)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1" />
+    <text x="120" y="22" fill="#fbbf24" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1.5" text-anchor="middle">ANNUAL STATE CONFERENCE</text>
+  </g>
+
+  <!-- Title -->
+  <text x="300" y="180" fill="url(#gold)" font-family="'Segoe UI', Arial, sans-serif" font-size="54" font-weight="900" letter-spacing="-1" text-anchor="middle">TYPSCON 2026</text>
+  <text x="300" y="215" fill="#e2e8f0" font-family="'Segoe UI', Arial, sans-serif" font-size="17" font-weight="600" letter-spacing="0.5" text-anchor="middle">Telangana Plastic Surgeons Conference</text>
+  <text x="300" y="240" fill="#94a3b8" font-family="'Segoe UI', Arial, sans-serif" font-size="13" font-weight="500" text-anchor="middle">Annual State Chapter Scientific Assembly</text>
+
+  <!-- Center Graphic Shield / Caduceus -->
+  <g transform="translate(230, 290)">
+    <rect width="140" height="170" rx="20" fill="rgba(255, 255, 255, 0.04)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="2" />
+    <!-- Medical Cross / Sparkle Symbol -->
+    <path d="M70 35 L70 135 M20 85 L120 85" stroke="#f59e0b" stroke-width="8" stroke-linecap="round" />
+    <circle cx="70" cy="85" r="28" fill="#0f172a" stroke="#38bdf8" stroke-width="3" />
+    <path d="M60 85 L67 92 L82 77" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- Info Cards -->
+  <g transform="translate(70, 520)">
+    <!-- Date Card -->
+    <rect width="215" height="90" rx="16" fill="rgba(255, 255, 255, 0.04)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <text x="107" y="38" fill="#94a3b8" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="600" text-anchor="middle">CONFERENCE DATES</text>
+    <text x="107" y="68" fill="#ffffff" font-family="'Segoe UI', Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">20 – 21 June 2026</text>
+
+    <!-- Venue Card -->
+    <rect x="245" y="0" width="215" height="90" rx="16" fill="rgba(255, 255, 255, 0.04)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <text x="352" y="38" fill="#94a3b8" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="600" text-anchor="middle">LOCATION / VENUE</text>
+    <text x="352" y="68" fill="#ffffff" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="800" text-anchor="middle">Hyderabad, Telangana</text>
+  </g>
+
+  <!-- Participants Stats -->
+  <g transform="translate(150, 645)">
+    <rect width="300" height="50" rx="14" fill="rgba(245, 158, 11, 0.12)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="1" />
+    <text x="150" y="32" fill="#fbbf24" font-family="'Segoe UI', Arial, sans-serif" font-size="15" font-weight="800" text-anchor="middle">⚡ 789 Registered Delegates</text>
+  </g>
+
+  <!-- Footer Tagline -->
+  <text x="300" y="750" fill="#64748b" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="600" letter-spacing="1" text-anchor="middle">POWERED BY REGXPERT EVENT MANAGEMENT</text>
+</svg>

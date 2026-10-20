@@ -173,7 +173,7 @@ const WORKFLOW_STEPS = [
 
 const BENEFITS = [
   { num: "80%", label: "Faster Check-in", sub: "vs manual processes" },
-  { num: "3K+", label: "Participants Managed", sub: "across all events" },
+  { num: "3.4K+", label: "Participants Managed", sub: "across medical conferences" },
   { num: "10+", label: "Events Powered", sub: "and growing" },
   { num: "99.9%", label: "Uptime", sub: "during live events" },
 ];
@@ -248,52 +248,72 @@ const BENTO_FEATURES = [
 
 const PAST_EVENTS = [
   {
-    name: "TNSCON 2026",
-    org: "Thyroid & Neck Surgery Conference",
-    location: "Khammam",
-    date: "Mar 6, 7 & 8",
-    participants: 620,
-    color: "#0891b2",
-  },
-  {
-    name: "CVSI Hands-On Workshop",
-    org: "Cardiovascular Society of India",
-    location: "Veterinary Hospital, Hyderabad",
-    date: "Apr 1 & 2",
-    participants: 185,
-    color: "#059669",
-  },
-  {
-    name: "NEMC",
-    org: "National ENT & Medical Conference",
-    location: "Bagalkote",
-    date: "Apr 2, 3 & 4",
-    participants: 430,
-    color: "#7c3aed",
-  },
-  {
-    name: "TNS Masterclass",
-    org: "Thyroid & Neck Surgery Masterclass",
-    location: "Gandhi Hospitals",
-    date: "May 9 & 10",
-    participants: 210,
-    color: "#ea580c",
-  },
-  {
-    name: "DIA: Safety 360",
-    org: "DIA Conference on Clinical and Post-Market Safety",
-    location: "AIG Hospitals, Hyderabad",
-    date: "Coming Soon",
-    participants: 0,
-    color: "#db2777",
-  },
-  {
     name: "ISVIR 2026",
-    org: "Indian Society for Vascular & Interventional Radiology",
-    location: "Vizag",
-    date: "Jul 2, 3 & 4",
-    participants: 572,
+    fullName: "ISVIR Midterm Complication Meet 2026",
+    org: "Indian Society of Vascular & Interventional Radiology",
+    location: "Novotel, Vizag",
+    date: "Jul 3 & 4, 2026",
+    participants: 576,
     color: "#2563eb",
+    poster: "/assets/posters/isvir-2026.jpg",
+    website: "https://isvirindia.org/",
+  },
+  {
+    name: "HYMNNSCON 2026",
+    fullName: "Hyderabad Muscle Nerve and Neuroimmunology Society Conference",
+    org: "Hyderabad Muscle Nerve and Neuroimmunology Society",
+    location: "Hyderabad, India",
+    date: "Jul 24, 25 & 26, 2026",
+    participants: 678,
+    color: "#0891b2",
+    poster: "/assets/posters/hymnnscon-2026.jpg",
+    website: "www.hymnns.com",
+  },
+  {
+    name: "NEUROTRAUMA 2026",
+    fullName: "Annual Conference of Neurotrauma Society of India",
+    org: "Neurotrauma Society of India",
+    location: "The Park Hotel, Somajiguda, Hyderabad",
+    date: "Aug 7, 8 & 9, 2026",
+    participants: 673,
+    color: "#7c3aed",
+    poster: "/assets/posters/neurotrauma-2026.jpg",
+    website: "www.neurotrauma.in",
+    theme: "Navaratna Conclave (9 Countries)",
+  },
+  {
+    name: "ASSTCON 2026",
+    fullName: "Association of Spine Surgeons of Telangana Annual Conference",
+    org: "Association of Spine Surgeons of Telangana",
+    location: "Sailing Club, Tank Bund, Hyderabad",
+    date: "Sep 26 & 27, 2026",
+    participants: 272,
+    color: "#059669",
+    poster: "/assets/posters/asstcon-2026.jpg",
+    theme: "Stronger Spines Healthier Lives",
+  },
+  {
+    name: "NEUROVASCON 2026",
+    fullName: "26th Annual Conference of Cerebrovascular Society of India",
+    org: "Cerebrovascular Society of India",
+    location: "Ramoji Film City, Hyderabad",
+    date: "Oct 2, 3 & 4, 2026",
+    participants: 455,
+    color: "#ea580c",
+    poster: "/assets/posters/neurovascon-2026.jpg",
+    website: "www.neurovascon2026.com",
+    theme: "Redefining Neurovascular Future",
+  },
+  {
+    name: "TYPSCON 2026",
+    fullName: "Telangana Plastic Surgeons State Chapter Conference",
+    org: "Telangana Plastic Surgeons Association",
+    location: "Hyderabad, Telangana",
+    date: "Jun 20 & 21, 2026",
+    participants: 789,
+    color: "#f59e0b",
+    poster: "/assets/posters/typscon-2026.svg",
+    theme: "Annual State Chapter Scientific Assembly",
   },
 ];
 
@@ -752,6 +772,7 @@ const LandingPage: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [statsRef, statsInView] = useInView(0.3);
+  const [activePoster, setActivePoster] = useState<any | null>(null);
 
   const [activeSteps, setActiveSteps] = useState<boolean[]>(new Array(9).fill(false));
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -1604,64 +1625,130 @@ const LandingPage: React.FC = () => {
               {PAST_EVENTS.map((ev, i) => (
                 <Reveal key={ev.name} delay={i * 120}>
                   <div style={{
-                    border: `1px solid rgba(255,255,255,0.07)`,
+                    border: `1px solid rgba(255,255,255,0.08)`,
                     borderRadius: 20, overflow: "hidden",
-                    background: "rgba(6,15,38,0.6)",
+                    background: "rgba(6,15,38,0.65)",
                     backdropFilter: "blur(20px)",
                     WebkitBackdropFilter: "blur(20px)",
                     transition: "all 0.35s cubic-bezier(.16,1,.3,1)",
                     boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                     onMouseOver={e => {
                       const d = e.currentTarget as HTMLDivElement;
-                      d.style.boxShadow = `0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px ${ev.color}40`;
+                      d.style.boxShadow = `0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px ${ev.color}50`;
                       d.style.transform = "translateY(-7px)";
-                      d.style.borderColor = `${ev.color}30`;
-                      d.style.background = "rgba(8,20,50,0.75)";
+                      d.style.borderColor = `${ev.color}40`;
+                      d.style.background = "rgba(8,20,50,0.85)";
                     }}
                     onMouseOut={e => {
                       const d = e.currentTarget as HTMLDivElement;
                       d.style.boxShadow = "0 4px 24px rgba(0,0,0,0.2)";
                       d.style.transform = "none";
-                      d.style.borderColor = "rgba(255,255,255,0.07)";
-                      d.style.background = "rgba(6,15,38,0.6)";
+                      d.style.borderColor = "rgba(255,255,255,0.08)";
+                      d.style.background = "rgba(6,15,38,0.65)";
                     }}
                   >
+                    {/* Event Poster Banner Header */}
+                    {ev.poster && (
+                      <div 
+                        onClick={() => setActivePoster(ev)}
+                        style={{
+                          position: "relative",
+                          height: 195,
+                          overflow: "hidden",
+                          cursor: "pointer",
+                          background: "#081329",
+                        }}
+                        className="group/poster"
+                        title="Click to view full event poster"
+                      >
+                        <img 
+                          src={ev.poster} 
+                          alt={`${ev.name} Poster`} 
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            objectPosition: "top center",
+                            transition: "transform 0.4s ease",
+                          }}
+                          className="group-hover/poster:scale-105"
+                        />
+                        <div style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "linear-gradient(180deg, rgba(6,15,38,0.1) 0%, rgba(6,15,38,0.85) 100%)",
+                          display: "flex",
+                          alignItems: "flex-end",
+                          justifyContent: "space-between",
+                          padding: "10px 16px"
+                        }}>
+                          <span style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                            padding: "4px 10px",
+                            borderRadius: 8,
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            background: "rgba(15,23,42,0.85)",
+                            backdropFilter: "blur(8px)",
+                            color: "#f1f5f9",
+                            border: "1px solid rgba(255,255,255,0.18)"
+                          }}>
+                            🔍 View Poster
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Colored top bar */}
                     <div style={{ height: 3, background: `linear-gradient(90deg, ${ev.color}, ${ev.color}55, transparent)` }} />
-                    <div style={{ padding: "26px" }}>
+                    <div style={{ padding: "24px", display: "flex", flexDirection: "column", flex: 1 }}>
                       {/* Participant count badge */}
                       <div style={{
                         display: "inline-flex", alignItems: "center", gap: 6,
                         background: `${ev.color}18`,
                         border: `1px solid ${ev.color}38`,
                         borderRadius: 100, padding: "4px 12px",
-                        fontSize: 12, fontWeight: 600,
-                        color: ev.participants === 0 ? ev.color : `${ev.color}dd`,
-                        marginBottom: 18,
+                        fontSize: 12, fontWeight: 700,
+                        color: `${ev.color}ee`,
+                        marginBottom: 16,
+                        width: "fit-content"
                       }}>
-                        {ev.participants === 0 ? (
-                          <>
-                            <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
-                            Upcoming
-                          </>
-                        ) : (
-                          <>
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
-                            {ev.participants.toLocaleString()} participants
-                          </>
-                        )}
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        {ev.participants.toLocaleString()} verified delegates
                       </div>
+
                       <h3 style={{ fontSize: 20, fontWeight: 800, color: "#f1f5f9", letterSpacing: -0.4, marginBottom: 6, lineHeight: 1.25 }}>{ev.name}</h3>
-                      <p style={{ fontSize: 13, color: "rgba(148,163,184,0.65)", lineHeight: 1.55, marginBottom: 20 }}>{ev.org}</p>
-                      <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "rgba(148,163,184,0.7)" }}>
+                      <p style={{ fontSize: 13, color: "rgba(148,163,184,0.75)", lineHeight: 1.5, marginBottom: 14 }}>{ev.fullName || ev.org}</p>
+
+                      {ev.theme && (
+                        <div style={{
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          color: "rgba(226,232,240,0.85)",
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: 8,
+                          padding: "6px 10px",
+                          marginBottom: 16,
+                          fontStyle: "italic"
+                        }}>
+                          "{ev.theme}"
+                        </div>
+                      )}
+
+                      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: "auto", paddingTop: 8 }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "rgba(148,163,184,0.75)" }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                           {ev.location}
                         </span>
-                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "rgba(148,163,184,0.7)" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "rgba(148,163,184,0.75)" }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                           {ev.date}
                         </span>
@@ -1671,6 +1758,115 @@ const LandingPage: React.FC = () => {
                 </Reveal>
               ))}
             </div>
+
+            {/* Poster High-Res Modal */}
+            {activePoster && (
+              <div 
+                onClick={() => setActivePoster(null)}
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 99999,
+                  background: "rgba(4, 9, 24, 0.88)",
+                  backdropFilter: "blur(12px)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 20,
+                  animation: "fadeIn 0.2s ease"
+                }}
+              >
+                <div 
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    position: "relative",
+                    maxWidth: 680,
+                    width: "100%",
+                    maxHeight: "92vh",
+                    background: "#0c152d",
+                    borderRadius: 24,
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    boxShadow: "0 25px 70px rgba(0,0,0,0.7), 0 0 50px rgba(99,102,241,0.25)",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <div style={{
+                    padding: "16px 22px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    borderBottom: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(15,23,42,0.85)"
+                  }}>
+                    <div>
+                      <h3 style={{ fontSize: 18, fontWeight: 800, color: "#fff", margin: 0 }}>
+                        {activePoster.name}
+                      </h3>
+                      <p style={{ fontSize: 12, color: "rgba(148,163,184,0.8)", margin: "2px 0 0 0" }}>
+                        {activePoster.fullName || activePoster.org}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setActivePoster(null)}
+                      style={{
+                        background: "rgba(255,255,255,0.08)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        borderRadius: 12,
+                        padding: "8px 14px",
+                        color: "#f1f5f9",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: "pointer",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseOver={e => (e.currentTarget.style.background = "rgba(239,68,68,0.25)")}
+                      onMouseOut={e => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+
+                  <div style={{
+                    flex: 1,
+                    overflowY: "auto",
+                    padding: 20,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    background: "#060c1d"
+                  }}>
+                    <img 
+                      src={activePoster.poster} 
+                      alt={activePoster.name}
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "70vh",
+                        objectFit: "contain",
+                        borderRadius: 12,
+                        boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                        border: "1px solid rgba(255,255,255,0.08)"
+                      }}
+                    />
+                  </div>
+
+                  <div style={{
+                    padding: "12px 22px",
+                    background: "rgba(15,23,42,0.9)",
+                    borderTop: "1px solid rgba(255,255,255,0.08)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    fontSize: 12,
+                    color: "rgba(148,163,184,0.85)"
+                  }}>
+                    <span>📍 {activePoster.location}</span>
+                    <span>📅 {activePoster.date}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
